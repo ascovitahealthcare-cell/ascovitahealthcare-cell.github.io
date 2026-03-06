@@ -677,12 +677,20 @@ td strong{color:var(--text)}
         </div>
       </div>
       <div class="tab-pane" id="pm-images">
-        <div class="form-group"><label>Primary Image URL</label><input class="form-control" id="pmImage" placeholder="https://..."></div>
-        <div class="form-group"><label>Secondary Image URL</label><input class="form-control" id="pmImage2" placeholder="https://..."></div>
-        <div style="font-size:0.78rem;color:var(--text3);margin-top:4px">Paste Wix/Hostinger image URLs. Or upload to Photo Library first and copy URL.</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-          <div id="pmImgPreview1" style="aspect-ratio:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:0.72rem">Primary preview</div>
-          <div id="pmImgPreview2" style="aspect-ratio:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:0.72rem">Secondary preview</div>
+        <div style="font-size:0.78rem;color:var(--text3);margin-bottom:14px">💡 Paste image URLs (Wix, Hostinger, Cloudinary etc). Min 5 images recommended. First image = main product image on store.</div>
+        <div id="pmImageFields">
+          <div class="form-group"><label>Image 1 (Primary)</label><input class="form-control pm-img-url" data-idx="0" placeholder="https://...image1.jpg" oninput="previewPmImage(this,0)"></div>
+          <div class="form-group"><label>Image 2</label><input class="form-control pm-img-url" data-idx="1" placeholder="https://...image2.jpg" oninput="previewPmImage(this,1)"></div>
+          <div class="form-group"><label>Image 3</label><input class="form-control pm-img-url" data-idx="2" placeholder="https://...image3.jpg" oninput="previewPmImage(this,2)"></div>
+          <div class="form-group"><label>Image 4</label><input class="form-control pm-img-url" data-idx="3" placeholder="https://...image4.jpg" oninput="previewPmImage(this,3)"></div>
+          <div class="form-group"><label>Image 5</label><input class="form-control pm-img-url" data-idx="4" placeholder="https://...image5.jpg" oninput="previewPmImage(this,4)"></div>
+        </div>
+        <div id="pmImgPreviews" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:14px">
+          <div class="pm-img-box" id="pmPrev0" style="aspect-ratio:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:0.65rem">1</div>
+          <div class="pm-img-box" id="pmPrev1" style="aspect-ratio:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:0.65rem">2</div>
+          <div class="pm-img-box" id="pmPrev2" style="aspect-ratio:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:0.65rem">3</div>
+          <div class="pm-img-box" id="pmPrev3" style="aspect-ratio:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:0.65rem">4</div>
+          <div class="pm-img-box" id="pmPrev4" style="aspect-ratio:1;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:0.65rem">5</div>
         </div>
       </div>
     </div>
@@ -747,9 +755,7 @@ td strong{color:var(--text)}
 // CONFIG
 // ═══════════════════════════════════════════════════
 const API = 'https://ascovita-backend.onrender.com';
-// ⚠️ SECURITY: Move your Anthropic API key to backend env vars (ANTHROPIC_API_KEY)
-// Never expose secret keys in frontend HTML — anyone can see them in page source.
-// Set it in Settings tab below, stored in sessionStorage only for this session.
+let ADMIN_JWT = sessionStorage.getItem('asc_admin_jwt') || '';  // FIX: admin JWT for backend calls
 
 // ═══════════════════════════════════════════════════
 // OFFLINE / DEMO FALLBACK DATA
@@ -838,15 +844,42 @@ let aiHistory=[];
 function doLogin() {
   const u = document.getElementById('loginUser').value.trim();
   const p = document.getElementById('loginPass').value;
-  if (u==='admin' && p==='ascovita') {
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('adminApp').style.display='block';
-    startSession();
-    initAdmin();
-  } else {
-    const e=document.getElementById('loginErr'); e.style.display='block';
-    setTimeout(()=>e.style.display='none',3000);
-  }
+  // First try backend JWT login, fall back to local check
+  fetch(API + '/api/admin/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({username: u, password: p}),
+    signal: AbortSignal.timeout(8000)
+  }).then(r => r.json()).then(data => {
+    if (data.token) {
+      ADMIN_JWT = data.token;
+      sessionStorage.setItem('asc_admin_jwt', ADMIN_JWT);
+      showAdminApp();
+    } else {
+      showLoginError();
+    }
+  }).catch(() => {
+    // Backend offline — allow local login for demo
+    if (u === 'admin' && (p === 'ascovita' || p === 'ascovita2024')) {
+      ADMIN_JWT = '';
+      showAdminApp();
+      showToast('⚠️ Backend offline — demo mode', 'error');
+    } else {
+      showLoginError();
+    }
+  });
+}
+
+function showAdminApp() {
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('adminApp').style.display='block';
+  startSession();
+  initAdmin();
+}
+
+function showLoginError() {
+  const e=document.getElementById('loginErr'); e.style.display='block';
+  setTimeout(()=>e.style.display='none',3000);
 }
 
 function startSession() {
@@ -864,6 +897,8 @@ function startSession() {
 
 function doLogout() {
   if(sessionTimer) clearInterval(sessionTimer);
+  ADMIN_JWT = '';
+  sessionStorage.removeItem('asc_admin_jwt');
   document.getElementById('adminApp').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('loginUser').value='';
@@ -892,10 +927,12 @@ async function testBackendConnection() {
   if (dot) dot.style.background = 'var(--gold)';
   if (txt) txt.textContent = 'Backend: connecting…';
   try {
-    const r = await fetch(API + '/api/products', {signal: AbortSignal.timeout(15000)});
+    const headers = {'Content-Type':'application/json'};
+    if (ADMIN_JWT) headers['Authorization'] = 'Bearer ' + ADMIN_JWT;
+    const r = await fetch(API + '/api/admin/products', {headers, signal: AbortSignal.timeout(15000)});
     if (r.ok) {
       const d = await r.json();
-      const count = (d.data || d).length || 0;
+      const count = (d.data || []).length;
       if (dot) dot.style.background = 'var(--green)';
       if (txt) txt.textContent = `Backend: ✅ Live — ${count} products in DB`;
       showToast(`✅ Backend connected! ${count} products synced.`,'success');
@@ -905,7 +942,7 @@ async function testBackendConnection() {
   } catch(e) {
     if (dot) dot.style.background = 'var(--red)';
     if (txt) txt.textContent = 'Backend: ❌ Offline / waking up';
-    showToast('Backend offline or waking up (Render free tier takes 30s)','error');
+    showToast('Backend offline or waking up (Render free tier takes ~30s)','error');
   }
 }
 
@@ -913,17 +950,22 @@ async function testBackendConnection() {
 // API HELPER
 // ═══════════════════════════════════════════════════
 async function api(path, method='GET', body=null) {
-  const opts={method,headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(12000)};
-  if(body) opts.body=JSON.stringify(body);
+  const headers = {'Content-Type':'application/json'};
+  if (ADMIN_JWT) headers['Authorization'] = 'Bearer ' + ADMIN_JWT;
+  const opts = {method, headers, signal: AbortSignal.timeout(15000)};
+  if (body) opts.body = JSON.stringify(body);
   try {
-    const r = await fetch(API+path, opts);
-    if(!r.ok) throw new Error('API error '+r.status);
+    const r = await fetch(API + path, opts);
+    if (!r.ok) {
+      const errData = await r.json().catch(() => ({}));
+      throw new Error(errData.error || 'API error ' + r.status);
+    }
     BACKEND_ONLINE = true;
+    hideOfflineBanner();
     return r.json();
   } catch(e) {
     BACKEND_ONLINE = false;
     showOfflineBanner();
-    // Return mock data for read endpoints so UI doesn't break
     if (method === 'GET') {
       if (path.includes('/orders')) return {data: MOCK_ORDERS, stats: MOCK_STATS};
       if (path.includes('/products')) return {data: MOCK_PRODUCTS};
@@ -932,7 +974,6 @@ async function api(path, method='GET', body=null) {
       if (path.includes('/coupons')) return {data: []};
       return {data: []};
     }
-    // For writes (POST/PUT/DELETE), show friendly error
     showToast('Cannot save — backend is offline', 'error');
     throw e;
   }
@@ -977,7 +1018,7 @@ async function loadDashboard() {
     const [statsRes, ordersRes, prodsRes] = await Promise.all([
       api('/api/admin/stats'),
       api('/api/admin/orders'),
-      api('/api/products')
+      api('/api/admin/products')   // FIX: use /admin/products so inactive are also shown in admin
     ]);
     if(ordersRes.data) ORDERS = ordersRes.data;
     if(prodsRes.data) PRODUCTS = prodsRes.data;
@@ -1291,7 +1332,7 @@ async function loadProducts() {
   const el=document.getElementById('productsTable');
   el.innerHTML='<thead><tr><th colspan="9" class="loading-row">Loading…</th></tr></thead>';
   try {
-    const res=await api('/api/products');
+    const res=await api('/api/admin/products');  // FIX: use admin endpoint to get ALL products
     PRODUCTS=res.data||[];
     renderProductsTable(PRODUCTS);
     loadPhotoLibrary();
@@ -1301,20 +1342,29 @@ async function loadProducts() {
 function renderProductsTable(data) {
   const el=document.getElementById('productsTable');
   if(!data.length){el.innerHTML='<thead><tr><th colspan="9">No products</th></tr></thead>';return;}
-  el.innerHTML=`<thead><tr><th>Image</th><th>Name</th><th>Category</th><th>MRP</th><th>Sale</th><th>Stock</th><th>Rating</th><th>Active</th><th>Actions</th></tr></thead>
-  <tbody>${data.map(p=>`<tr>
-    <td><img src="${p.image||''}" style="width:44px;height:44px;object-fit:contain;border-radius:8px;background:var(--bg2)" onerror="this.style.display='none'"></td>
-    <td><strong>${p.name}</strong><div style="font-size:0.68rem;color:var(--text3)">${p.brand||'Ascovita'}</div></td>
-    <td><span class="badge bgray">${p.category||'—'}</span></td>
-    <td>₹${p.price||0}</td><td>${p.sale_price?'₹'+p.sale_price:'—'}</td>
-    <td><span class="badge ${p.stock<20?'br':'bg'}">${p.stock||0}</span></td>
-    <td>⭐ ${p.rating||4.5}</td>
-    <td><span class="badge ${p.active?'bg':'bgray'}">${p.active?'Active':'Hidden'}</span></td>
-    <td><div style="display:flex;gap:4px">
-      <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">Edit</button>
-      <button class="btn btn-red btn-sm" onclick="toggleProduct(${p.id},${p.active})">${p.active?'Hide':'Show'}</button>
-    </div></td>
-  </tr>`).join('')}</tbody>`;
+  el.innerHTML=`<thead><tr><th>Images</th><th>Name</th><th>Category</th><th>MRP</th><th>Sale</th><th>Stock</th><th>Rating</th><th>Active</th><th>Actions</th></tr></thead>
+  <tbody>${data.map(p=>{
+    // Collect all images for this product
+    const imgs = p.images ? (typeof p.images==='string'?JSON.parse(p.images):p.images) : [p.image,p.image2,p.image3,p.image4,p.image5].filter(Boolean);
+    const imgHtml = `<div style="display:flex;gap:3px;align-items:center">
+      <img src="${imgs[0]||''}" style="width:38px;height:38px;object-fit:contain;border-radius:6px;background:var(--bg2)" onerror="this.style.display='none'">
+      ${imgs.length>1?`<div style="display:flex;flex-direction:column;gap:2px">${imgs.slice(1,4).map(u=>`<div style="width:14px;height:14px;background:var(--bg2);border-radius:3px;border:1px solid var(--border);overflow:hidden"><img src="${u}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>`).join('')}</div>`:''}
+      ${imgs.length>0?`<span style="font-size:0.6rem;color:var(--text3)">${imgs.length}📷</span>`:''}
+    </div>`;
+    return `<tr>
+      <td>${imgHtml}</td>
+      <td><strong>${p.name}</strong><div style="font-size:0.68rem;color:var(--text3)">${p.brand||'Ascovita'}</div></td>
+      <td><span class="badge bgray">${p.category||'—'}</span></td>
+      <td>₹${p.price||0}</td><td>${p.sale_price?'₹'+p.sale_price:'—'}</td>
+      <td><span class="badge ${(p.stock||0)<20?'br':'bg'}">${p.stock||0}</span></td>
+      <td>⭐ ${p.rating||4.5}</td>
+      <td><span class="badge ${p.active?'bg':'bgray'}">${p.active?'Active':'Hidden'}</span></td>
+      <td><div style="display:flex;gap:4px">
+        <button class="btn btn-secondary btn-sm" onclick="editProduct(${p.id})">Edit</button>
+        <button class="btn btn-red btn-sm" onclick="toggleProduct(${p.id},${p.active})">${p.active?'Hide':'Show'}</button>
+      </div></td>
+    </tr>`;
+  }).join('')}</tbody>`;
 }
 
 function filterProducts(q) {
@@ -1326,8 +1376,14 @@ function openProductModal(id=null) {
   editingProductId=id;
   document.getElementById('productModalTitle').textContent=id?'Edit Product':'Add New Product';
   document.getElementById('pmTierRows').innerHTML='';
+  // Clear all 5 image inputs
+  document.querySelectorAll('.pm-img-url').forEach(inp => { inp.value=''; });
+  for(let i=0;i<5;i++){const p=document.getElementById('pmPrev'+i);if(p)p.innerHTML='<span style="font-size:0.65rem;color:var(--text3)">'+(i+1)+'</span>';}
   if(!id){
-    ['pmName','pmBadge','pmStock','pmMRP','pmSale','pmOffer','pmDesc','pmTags','pmImage','pmImage2'].forEach(f=>{const el=document.getElementById(f);if(el)el.value=f==='pmStock'?'100':f==='pmMRP'?'499':f==='pmBrand'?'Ascovita':''});
+    ['pmName','pmBadge','pmTags','pmDesc','pmSale','pmOffer'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+    const s=document.getElementById('pmStock');if(s)s.value='100';
+    const m=document.getElementById('pmMRP');if(m)m.value='499';
+    const b=document.getElementById('pmBrand');if(b)b.value='Ascovita';
   } else {
     const p=PRODUCTS.find(x=>x.id===id);
     if(p){
@@ -1340,8 +1396,18 @@ function openProductModal(id=null) {
       document.getElementById('pmOffer').value=p.offer_text||'';
       document.getElementById('pmDesc').value=p.description||'';
       document.getElementById('pmTags').value=p.tags||'';
-      document.getElementById('pmImage').value=p.image||'';
-      document.getElementById('pmImage2').value=p.image2||'';
+      // Load up to 5 images
+      const images = p.images ? (typeof p.images==='string'?JSON.parse(p.images):p.images) : [p.image,p.image2,p.image3,p.image4,p.image5].filter(Boolean);
+      const inputs = document.querySelectorAll('.pm-img-url');
+      inputs.forEach((inp, i) => {
+        inp.value = images[i] || '';
+        if(images[i]) previewPmImage(inp, i);
+      });
+      // Load tiers if saved
+      if(p.tiers){
+        const tiers=typeof p.tiers==='string'?JSON.parse(p.tiers):p.tiers;
+        if(Array.isArray(tiers)) tiers.forEach(t=>addProductTierData(t));
+      }
     }
   }
   openModal('productModal');
@@ -1349,13 +1415,15 @@ function openProductModal(id=null) {
 
 function editProduct(id){openProductModal(id);}
 
-function addProductTier() {
+function addProductTier() { addProductTierData({label:'',qty:1,disc:0,rate:''}); }
+
+function addProductTierData({label='',qty=1,disc=0,rate=''}={}) {
   const row=document.createElement('div');
   row.className='tier-row';
-  row.innerHTML=`<div class="form-group"><label>Label</label><input class="form-control" placeholder="1 Pack"></div>
-    <div class="form-group"><label>Qty</label><input type="number" class="form-control pt-qty" value="1"></div>
-    <div class="form-group"><label>Discount %</label><input type="number" class="form-control pt-disc" value="0"></div>
-    <div class="form-group"><label>Rate (₹)</label><input type="number" class="form-control pt-rate" value="499"></div>
+  row.innerHTML=`<div class="form-group"><label>Label</label><input class="form-control" placeholder="1 Pack" value="${label}"></div>
+    <div class="form-group"><label>Qty</label><input type="number" class="form-control pt-qty" value="${qty}"></div>
+    <div class="form-group"><label>Discount %</label><input type="number" class="form-control pt-disc" value="${disc}"></div>
+    <div class="form-group"><label>Rate (₹)</label><input type="number" class="form-control pt-rate" value="${rate}" placeholder="Auto"></div>
     <div class="form-group" style="justify-content:flex-end;padding-top:20px"><button class="btn btn-red btn-sm" onclick="this.closest('.tier-row').remove()">✕</button></div>`;
   document.getElementById('pmTierRows').appendChild(row);
 }
@@ -1363,15 +1431,48 @@ function addProductTier() {
 async function saveProduct() {
   const name=document.getElementById('pmName').value.trim();
   if(!name){showToast('Product name required!','error');return;}
-  const img=document.getElementById('pmImage').value;
-  const img2=document.getElementById('pmImage').onblur=()=>{const v=document.getElementById('pmImage').value;const p1=document.getElementById('pmImgPreview1');if(p1&&v)p1.innerHTML=`<img src="${v}" style="width:100%;height:100%;object-fit:cover">`};
-  const body={name,brand:document.getElementById('pmBrand').value,category:document.getElementById('pmCategory').value,badge:document.getElementById('pmBadge').value,stock:parseInt(document.getElementById('pmStock').value)||100,price:parseFloat(document.getElementById('pmMRP').value)||499,sale_price:parseFloat(document.getElementById('pmSale').value)||null,offer_text:document.getElementById('pmOffer').value,description:document.getElementById('pmDesc').value,tags:document.getElementById('pmTags').value,image:document.getElementById('pmImage').value,active:true};
+
+  // Collect all 5 image URLs  (FIX: was broken with callback assignment)
+  const imageInputs = document.querySelectorAll('.pm-img-url');
+  const images = Array.from(imageInputs).map(inp=>inp.value.trim()).filter(Boolean);
+
+  // Collect tiers
+  const tierRows=document.querySelectorAll('#pmTierRows .tier-row');
+  const tiers=Array.from(tierRows).map(r=>({
+    label:r.querySelectorAll('input')[0]?.value||'',
+    qty:parseInt(r.querySelector('.pt-qty')?.value||1),
+    disc:parseFloat(r.querySelector('.pt-disc')?.value||0),
+    rate:parseFloat(r.querySelector('.pt-rate')?.value||0)||null
+  }));
+
+  const body={
+    name,
+    brand: document.getElementById('pmBrand').value||'Ascovita',
+    category: document.getElementById('pmCategory').value,
+    badge: document.getElementById('pmBadge').value,
+    stock: parseInt(document.getElementById('pmStock').value)||100,
+    price: parseFloat(document.getElementById('pmMRP').value)||499,
+    sale_price: parseFloat(document.getElementById('pmSale').value)||null,
+    offer_text: document.getElementById('pmOffer').value,
+    description: document.getElementById('pmDesc').value,
+    tags: document.getElementById('pmTags').value,
+    image:  images[0]||'',     // primary image (backward compat)
+    image2: images[1]||'',
+    image3: images[2]||'',
+    image4: images[3]||'',
+    image5: images[4]||'',
+    images: JSON.stringify(images),   // full array stored as JSON
+    tiers: tiers.length ? JSON.stringify(tiers) : null,
+    active: true,
+  };
+
   try {
     if(editingProductId) await api('/api/products/'+editingProductId,'PUT',body);
     else await api('/api/products','POST',body);
-    showToast(editingProductId?'Product updated!':'Product added!','success');
-    closeModal('productModal'); await loadProducts();
-  } catch(e){showToast('Failed to save','error');}
+    showToast(editingProductId?'✅ Product updated!':'✅ Product added!','success');
+    closeModal('productModal');
+    await loadProducts();
+  } catch(e){showToast('Failed to save product: '+e.message,'error');}
 }
 
 async function toggleProduct(id,active) {
@@ -1382,8 +1483,15 @@ async function toggleProduct(id,active) {
 // PHOTO LIBRARY
 // ═══════════════════════════════════════════════════
 function loadPhotoLibrary() {
-  if(!photos.length && PRODUCTS.length) {
-    photos=PRODUCTS.filter(p=>p.image).map(p=>({url:p.image,name:p.name,selected:false}));
+  if (PRODUCTS.length && photos.length === 0) {
+    PRODUCTS.forEach(p => {
+      const imgs = p.images ? (typeof p.images==='string'?JSON.parse(p.images):p.images) : [p.image,p.image2,p.image3,p.image4,p.image5].filter(Boolean);
+      imgs.forEach((url, i) => {
+        if (url && !photos.find(x=>x.url===url)) {
+          photos.push({url, name: p.name + (i>0?' ('+(i+1)+')':''), selected: false});
+        }
+      });
+    });
   }
   renderPhotoGrid();
 }
@@ -1413,7 +1521,7 @@ function exportPhotoUrls(){const urls=photos.map(p=>p.url).join('\n');navigator.
 // INVENTORY
 // ═══════════════════════════════════════════════════
 async function loadInventory() {
-  if(!PRODUCTS.length){const r=await api('/api/products');PRODUCTS=r.data||[];}
+  if(!PRODUCTS.length){const r=await api('/api/admin/products');PRODUCTS=r.data||[];}
   const el=document.getElementById('inventoryTable');
   if(!PRODUCTS.length){el.innerHTML='<thead><tr><th>No products</th></tr></thead>';return;}
   el.innerHTML=`<thead><tr><th>Product</th><th>SKU</th><th>Stock</th><th>Status</th><th>Reorder At</th><th>Update Stock</th></tr></thead>
@@ -1790,10 +1898,19 @@ function showToast(msg,type=''){const t=document.getElementById('toast');t.textC
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
 
-// Image preview on URL input
+// Image preview helper for product modal
+function previewPmImage(inp, idx) {
+  const p = document.getElementById('pmPrev'+idx);
+  if (!p) return;
+  const url = inp.value.trim();
+  if (url) {
+    p.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<span style=color:var(--red);font-size:0.65rem>Invalid</span>'">`;
+  } else {
+    p.innerHTML = `<span style="font-size:0.65rem;color:var(--text3)">${idx+1}</span>`;
+  }
+}
+
 document.addEventListener('input',e=>{
-  if(e.target.id==='pmImage'){const p=document.getElementById('pmImgPreview1');if(p)p.innerHTML=e.target.value?`<img src="${e.target.value}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='Invalid URL'">`:'Primary preview';}
-  if(e.target.id==='pmImage2'){const p=document.getElementById('pmImgPreview2');if(p)p.innerHTML=e.target.value?`<img src="${e.target.value}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='Invalid URL'">`:'Secondary preview';}
   if(e.target.id==='discCode') e.target.value=e.target.value.toUpperCase();
 });
 </script>
