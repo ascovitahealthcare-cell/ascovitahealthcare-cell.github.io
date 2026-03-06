@@ -6515,7 +6515,7 @@ function bootApp() {
         document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
         showProcessingScreen(cfoid, pd.total, 'redirect');
         updateProcessingStatus(70, 'Verifying payment...');
-        fetch(apiEp + '/api/verify-order/' + cfoid, {signal: AbortSignal.timeout(14000)})
+        fetch(apiEp + '/api/verify-order/' + cfoid, {})
           .then(function(r){ return r.json(); })
           .then(function(d){
             var st = (d.order_status || d.payment_status || '').toUpperCase();
@@ -6826,15 +6826,16 @@ async function startPayment(method) {
     // ── STEP 1: Wake up Render backend (free tier cold-start fix) ──
     updateProcessingStatus(10, '⏳ Starting payment server (may take 30s on first load)...');
     try {
-      await fetch(apiEndpoint + '/', { method: 'GET', signal: AbortSignal.timeout(25000) });
+      await fetch(apiEndpoint + '/');
     } catch(e) { /* ignore — just a wakeup ping */ }
 
     // ── STEP 2: Create Cashfree order on backend ──
+    // NOTE: No AbortSignal used here — AbortSignal is not cloneable and causes
+    // DataCloneError when Cashfree SDK calls postMessage() internally
     updateProcessingStatus(25, 'Creating secure payment session...');
     const resp = await fetch(apiEndpoint + '/api/create-cashfree-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(35000),
       body: JSON.stringify({
         order_id:       orderId,
         amount:         total,
@@ -6919,9 +6920,7 @@ async function startPayment(method) {
     let verified = false;
 
     try {
-      const verifyResp = await fetch(apiEndpoint + '/api/verify-order/' + orderId, {
-        signal: AbortSignal.timeout(10000)
-      });
+      const verifyResp = await fetch(apiEndpoint + '/api/verify-order/' + orderId);
       const verifyData = await verifyResp.json();
       const status = verifyData.order_status || verifyData.payment_status || '';
       verified = status === 'PAID' || status === 'SUCCESS';
@@ -7095,7 +7094,6 @@ async function finalizeOrder(orderId, formData, total, method) {
       const srResp = await fetch(SHIPROCKET_CONFIG.apiBase + '/api/create-shiprocket-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(15000),
         body: JSON.stringify({
           order_id: orderId,
           order_date: new Date().toISOString().slice(0,19).replace('T',' '),
@@ -7152,7 +7150,6 @@ async function finalizeOrder(orderId, formData, total, method) {
           'Content-Type': 'application/json',
           ..._jwt ? { 'Authorization': 'Bearer ' + _jwt } : {},
         },
-        signal: AbortSignal.timeout(10000),
         body: JSON.stringify({
           id: orderId,
           customer_name: `${formData.firstName} ${formData.lastName}`,
