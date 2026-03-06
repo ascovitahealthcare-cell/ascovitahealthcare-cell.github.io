@@ -295,6 +295,10 @@ td strong{color:var(--text)}
     <div class="topbar">
       <div class="tb-left"><h2 id="topTitle">Dashboard</h2><p id="topSub"></p></div>
       <div class="tb-right">
+        <div class="session-timer" style="cursor:pointer" onclick="showPage('settings');testBackendConnection()" title="Click to test backend">
+          <span id="topBackendDot" style="width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block;transition:background 0.5s"></span>
+          <span id="topBackendTxt" style="font-size:0.68rem">Backend</span>
+        </div>
         <div class="session-timer">⏱ Session: <span id="sessionCountdown">2:00:00</span></div>
         <button class="tb-btn" onclick="refreshPage()">🔄 Refresh</button>
         <button class="tb-btn" onclick="showPage('orders')">📦 Orders</button>
@@ -587,13 +591,24 @@ td strong{color:var(--text)}
               <div class="form-group"><label>New Password</label><input type="password" class="form-control" id="newPass" placeholder="••••••••"></div>
               <div class="form-group"><label>Confirm Password</label><input type="password" class="form-control" id="confPass" placeholder="••••••••"></div>
               <button class="btn btn-primary" onclick="changePassword()" style="margin-bottom:16px">Update Password</button>
+              <div class="form-group" style="margin-top:12px">
+                <label>Anthropic API Key (for AI Assistant)</label>
+                <input type="password" class="form-control" id="anthropicKeyInput" placeholder="sk-ant-api03-..." value="">
+                <div style="font-size:0.68rem;color:var(--text3);margin-top:4px">Stored in session only. Never saved to disk.</div>
+              </div>
+              <button class="btn btn-secondary" onclick="saveAIKey()" style="margin-bottom:16px">💾 Save AI Key</button>
               <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:0.78rem;color:var(--text2)">
                 <div style="font-weight:700;color:var(--green);margin-bottom:8px">🔒 System Info</div>
                 <div>Backend: ascovita-backend.onrender.com</div>
                 <div>Database: Supabase PostgreSQL</div>
                 <div>Payments: Cashfree PROD</div>
                 <div>Session: 2 hours auto-logout</div>
+                <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+                  <span id="backendStatusDot" style="width:8px;height:8px;border-radius:50%;background:var(--text3);display:inline-block"></span>
+                  <span id="backendStatusText" style="color:var(--text3)">Backend: checking…</span>
+                </div>
               </div>
+              <button class="btn btn-secondary" onclick="testBackendConnection()" style="margin-top:10px;width:100%">🔗 Test Backend Connection</button>
             </div>
           </div>
         </div>
@@ -732,7 +747,10 @@ td strong{color:var(--text)}
 // CONFIG
 // ═══════════════════════════════════════════════════
 const API = 'https://ascovita-backend.onrender.com';
-const ANTHROPIC_KEY = 'sk-ant-api03-8-7dxjtLhvBcbh15DXGWZhT0jrSOnt_ZaF3VLO3rC3yOoUD3ZH37TF_0vwzdUItHbmS6yyoWsI5_s3Z-Wcd_g-3sVTbAAA';
+// ⚠️ SECURITY: Move your Anthropic API key to backend env vars (ANTHROPIC_API_KEY)
+// Never expose secret keys in frontend HTML — anyone can see them in page source.
+// Set it in Settings tab below, stored in sessionStorage only for this session.
+let ANTHROPIC_KEY = sessionStorage.getItem('asc_ai_key') || '';
 const WA_NUMBER = '+995597725086';
 const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 hours
 
@@ -790,6 +808,37 @@ function changePassword() {
   showToast('Password updated! (Stored locally for this session)','success');
 }
 
+function saveAIKey() {
+  const key = document.getElementById('anthropicKeyInput').value.trim();
+  if (!key || !key.startsWith('sk-ant-')) { showToast('Enter a valid Anthropic API key (starts with sk-ant-)','error'); return; }
+  ANTHROPIC_KEY = key;
+  sessionStorage.setItem('asc_ai_key', key);
+  showToast('✅ AI key saved for this session!','success');
+}
+
+async function testBackendConnection() {
+  const dot = document.getElementById('backendStatusDot');
+  const txt = document.getElementById('backendStatusText');
+  if (dot) dot.style.background = 'var(--gold)';
+  if (txt) txt.textContent = 'Backend: connecting…';
+  try {
+    const r = await fetch(API + '/api/products', {signal: AbortSignal.timeout(15000)});
+    if (r.ok) {
+      const d = await r.json();
+      const count = (d.data || d).length || 0;
+      if (dot) dot.style.background = 'var(--green)';
+      if (txt) txt.textContent = `Backend: ✅ Live — ${count} products in DB`;
+      showToast(`✅ Backend connected! ${count} products synced.`,'success');
+    } else {
+      throw new Error('HTTP ' + r.status);
+    }
+  } catch(e) {
+    if (dot) dot.style.background = 'var(--red)';
+    if (txt) txt.textContent = 'Backend: ❌ Offline / waking up';
+    showToast('Backend offline or waking up (Render free tier takes 30s)','error');
+  }
+}
+
 // ═══════════════════════════════════════════════════
 // API HELPER
 // ═══════════════════════════════════════════════════
@@ -810,6 +859,29 @@ async function initAdmin() {
   renderWAHistory();
   await loadDashboard();
   startVisitorSimulation();
+  // Check backend connection status
+  setTimeout(async () => {
+    try {
+      const r = await fetch(API + '/api/products', {signal: AbortSignal.timeout(12000)});
+      const dot = document.getElementById('backendStatusDot');
+      const txt = document.getElementById('backendStatusText');
+      const topDot = document.getElementById('topBackendDot');
+      const topTxt = document.getElementById('topBackendTxt');
+      if (r.ok) {
+        const d = await r.json();
+        const count = (d.data || d).length || 0;
+        if (dot) { dot.style.background = 'var(--green)'; }
+        if (txt) { txt.textContent = `Backend: ✅ Live — ${count} products`; }
+        if (topDot) { topDot.style.background = 'var(--green)'; }
+        if (topTxt) { topTxt.textContent = `DB Live`; }
+      }
+    } catch(e) {
+      const topDot = document.getElementById('topBackendDot');
+      const topTxt = document.getElementById('topBackendTxt');
+      if (topDot) topDot.style.background = 'var(--red)';
+      if (topTxt) topTxt.textContent = 'Backend offline';
+    }
+  }, 2000);
 }
 
 async function loadDashboard() {
@@ -1363,10 +1435,17 @@ function addTierEditRowData({qty,disc,label}={}) {
   document.getElementById('tierEditRows').appendChild(row);
 }
 
-function saveTiers() {
+async function saveTiers() {
   const rows=document.querySelectorAll('#tierEditRows .tier-row');
   const tiers=Array.from(rows).map(r=>({label:r.querySelector('.te-label').value,qty:parseInt(r.querySelector('.te-qty').value),disc:parseFloat(r.querySelector('.te-disc').value),rate:parseFloat(r.querySelector('.te-rate').value)||null}));
-  showToast(`${tiers.length} tiers saved! Update index.html QTY_TIERS to apply on website.`,'success');
+  const prodId = document.getElementById('tierProdSelect').value;
+  try {
+    // Save tiers to backend product record
+    await api('/api/products/'+prodId,'PUT',{tiers:JSON.stringify(tiers)});
+    showToast(`✅ ${tiers.length} tiers saved to backend & live on store!`,'success');
+  } catch(e) {
+    showToast(`${tiers.length} tiers updated locally. Backend save failed.`,'error');
+  }
   closeModal('tierModal');
 }
 
