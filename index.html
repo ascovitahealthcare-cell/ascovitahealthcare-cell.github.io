@@ -107,9 +107,10 @@ h1,h2,h3,h4 { font-family:var(--font-display); }
 .trust-dot { width:26px; height:26px; background:var(--green-pale); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0; }
 .hero-visual { position:relative; }
 .hero-img { width:100%; max-width:500px; border-radius:30px 30px 30px 8px; object-fit:cover; box-shadow:0 24px 60px rgba(45,80,22,0.20); display:block; margin:0 auto; }
-.hero-float { position:absolute; background:white; border-radius:14px; padding:12px 16px; box-shadow:var(--shadow-lg); display:flex; align-items:center; gap:10px; }
-.hero-float.f1 { bottom:12%; left:-8%; }
-.hero-float.f2 { top:12%; right:-6%; }
+.hero-float { position:absolute; background:rgba(255,255,255,0.92); backdrop-filter:blur(10px); border-radius:16px; padding:12px 16px; box-shadow:0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.6) inset; display:flex; align-items:center; gap:10px; animation:heroFloatBounce 6s ease-in-out infinite; }
+.hero-float.f1 { bottom:12%; left:-8%; animation-delay:0s; }
+.hero-float.f2 { top:12%; right:-6%; animation-delay:-3s; }
+@keyframes heroFloatBounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);} }
 .float-ico { font-size:1.4rem; }
 .float-label { font-size:0.68rem; color:var(--gray); font-weight:400; display:block; }
 .float-val { font-size:0.88rem; font-weight:700; color:var(--dark); }
@@ -137,8 +138,10 @@ h1,h2,h3,h4 { font-family:var(--font-display); }
 
 /* CATEGORY GRID */
 .cat-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; }
-.cat-card { background:var(--cream); border:2px solid transparent; border-radius:var(--radius); padding:24px 16px; text-align:center; cursor:pointer; transition:var(--transition); text-decoration:none; display:block; }
-.cat-card:hover, .cat-card.active { border-color:var(--green); background:var(--green-pale); transform:translateY(-3px); }
+.cat-card { background:var(--cream); border:2px solid transparent; border-radius:var(--radius); padding:24px 16px; text-align:center; cursor:pointer; transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s, border-color 0.2s; text-decoration:none; display:block; position:relative; overflow:hidden; }
+.cat-card::after { content:''; position:absolute; top:0; left:-100%; width:60%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); transform:skewX(-20deg); transition:left 0.5s; }
+.cat-card:hover::after { left:150%; }
+.cat-card:hover, .cat-card.active { border-color:var(--green); background:var(--green-pale); transform:translateY(-6px) scale(1.03); box-shadow:0 16px 40px rgba(45,80,22,0.2); }
 .cat-icon { font-size:2.2rem; margin-bottom:10px; display:block; }
 .cat-name { font-family:var(--font-display); font-size:0.95rem; font-weight:600; color:var(--dark); display:block; margin-bottom:3px; }
 .cat-count { font-size:0.72rem; color:var(--gray); }
@@ -302,8 +305,9 @@ textarea.form-input { resize:vertical; min-height:90px; }
 .certs .section-title { color:white; }
 .certs .section-sub { color:rgba(255,255,255,0.55); }
 .cert-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
-.cert-card { background:rgba(255,255,255,0.07); border-radius:var(--radius); padding:24px 18px; text-align:center; border:1px solid rgba(255,255,255,0.1); transition:var(--transition); }
-.cert-card:hover { background:rgba(255,255,255,0.13); }
+.cert-card { background:rgba(255,255,255,0.07); border-radius:var(--radius); padding:28px 22px; text-align:center; border:1px solid rgba(255,255,255,0.15); transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s; backdrop-filter:blur(8px); position:relative; overflow:hidden; }
+.cert-card::before { content:''; position:absolute; top:-40%; left:-40%; width:80%; height:80%; background:radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%); border-radius:50%; pointer-events:none; }
+.cert-card:hover { background:rgba(255,255,255,0.15); transform:translateY(-8px) scale(1.03); box-shadow:0 24px 50px rgba(0,0,0,0.25); }
 .cert-ico { font-size:2.2rem; margin-bottom:12px; }
 .cert-t { font-weight:700; font-size:0.88rem; margin-bottom:5px; }
 .cert-d { font-size:0.75rem; color:rgba(255,255,255,0.55); line-height:1.5; }
@@ -1033,11 +1037,22 @@ textarea.form-input { resize:vertical; min-height:90px; }
 .wish-badge { position:absolute; top:3px; right:3px; background:var(--gold); color:white; font-size:0.62rem; width:17px; height:17px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; }
 @media(max-width:480px) { .side-cart { width:100vw; } }
 .hero-slides-wrap { position:relative; min-height:100vh; overflow:hidden; }
-.hero-slide { position:absolute; inset:0; display:flex; align-items:center; opacity:0; transition:opacity 0.8s ease; pointer-events:none; padding-top:70px; }
-.hero-slide.active { opacity:1; pointer-events:all; }
+.hero-slide { position:absolute; inset:0; display:flex; align-items:center; opacity:0; transition:opacity 0.9s cubic-bezier(0.22,1,0.36,1), transform 0.9s cubic-bezier(0.22,1,0.36,1); pointer-events:none; padding-top:70px; transform:scale(1.02); }
+.hero-slide.active { opacity:1; pointer-events:all; transform:scale(1); }
+.hero-slide.leaving { opacity:0; transform:scale(0.98) translateX(-30px); }
 .hero-slide-1 { background: linear-gradient(135deg, #f0f7e8 0%, #e0f0d0 40%, #c8e6b0 100%); }
 .hero-slide-2 { background: linear-gradient(135deg, #1a2f0a 0%, #2D5016 50%, #3d6b1f 100%); color:white; }
 .hero-slide-3 { background: linear-gradient(135deg, #fdf6e3 0%, #fef9ec 40%, #f7ecd0 100%); }
+
+/* Animate slide content on active */
+.hero-slide.active .slide-tag     { animation:heroSlideUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.1s both; }
+.hero-slide.active .slide-headline{ animation:heroSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s both; }
+.hero-slide.active .slide-sub     { animation:heroSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.32s both; }
+.hero-slide.active .slide-offer   { animation:heroSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.42s both; }
+.hero-slide.active .slide-btns    { animation:heroSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.52s both; }
+.hero-slide.active .slide-trust   { animation:heroSlideUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.62s both; }
+.hero-slide.active .slide-visual  { animation:heroFadeIn  0.9s cubic-bezier(0.22,1,0.36,1) 0.3s both; }
+.hero-slide.active .slide-bubble  { animation:heroSlideUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.75s both; }
 .slide-inner { display:grid; grid-template-columns:1.1fr 0.9fr; gap:60px; align-items:center; padding:80px 0 60px; width:100%; }
 .slide-tag { display:inline-flex; align-items:center; gap:8px; border-radius:100px; padding:6px 18px; font-size:0.72rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:18px; }
 .slide-tag.green { background:rgba(45,80,22,0.1); color:var(--green); border:1px solid rgba(45,80,22,0.2); }
@@ -1052,14 +1067,21 @@ textarea.form-input { resize:vertical; min-height:90px; }
 .slide-btns { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:24px; }
 .slide-trust { font-size:0.75rem; opacity:0.65; letter-spacing:0.3px; }
 .slide-visual { position:relative; }
-.slide-img-frame { border-radius:24px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.15); }
-.slide-img-frame img { width:100%; height:460px; object-fit:cover; display:block; }
-.slide-bubble { position:absolute; background:white; border-radius:14px; padding:12px 16px; box-shadow:0 8px 28px rgba(0,0,0,0.12); display:flex; align-items:center; gap:10px; }
-.slide-bubble.b1 { top:18px; left:-18px; }
-.slide-bubble.b2 { bottom:24px; right:-18px; }
-.slide-bubble .bi { font-size:1.4rem; }
+.slide-img-frame { border-radius:24px; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.2); animation:imgFloat 7s ease-in-out infinite; }
+@keyframes imgFloat {
+  0%,100% { transform:translateY(0) rotate(0.5deg); box-shadow:0 30px 80px rgba(0,0,0,0.2); }
+  50%     { transform:translateY(-14px) rotate(-0.3deg); box-shadow:0 44px 100px rgba(0,0,0,0.25), 0 0 40px rgba(78,138,40,0.1); }
+}
+.slide-img-frame img { width:100%; height:460px; object-fit:cover; display:block; transition:transform 0.6s ease; }
+.slide-img-frame:hover img { transform:scale(1.04); }
+.slide-bubble { position:absolute; background:rgba(255,255,255,0.95); backdrop-filter:blur(12px); border-radius:16px; padding:12px 16px; box-shadow:0 8px 32px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.5) inset; display:flex; align-items:center; gap:10px; }
+.slide-bubble.b1 { top:18px; left:-18px; animation:bubbleFloat1 4s ease-in-out infinite; }
+.slide-bubble.b2 { bottom:24px; right:-18px; animation:bubbleFloat2 5s ease-in-out infinite; }
+.slide-bubble .bi { display:flex; align-items:center; justify-content:center; }
 .slide-bubble .bv { font-size:0.82rem; font-weight:700; color:var(--dark); }
 .slide-bubble .bl { font-size:0.68rem; color:var(--gray); }
+@keyframes bubbleFloat1 { 0%,100%{transform:translateY(0) rotate(-1deg);} 50%{transform:translateY(-8px) rotate(1deg);} }
+@keyframes bubbleFloat2 { 0%,100%{transform:translateY(0) rotate(1deg);} 50%{transform:translateY(-6px) rotate(-1deg);} }
 /* Controls */
 .slides-controls { position:absolute; bottom:32px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:16px; z-index:10; }
 .slide-dot { width:10px; height:10px; border-radius:50%; border:2px solid rgba(45,80,22,0.4); background:transparent; cursor:pointer; transition:all 0.2s; padding:0; }
@@ -1076,8 +1098,8 @@ textarea.form-input { resize:vertical; min-height:90px; }
 /* Category grid expanded */
 .cat-grid-new { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:28px; }
 .cat-grid-marketing { display:grid; grid-template-columns:repeat(9,1fr); gap:10px; }
-.cat-card-sm { background:white; border:1.5px solid var(--light-gray); border-radius:var(--radius-sm); padding:12px 10px; text-align:center; cursor:pointer; transition:var(--transition); }
-.cat-card-sm:hover { border-color:var(--green); background:var(--green-pale); transform:translateY(-2px); }
+.cat-card-sm { background:white; border:1.5px solid var(--light-gray); border-radius:var(--radius-sm); padding:14px 10px; text-align:center; cursor:pointer; transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s, border-color 0.2s; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+.cat-card-sm:hover { border-color:var(--green); background:var(--green-pale); transform:translateY(-5px) scale(1.06); box-shadow:0 12px 28px rgba(45,80,22,0.18); }
 .cat-card-sm .ci { font-size:1.2rem; margin-bottom:4px; }
 .cat-card-sm .cn { font-size:0.72rem; font-weight:700; color:var(--text); }
 /* Upsell widget */
@@ -1401,23 +1423,1116 @@ textarea.form-input { resize:vertical; min-height:90px; }
 .vita-send-btn{width:42px;height:42px;background:var(--green);border:none;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all 0.2s}
 .vita-send-btn:hover{background:var(--green-light);transform:scale(1.06)}
 .vita-send-btn:disabled{opacity:0.45;cursor:not-allowed;transform:none}
+
+/* ══ 3D SVG ICON SYSTEM ══════════════════════════════════════ */
+.svg-icon { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; }
+.svg-icon svg { display:block; }
+
+/* 3D cert cards */
+.cert-ico { display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+.cert-ico svg { filter:drop-shadow(0 4px 8px rgba(45,80,22,0.25)); }
+
+/* 3D cat icons */
+.cat-icon { display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+.cat-icon svg { filter:drop-shadow(0 4px 10px rgba(0,0,0,0.15)); transition:transform 0.3s; }
+.cat-card:hover .cat-icon svg { transform:scale(1.12) translateY(-3px); }
+
+/* 3D small cat icons */
+.cat-card-sm .ci { display:flex; align-items:center; justify-content:center; margin-bottom:4px; min-height:32px; }
+.cat-card-sm .ci svg { filter:drop-shadow(0 2px 5px rgba(0,0,0,0.15)); transition:transform 0.25s; }
+.cat-card-sm:hover .ci svg { transform:scale(1.15) translateY(-2px); }
+
+/* Trust dots */
+.trust-dot { background:var(--green-pale); }
+.trust-dot svg { filter:drop-shadow(0 2px 4px rgba(45,80,22,0.2)); }
+
+/* Slide bubbles */
+.slide-bubble .bi { display:flex; align-items:center; justify-content:center; }
+.slide-bubble .bi svg { filter:drop-shadow(0 3px 6px rgba(0,0,0,0.15)); }
+
+/* Nav logo leaf */
+.nav-logo-leaf svg { filter:drop-shadow(0 2px 4px rgba(45,80,22,0.4)); }
+
+/* Float badges on hero */
+.hero-float svg { filter:drop-shadow(0 2px 6px rgba(0,0,0,0.12)); }
+
+/* Announcement bar icons */
+.ann-svg { display:inline-flex; align-items:center; vertical-align:middle; margin-right:5px; }
+
+/* 3D hover lift for cert cards */
+.cert-card { transition:transform 0.3s, box-shadow 0.3s; }
+.cert-card:hover { transform:translateY(-6px) scale(1.02); box-shadow:0 20px 50px rgba(45,80,22,0.18); }
+
+/* Wiggle animation on cert icons */
+@keyframes float3d {
+  0%,100% { transform:translateY(0) rotateZ(0deg); }
+  33% { transform:translateY(-6px) rotateZ(-3deg); }
+  66% { transform:translateY(-3px) rotateZ(2deg); }
+}
+.cert-card:hover .cert-ico svg { animation:float3d 0.7s ease-in-out; }
+
+/* Shimmer on trust chips */
+@keyframes shimmer3d {
+  0%,100% { filter:drop-shadow(0 2px 4px rgba(45,80,22,0.2)); }
+  50% { filter:drop-shadow(0 4px 12px rgba(45,80,22,0.45)); }
+}
+.trust-dot:hover svg { animation:shimmer3d 0.8s ease; }
+
+/* ═══════════════════════════════════════════════════════════
+   ASCOVITA — PREMIUM ANIMATION SYSTEM v2
+   Scroll-reveal, micro-interactions, hover shadows, parallax
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── SCROLL REVEAL BASE ── */
+[data-reveal] {
+  opacity:0;
+  will-change:opacity,transform;
+  transition-timing-function:cubic-bezier(0.22,1,0.36,1);
+  transition-property:opacity,transform,filter;
+  transition-duration:0.75s;
+}
+[data-reveal="up"]    { transform:translateY(48px); }
+[data-reveal="down"]  { transform:translateY(-32px); }
+[data-reveal="left"]  { transform:translateX(-56px); }
+[data-reveal="right"] { transform:translateX(56px); }
+[data-reveal="scale"] { transform:scale(0.88) translateY(24px); }
+[data-reveal="blur"]  { transform:translateY(24px); filter:blur(8px); }
+[data-reveal="flip"]  { transform:perspective(600px) rotateX(18deg) translateY(24px); }
+
+[data-reveal].revealed {
+  opacity:1;
+  transform:none;
+  filter:none;
+}
+
+/* Stagger delays */
+[data-delay="1"] { transition-delay:0.08s; }
+[data-delay="2"] { transition-delay:0.16s; }
+[data-delay="3"] { transition-delay:0.24s; }
+[data-delay="4"] { transition-delay:0.32s; }
+[data-delay="5"] { transition-delay:0.40s; }
+[data-delay="6"] { transition-delay:0.50s; }
+
+/* ── SECTION WIPE LINE ── */
+.section-wipe {
+  position:relative;
+}
+.section-wipe::after {
+  content:'';
+  position:absolute;
+  bottom:0; left:0;
+  height:2px;
+  background:linear-gradient(90deg, var(--green-pale), var(--gold-pale), transparent);
+  width:0%;
+  transition:width 1.2s cubic-bezier(0.22,1,0.36,1);
+}
+.section-wipe.revealed::after { width:100%; }
+
+/* ── HERO ENTRANCE ── */
+@keyframes heroSlideUp {
+  from { opacity:0; transform:translateY(36px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes heroFadeIn {
+  from { opacity:0; transform:scale(0.96) translateY(20px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes heroGlowPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(78,138,40,0); }
+  50%     { box-shadow:0 0 32px 8px rgba(78,138,40,0.18); }
+}
+
+.hero-eyebrow   { animation:heroSlideUp 0.6s cubic-bezier(0.22,1,0.36,1) 0.1s both; }
+.hero-title     { animation:heroSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.22s both; }
+.hero-sub       { animation:heroSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.36s both; }
+.hero-actions   { animation:heroSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.48s both; }
+.hero-trust     { animation:heroSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.60s both; }
+.hero-visual    { animation:heroFadeIn  0.9s cubic-bezier(0.22,1,0.36,1) 0.3s both; }
+.hero-float     { animation:heroFloatBounce 6s ease-in-out infinite, heroSlideUp 0.7s cubic-bezier(0.22,1,0.36,1) 0.7s both !important; }
+
+/* ── MAGNETIC BUTTON EFFECT ── */
+.btn-primary, .btn-outline, .btn-gold, .add-cart-btn {
+  position:relative;
+  overflow:hidden;
+}
+.btn-primary::after, .btn-gold::after {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+  opacity:0;
+  transition:opacity 0.3s;
+}
+.btn-primary:hover::after, .btn-gold:hover::after { opacity:1; }
+
+/* Ripple on click */
+.ripple-effect {
+  position:absolute; border-radius:50%;
+  background:rgba(255,255,255,0.4);
+  transform:scale(0); animation:rippleAnim 0.6s linear;
+  pointer-events:none;
+}
+@keyframes rippleAnim {
+  to { transform:scale(4); opacity:0; }
+}
+
+/* ── PRODUCT CARD ENHANCED ── */
+.product-card {
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1),
+             box-shadow 0.4s ease,
+             border-color 0.3s ease !important;
+}
+.product-card:hover {
+  transform:translateY(-10px) scale(1.02) !important;
+  box-shadow:0 24px 60px rgba(45,80,22,0.18), 0 4px 12px rgba(45,80,22,0.1) !important;
+}
+.product-card::before {
+  content:'';
+  position:absolute; inset:0;
+  background:linear-gradient(135deg, rgba(78,138,40,0.04) 0%, transparent 60%);
+  opacity:0; transition:opacity 0.4s; border-radius:inherit;
+  pointer-events:none;
+}
+.product-card:hover::before { opacity:1; }
+
+/* ── SECTION TITLE ANIMATED UNDERLINE ── */
+.section-title {
+  position:relative;
+  display:inline-block;
+}
+.section-title::after {
+  content:'';
+  position:absolute;
+  bottom:-6px; left:0;
+  height:3px; width:0%;
+  background:linear-gradient(90deg, var(--gold), var(--green-light));
+  border-radius:2px;
+  transition:width 0.8s cubic-bezier(0.22,1,0.36,1) 0.2s;
+}
+.revealed .section-title::after,
+[data-reveal].revealed .section-title::after { width:60%; }
+.text-center .section-title::after { left:20%; }
+
+/* ── SCROLL PROGRESS BAR ── */
+#scrollBar {
+  position:fixed; top:0; left:0; z-index:9999;
+  height:3px; width:0%;
+  background:linear-gradient(90deg, var(--green), var(--gold), var(--green-light));
+  transition:width 0.1s linear;
+  box-shadow:0 0 8px rgba(78,138,40,0.5);
+}
+
+/* ── FLOATING PARTICLES ── */
+.particle {
+  position:fixed; pointer-events:none; z-index:1;
+  border-radius:50%;
+  opacity:0;
+  animation:particleFloat linear infinite;
+}
+@keyframes particleFloat {
+  0%   { transform:translateY(100vh) rotate(0deg); opacity:0; }
+  10%  { opacity:0.4; }
+  90%  { opacity:0.2; }
+  100% { transform:translateY(-120px) rotate(360deg); opacity:0; }
+}
+
+/* ── STAT COUNTER ANIMATION ── */
+.stat-num { transition:all 0.3s; }
+
+/* ── NAVBAR SCROLL SHRINK ── */
+.navbar.scrolled {
+  box-shadow:0 4px 30px rgba(45,80,22,0.12);
+  border-bottom-color:rgba(45,80,22,0.15);
+}
+.navbar.scrolled .nav-inner { height:58px; transition:height 0.3s ease; }
+
+/* ── CARD GLOW ON HOVER ── */
+.cert-card, .value-card, .blog-card, .testi-card {
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1),
+             box-shadow 0.4s ease !important;
+}
+.cert-card:hover {
+  transform:translateY(-8px) scale(1.03) !important;
+  box-shadow:0 20px 50px rgba(45,80,22,0.16), 0 0 0 1px rgba(78,138,40,0.12) !important;
+}
+.blog-card:hover {
+  transform:translateY(-8px) !important;
+  box-shadow:0 20px 50px rgba(0,0,0,0.12) !important;
+}
+.testi-card:hover {
+  transform:translateY(-6px) scale(1.015) !important;
+  box-shadow:0 20px 40px rgba(45,80,22,0.13) !important;
+}
+
+/* ── CATEGORY CARD SHIMMER ── */
+.cat-card::before {
+  content:'';
+  position:absolute; top:0; left:-120%;
+  width:60%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  transform:skewX(-20deg);
+  transition:left 0.6s ease;
+  z-index:1; pointer-events:none;
+}
+.cat-card:hover::before { left:130%; }
+
+/* ── SCROLL-TRIGGERED COUNTER ── */
+@keyframes countUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── IMAGE PARALLAX WRAPPER ── */
+.parallax-img { overflow:hidden; }
+.parallax-img img { transform:scale(1.12); transition:transform 8s ease; will-change:transform; }
+
+/* ── GOLD SHIMMER ON BADGES ── */
+@keyframes goldShimmer {
+  0%   { background-position:200% center; }
+  100% { background-position:-200% center; }
+}
+.p-badge, .hero-eyebrow, .section-label {
+  position:relative; overflow:hidden;
+}
+.p-badge::after {
+  content:'';
+  position:absolute; top:0; left:-200%;
+  width:60%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  animation:badgeShimmer 3s ease-in-out infinite;
+}
+@keyframes badgeShimmer {
+  0%   { left:-200%; }
+  50%  { left:200%; }
+  100% { left:200%; }
+}
+
+/* ── PAGE TRANSITION ── */
+#pageTransition {
+  position:fixed; inset:0; z-index:99999;
+  background:var(--green);
+  pointer-events:none;
+  clip-path:inset(0 0 100% 0);
+  transition:clip-path 0.5s cubic-bezier(0.77,0,0.18,1);
+}
+#pageTransition.entering { clip-path:inset(0 0 0% 0); }
+#pageTransition.leaving  { clip-path:inset(100% 0 0% 0); }
+
+/* ── ANNOUNCEMENT BAR PULSE ── */
+.ann-bar {
+  background:linear-gradient(90deg, var(--green) 0%, #3D6B1F 50%, var(--green) 100%);
+  background-size:200% auto;
+  animation:marquee 24s linear infinite, annGradient 6s ease-in-out infinite;
+}
+@keyframes annGradient {
+  0%,100% { background-position:0% center; }
+  50%     { background-position:100% center; }
+}
+
+/* ── SHADOW DEPTH SYSTEM ── */
+:root {
+  --shadow-xs:  0 1px 3px rgba(45,80,22,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-sm:  0 4px 6px rgba(45,80,22,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  --shadow-md:  0 8px 25px rgba(45,80,22,0.10), 0 4px 10px rgba(0,0,0,0.08);
+  --shadow-lg:  0 20px 50px rgba(45,80,22,0.13), 0 8px 20px rgba(0,0,0,0.08);
+  --shadow-xl:  0 32px 70px rgba(45,80,22,0.16), 0 16px 30px rgba(0,0,0,0.10);
+  --shadow-gold: 0 8px 30px rgba(184,134,11,0.25);
+  --shadow-green: 0 8px 30px rgba(45,80,22,0.30);
+  --shadow-inner: inset 0 2px 6px rgba(45,80,22,0.08);
+}
+
+/* Apply depth shadows to key elements */
+.product-card  { box-shadow:var(--shadow-sm); }
+.cert-card     { box-shadow:var(--shadow-xs); }
+.cart-summary-box { box-shadow:var(--shadow-md); }
+.navbar        { box-shadow:0 1px 0 rgba(45,80,22,0.08); }
+.hero-float    { box-shadow:var(--shadow-lg) !important; }
+.btn-primary:hover { box-shadow:var(--shadow-green) !important; }
+.btn-gold:hover    { box-shadow:var(--shadow-gold) !important; }
+
+/* ── SMOOTH UNDERLINE LINKS ── */
+.nav-links a {
+  position:relative;
+}
+.nav-links a::before {
+  content:'';
+  position:absolute; bottom:-2px; left:0;
+  height:2px; width:0%;
+  background:linear-gradient(90deg, var(--gold), var(--green-light));
+  border-radius:1px;
+  transition:width 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+.nav-links a:hover::before, .nav-links a.active::before { width:100%; }
+
+/* ── ADD TO CART BOUNCE ── */
+@keyframes cartBounce {
+  0%   { transform:scale(1); }
+  30%  { transform:scale(0.92); }
+  60%  { transform:scale(1.08); }
+  80%  { transform:scale(0.97); }
+  100% { transform:scale(1); }
+}
+.cart-badge.bump { animation:cartBounce 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+
+/* ── LOADING SKELETON ── */
+@keyframes skeletonWave {
+  0%   { background-position:-200px 0; }
+  100% { background-position:calc(200px + 100%) 0; }
+}
+.skeleton {
+  background:linear-gradient(90deg, #f0f0ea 25%, #e8e8e0 50%, #f0f0ea 75%);
+  background-size:400px 100%;
+  animation:skeletonWave 1.4s ease-in-out infinite;
+  border-radius:8px;
+}
+
+/* ── MORPHING BG ORBS ── */
+.bg-orb {
+  position:absolute; border-radius:50%;
+  filter:blur(60px); pointer-events:none; z-index:0;
+  animation:orbFloat ease-in-out infinite;
+}
+@keyframes orbFloat {
+  0%,100% { transform:translate(0,0) scale(1); }
+  33%     { transform:translate(30px,-20px) scale(1.05); }
+  66%     { transform:translate(-20px,30px) scale(0.95); }
+}
+
+/* ── SECTION ENTRANCE PULSE ── */
+@keyframes sectionPulse {
+  0%   { opacity:0; transform:translateY(24px) scale(0.97); }
+  100% { opacity:1; transform:translateY(0) scale(1); }
+}
+
+/* ── CLICK WAVE EFFECT ── */
+.click-wave {
+  position:fixed; border-radius:50%; pointer-events:none; z-index:99998;
+  border:2px solid rgba(78,138,40,0.5);
+  animation:clickWaveAnim 0.6s ease-out forwards;
+  transform:translate(-50%,-50%);
+}
+@keyframes clickWaveAnim {
+  0%   { width:0; height:0; opacity:1; }
+  100% { width:80px; height:80px; opacity:0; }
+}
 </style>
 </head>
 <body>
 
+<!-- ── ANIMATION SYSTEM ELEMENTS ── -->
+<div id="scrollBar"></div>
+<div id="pageTransition"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// ASCOVITA ANIMATION ENGINE v2
+// Scroll-reveal · Cursor glow · Click waves · Parallax
+// Particle system · Scroll progress · Nav shrink
+// ═══════════════════════════════════════════════════════════
+(function() {
+
+  // ── SCROLL PROGRESS BAR ──
+  const bar = document.getElementById('scrollBar');
+  window.addEventListener('scroll', function() {
+    const scrolled = window.scrollY;
+    const max = document.body.scrollHeight - window.innerHeight;
+    if (bar) bar.style.width = (scrolled / max * 100) + '%';
+  }, { passive: true });
+
+  // ── NAVBAR SHRINK ON SCROLL ──
+  const navbar = document.querySelector('.navbar');
+  window.addEventListener('scroll', function() {
+    if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 60);
+  }, { passive: true });
+
+  // ── CLICK WAVE ──
+  document.addEventListener('click', function(e) {
+    const wave = document.createElement('div');
+    wave.className = 'click-wave';
+    wave.style.left = e.clientX + 'px';
+    wave.style.top  = e.clientY + 'px';
+    document.body.appendChild(wave);
+    setTimeout(function() { wave.remove(); }, 700);
+
+    // Ripple on buttons
+    const btn = e.target.closest('.btn-primary, .btn-gold, .btn-outline, .add-cart-btn');
+    if (btn) {
+      const r = document.createElement('span');
+      r.className = 'ripple-effect';
+      const rect = btn.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      r.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+(e.clientX-rect.left-size/2)+'px;top:'+(e.clientY-rect.top-size/2)+'px';
+      btn.appendChild(r);
+      setTimeout(function(){ r.remove(); }, 700);
+    }
+  });
+
+  // ── CART BADGE BUMP ──
+  const _origUpdateCartUI = null;
+  document.addEventListener('DOMContentLoaded', function() {
+    const badges = document.querySelectorAll('.cart-badge');
+    // Observe cart badge changes
+    const cartObs = new MutationObserver(function(mutations) {
+      mutations.forEach(function(m) {
+        if (m.target.classList.contains('cart-badge')) {
+          m.target.classList.remove('bump');
+          void m.target.offsetWidth;
+          m.target.classList.add('bump');
+        }
+      });
+    });
+    badges.forEach(function(b) { cartObs.observe(b, { childList:true, characterData:true, subtree:true }); });
+  });
+
+  // ── SCROLL REVEAL ENGINE ──
+  function initScrollReveal() {
+    const obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('[data-reveal]').forEach(function(el) {
+      obs.observe(el);
+    });
+  }
+
+  // ── ADD data-reveal ATTRIBUTES DYNAMICALLY ──
+  function tagSections() {
+    // Section labels
+    document.querySelectorAll('.section-label:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'up');
+      el.setAttribute('data-delay', '1');
+    });
+    // Section titles
+    document.querySelectorAll('.section-title:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'up');
+      el.setAttribute('data-delay', '2');
+    });
+    // Section subs
+    document.querySelectorAll('.section-sub:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'up');
+      el.setAttribute('data-delay', '3');
+    });
+    // Product cards — staggered
+    document.querySelectorAll('#featuredGrid .product-card:not([data-reveal]), #newArrivalsGrid .product-card:not([data-reveal]), #shopGrid .product-card:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'scale');
+      el.setAttribute('data-delay', String(Math.min(i % 4 + 1, 6)));
+    });
+    // Category cards
+    document.querySelectorAll('.cat-card:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'up');
+      el.setAttribute('data-delay', String(Math.min(i + 1, 6)));
+    });
+    // Cert/trust cards
+    document.querySelectorAll('.cert-card:not([data-reveal]), .value-card:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'flip');
+      el.setAttribute('data-delay', String(Math.min(i % 4 + 1, 5)));
+    });
+    // Blog cards
+    document.querySelectorAll('.blog-card:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'up');
+      el.setAttribute('data-delay', String(Math.min(i + 1, 4)));
+    });
+    // Testimonials
+    document.querySelectorAll('.testi-card:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'scale');
+      el.setAttribute('data-delay', String(Math.min(i + 1, 4)));
+    });
+    // AT items (about timeline)
+    document.querySelectorAll('.at-item:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', i % 2 === 0 ? 'left' : 'right');
+      el.setAttribute('data-delay', '1');
+    });
+    // Stat cards
+    document.querySelectorAll('.stat-card:not([data-reveal]), .stat-num:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'up');
+      el.setAttribute('data-delay', String(Math.min(i + 1, 4)));
+    });
+    // Hero floats
+    document.querySelectorAll('.hero-float:not([data-reveal])').forEach(function(el) {
+      el.setAttribute('data-reveal', 'scale');
+    });
+    // Cert badges
+    document.querySelectorAll('.cert-badge:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'up');
+      el.setAttribute('data-delay', String(Math.min(i + 1, 4)));
+    });
+    // B2B cards
+    document.querySelectorAll('.b2b-card:not([data-reveal]), .b2b-step:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'up');
+      el.setAttribute('data-delay', String(Math.min(i % 3 + 1, 4)));
+    });
+    // FAQ items
+    document.querySelectorAll('.faq-item:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'left');
+      el.setAttribute('data-delay', String(Math.min(i % 3 + 1, 4)));
+    });
+    // Integration cards
+    document.querySelectorAll('.intg-card:not([data-reveal])').forEach(function(el, i) {
+      el.setAttribute('data-reveal', 'scale');
+      el.setAttribute('data-delay', String(Math.min(i + 1, 5)));
+    });
+
+    initScrollReveal();
+  }
+
+  // ── RE-TAG after dynamic renders ──
+  var _origRenderProductCard = null;
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(tagSections, 300);
+
+    // Re-init reveal after shop/product grids re-render
+    var renderObserver = new MutationObserver(function(mutations) {
+      var shouldRetag = mutations.some(function(m) {
+        return m.target.id === 'shopGrid' || m.target.id === 'featuredGrid' ||
+               m.target.id === 'newArrivalsGrid' || m.target.id === 'relatedGrid';
+      });
+      if (shouldRetag) setTimeout(tagSections, 100);
+    });
+    ['shopGrid','featuredGrid','newArrivalsGrid','relatedGrid','homeFaqWrap'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) renderObserver.observe(el, { childList:true });
+    });
+  });
+
+  // ── FLOATING PARTICLES ──
+  function spawnParticles() {
+    var colors = ['rgba(78,138,40,0.3)', 'rgba(184,134,11,0.25)', 'rgba(78,138,40,0.2)', 'rgba(232,160,32,0.2)'];
+    var sizes  = [4, 6, 8, 10, 5, 7];
+    for (var i = 0; i < 8; i++) {
+      (function(i) {
+        setTimeout(function() {
+          var p = document.createElement('div');
+          p.className = 'particle';
+          var size = sizes[i % sizes.length];
+          p.style.cssText = [
+            'width:' + size + 'px',
+            'height:' + size + 'px',
+            'left:' + (Math.random() * 100) + '%',
+            'background:' + colors[i % colors.length],
+            'animation-duration:' + (12 + Math.random() * 16) + 's',
+            'animation-delay:' + (Math.random() * 8) + 's',
+          ].join(';');
+          document.body.appendChild(p);
+        }, i * 1200);
+      })(i);
+    }
+  }
+  spawnParticles();
+
+  // ── PARALLAX on HERO images ──
+  var heroVisual = document.querySelector('.hero-visual');
+  window.addEventListener('scroll', function() {
+    if (!heroVisual) return;
+    var scrollY = window.scrollY;
+    if (scrollY < window.innerHeight) {
+      heroVisual.style.transform = 'translateY(' + (scrollY * 0.12) + 'px)';
+    }
+  }, { passive: true });
+
+  // ── COUNTER ANIMATION for hero stats ──
+  function animateCounter(el, target, prefix, suffix) {
+    var start = 0;
+    var duration = 1800;
+    var step = target / (duration / 16);
+    var current = 0;
+    var timer = setInterval(function() {
+      current = Math.min(current + step, target);
+      el.textContent = prefix + Math.floor(current).toLocaleString('en-IN') + suffix;
+      if (current >= target) clearInterval(timer);
+    }, 16);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Animate hero stat numbers when visible
+    var heroObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var counters = entry.target.querySelectorAll('[data-count]');
+          counters.forEach(function(el) {
+            var target = parseFloat(el.getAttribute('data-count'));
+            var prefix = el.getAttribute('data-prefix') || '';
+            var suffix = el.getAttribute('data-suffix') || '';
+            animateCounter(el, target, prefix, suffix);
+          });
+          heroObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    var heroTrust = document.querySelector('.hero-trust');
+    if (heroTrust) heroObs.observe(heroTrust);
+
+    // Animate all [data-count] elements when visible
+    var counterObs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var el = entry.target;
+          var target = parseFloat(el.getAttribute('data-count'));
+          var prefix = el.getAttribute('data-prefix') || '';
+          var suffix = el.getAttribute('data-suffix') || '';
+          animateCounter(el, target, prefix, suffix);
+          counterObs.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('[data-count]').forEach(function(el) {
+      counterObs.observe(el);
+    });
+
+    // Wrap showPage AFTER main app defines it (poll until available)
+    var _spWrapTimer = setInterval(function() {
+      if (typeof window.showPage === 'function' && !window._animSPWrapped) {
+        window._animSPWrapped = true;
+        var _origSP = window.showPage;
+        window.showPage = function(pg) { _origSP(pg); setTimeout(tagSections, 200); };
+        clearInterval(_spWrapTimer);
+      }
+    }, 150);
+  });
+
+})();
+</script>
+
+<!-- SVG ICON DEFS — reusable 3D illustrated icons -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+
+    <!-- LEAF / PLANT (🌿) -->
+    <symbol id="ico-leaf" viewBox="0 0 48 48">
+      <defs>
+        <radialGradient id="lg-leaf" cx="40%" cy="30%" r="65%">
+          <stop offset="0%" stop-color="#6DD35A"/>
+          <stop offset="60%" stop-color="#3A8C22"/>
+          <stop offset="100%" stop-color="#1F5A0F"/>
+        </radialGradient>
+        <radialGradient id="lg-leaf-shine" cx="30%" cy="20%" r="50%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.6)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="28" cy="22" rx="16" ry="10" fill="url(#lg-leaf)" transform="rotate(-30,28,22)"/>
+      <ellipse cx="28" cy="22" rx="16" ry="10" fill="url(#lg-leaf-shine)" transform="rotate(-30,28,22)" opacity="0.5"/>
+      <path d="M24 38 Q26 26 34 18" stroke="#1F5A0F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <path d="M24 38 Q22 30 16 24" stroke="#2D7015" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.7"/>
+      <!-- shadow -->
+      <ellipse cx="26" cy="44" rx="8" ry="2" fill="rgba(0,0,0,0.15)"/>
+    </symbol>
+
+    <!-- STAR (⭐) -->
+    <symbol id="ico-star" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-star" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FFE066"/>
+          <stop offset="50%" stop-color="#F5A623"/>
+          <stop offset="100%" stop-color="#C47A00"/>
+        </linearGradient>
+        <linearGradient id="lg-star-shine" x1="0%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.7)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </linearGradient>
+      </defs>
+      <polygon points="24,6 28.5,18 42,18 31,26 35,38 24,30 13,38 17,26 6,18 19.5,18" fill="url(#lg-star)"/>
+      <polygon points="24,6 28.5,18 42,18 31,26 35,38 24,30 13,38 17,26 6,18 19.5,18" fill="url(#lg-star-shine)" opacity="0.4"/>
+      <ellipse cx="24" cy="44" rx="7" ry="2" fill="rgba(0,0,0,0.12)"/>
+    </symbol>
+
+    <!-- CHECKMARK / VERIFIED (✅) -->
+    <symbol id="ico-check" viewBox="0 0 48 48">
+      <defs>
+        <radialGradient id="lg-check" cx="40%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="#5EE87A"/>
+          <stop offset="60%" stop-color="#27AE60"/>
+          <stop offset="100%" stop-color="#1A7A40"/>
+        </radialGradient>
+      </defs>
+      <circle cx="24" cy="24" r="18" fill="url(#lg-check)"/>
+      <circle cx="24" cy="24" r="18" fill="rgba(255,255,255,0.12)"/>
+      <!-- shine arc -->
+      <ellipse cx="19" cy="17" rx="7" ry="4" fill="rgba(255,255,255,0.3)" transform="rotate(-30,19,17)"/>
+      <polyline points="15,24 21,30 33,18" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <ellipse cx="24" cy="44" rx="7" ry="1.5" fill="rgba(0,0,0,0.1)"/>
+    </symbol>
+
+    <!-- MICROSCOPE / LAB (🔬) -->
+    <symbol id="ico-lab" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-lab" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#78C8F0"/>
+          <stop offset="50%" stop-color="#3A9FD4"/>
+          <stop offset="100%" stop-color="#1A6FA0"/>
+        </linearGradient>
+      </defs>
+      <!-- base -->
+      <rect x="12" y="38" width="24" height="4" rx="2" fill="#2D5016"/>
+      <rect x="20" y="28" width="4" height="12" rx="1.5" fill="#3A7022"/>
+      <!-- arm -->
+      <rect x="22" y="14" width="14" height="3.5" rx="1.5" fill="#4F8A28" transform="rotate(-10,22,14)"/>
+      <!-- lens tube -->
+      <rect x="19" y="8" width="7" height="18" rx="3" fill="url(#lg-lab)"/>
+      <circle cx="22.5" cy="9" r="3" fill="#9DE0FF"/>
+      <ellipse cx="22.5" cy="9" rx="2" ry="1.2" fill="rgba(255,255,255,0.5)"/>
+      <!-- light beam -->
+      <path d="M19 26 L16 38 M26 26 L28 38" stroke="rgba(120,200,240,0.3)" stroke-width="1.5" fill="none"/>
+      <ellipse cx="24" cy="44" rx="8" ry="1.5" fill="rgba(0,0,0,0.1)"/>
+    </symbol>
+
+    <!-- FACTORY / GMP (🏭) -->
+    <symbol id="ico-factory" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-factory" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#6FA3D0"/>
+          <stop offset="100%" stop-color="#3A6FA0"/>
+        </linearGradient>
+      </defs>
+      <!-- building body -->
+      <rect x="6" y="22" width="36" height="20" rx="2" fill="url(#lg-factory)"/>
+      <rect x="6" y="22" width="36" height="4" rx="1" fill="rgba(255,255,255,0.15)"/>
+      <!-- windows -->
+      <rect x="11" y="28" width="5" height="5" rx="1" fill="#C8E8FF"/>
+      <rect x="21" y="28" width="5" height="5" rx="1" fill="#C8E8FF"/>
+      <rect x="31" y="28" width="5" height="5" rx="1" fill="#C8E8FF"/>
+      <!-- door -->
+      <rect x="20" y="34" width="8" height="8" rx="1" fill="#1E4A7A"/>
+      <!-- chimneys -->
+      <rect x="12" y="12" width="5" height="12" rx="2" fill="#4A7AAA"/>
+      <rect x="22" y="8" width="5" height="16" rx="2" fill="#4A7AAA"/>
+      <!-- smoke -->
+      <circle cx="14.5" cy="10" r="3" fill="rgba(200,220,240,0.6)"/>
+      <circle cx="24.5" cy="6" r="4" fill="rgba(200,220,240,0.5)"/>
+      <ellipse cx="24" cy="44" rx="9" ry="1.5" fill="rgba(0,0,0,0.1)"/>
+    </symbol>
+
+    <!-- ORGANIC / CERTIFIED LEAF (🌱) -->
+    <symbol id="ico-organic" viewBox="0 0 48 48">
+      <defs>
+        <radialGradient id="lg-organic" cx="35%" cy="25%" r="70%">
+          <stop offset="0%" stop-color="#A8E66A"/>
+          <stop offset="55%" stop-color="#4CAF50"/>
+          <stop offset="100%" stop-color="#1B5E20"/>
+        </radialGradient>
+      </defs>
+      <!-- earth / pot -->
+      <ellipse cx="24" cy="40" rx="12" ry="4" fill="#8B5E3C"/>
+      <rect x="18" y="36" width="12" height="6" rx="3" fill="#A0522D"/>
+      <!-- main leaf -->
+      <path d="M24 34 C24 34 10 24 14 10 C14 10 28 8 32 22 C34 28 28 34 24 34Z" fill="url(#lg-organic)"/>
+      <path d="M24 34 C24 34 10 24 14 10 C14 10 28 8 32 22 C34 28 28 34 24 34Z" fill="rgba(255,255,255,0.15)"/>
+      <!-- vein -->
+      <path d="M24 34 C22 26 16 18 14 10" stroke="rgba(255,255,255,0.5)" stroke-width="1.2" fill="none"/>
+      <path d="M20 22 C22 20 26 20 28 18" stroke="rgba(255,255,255,0.35)" stroke-width="0.8" fill="none"/>
+      <path d="M18 28 C20 26 26 26 30 24" stroke="rgba(255,255,255,0.35)" stroke-width="0.8" fill="none"/>
+    </symbol>
+
+    <!-- LIGHTNING / ENERGY (⚡) -->
+    <symbol id="ico-energy" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-energy" x1="20%" y1="0%" x2="80%" y2="100%">
+          <stop offset="0%" stop-color="#FFE566"/>
+          <stop offset="40%" stop-color="#FFC107"/>
+          <stop offset="100%" stop-color="#E65100"/>
+        </linearGradient>
+        <filter id="glow-energy">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <polygon points="27,4 14,26 23,26 21,44 34,22 25,22" fill="url(#lg-energy)" filter="url(#glow-energy)"/>
+      <polygon points="27,4 14,26 23,26 21,44 34,22 25,22" fill="rgba(255,255,255,0.2)"/>
+      <ellipse cx="24" cy="44" rx="7" ry="2" fill="rgba(255,150,0,0.2)"/>
+    </symbol>
+
+    <!-- TROPHY (🏆) -->
+    <symbol id="ico-trophy" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-trophy" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FFE57A"/>
+          <stop offset="50%" stop-color="#F5A623"/>
+          <stop offset="100%" stop-color="#B8860B"/>
+        </linearGradient>
+      </defs>
+      <!-- cup -->
+      <path d="M14 8 L34 8 L32 24 C32 30 28 34 24 34 C20 34 16 30 16 24Z" fill="url(#lg-trophy)"/>
+      <path d="M14 8 L34 8 L32 24 C32 30 28 34 24 34 C20 34 16 30 16 24Z" fill="rgba(255,255,255,0.2)"/>
+      <!-- shine -->
+      <ellipse cx="20" cy="14" rx="4" ry="2.5" fill="rgba(255,255,255,0.4)" transform="rotate(-15,20,14)"/>
+      <!-- handles -->
+      <path d="M14 12 C8 12 6 20 12 22" stroke="#F5A623" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M34 12 C40 12 42 20 36 22" stroke="#F5A623" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- stem + base -->
+      <rect x="21" y="34" width="6" height="6" rx="1" fill="#C47A00"/>
+      <rect x="14" y="40" width="20" height="3" rx="1.5" fill="#B8860B"/>
+      <ellipse cx="24" cy="44" rx="9" ry="1.5" fill="rgba(0,0,0,0.12)"/>
+    </symbol>
+
+    <!-- WAVE / SPIRULINA (🌊) -->
+    <symbol id="ico-wave" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-wave" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#26C6DA"/>
+          <stop offset="50%" stop-color="#0288D1"/>
+          <stop offset="100%" stop-color="#01579B"/>
+        </linearGradient>
+      </defs>
+      <path d="M6 30 Q12 22 18 30 Q24 38 30 30 Q36 22 42 30 L42 42 Q36 38 30 42 Q24 46 18 42 Q12 38 6 42Z" fill="url(#lg-wave)"/>
+      <path d="M6 22 Q12 14 18 22 Q24 30 30 22 Q36 14 42 22" stroke="rgba(100,220,240,0.7)" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M6 16 Q12 10 18 16 Q24 22 30 16 Q36 10 42 16" stroke="rgba(150,230,248,0.4)" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <ellipse cx="24" cy="44" rx="9" ry="1.5" fill="rgba(2,88,152,0.15)"/>
+    </symbol>
+
+    <!-- BUBBLE / EFFERVESCENT (🫧) -->
+    <symbol id="ico-bubble" viewBox="0 0 48 48">
+      <defs>
+        <radialGradient id="lg-bub1" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="#B3E5FC"/>
+          <stop offset="100%" stop-color="#4FC3F7"/>
+        </radialGradient>
+        <radialGradient id="lg-bub2" cx="30%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="#E1F5FE"/>
+          <stop offset="100%" stop-color="#81D4FA"/>
+        </radialGradient>
+      </defs>
+      <circle cx="28" cy="26" r="14" fill="url(#lg-bub1)" opacity="0.9"/>
+      <circle cx="28" cy="26" r="14" fill="rgba(255,255,255,0.2)"/>
+      <ellipse cx="23" cy="21" rx="4" ry="2.5" fill="rgba(255,255,255,0.5)" transform="rotate(-30,23,21)"/>
+      <circle cx="14" cy="20" r="7" fill="url(#lg-bub2)" opacity="0.8"/>
+      <ellipse cx="12" cy="17" rx="2" ry="1.5" fill="rgba(255,255,255,0.5)"/>
+      <circle cx="10" cy="34" r="4" fill="rgba(179,229,252,0.7)"/>
+      <ellipse cx="9" cy="33" rx="1.2" ry="0.8" fill="rgba(255,255,255,0.5)"/>
+    </symbol>
+
+    <!-- FIRE / BESTSELLER (🔥) -->
+    <symbol id="ico-fire" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-fire" x1="0%" y1="100%" x2="60%" y2="0%">
+          <stop offset="0%" stop-color="#BF360C"/>
+          <stop offset="35%" stop-color="#FF6D00"/>
+          <stop offset="70%" stop-color="#FFD600"/>
+          <stop offset="100%" stop-color="#FFF8E1"/>
+        </linearGradient>
+      </defs>
+      <path d="M24 42 C14 42 8 34 10 26 C11 20 16 16 18 10 C20 16 18 20 22 22 C22 18 24 12 28 8 C28 16 32 18 34 24 C36 18 34 14 32 10 C38 16 40 22 40 28 C40 36 33 42 24 42Z" fill="url(#lg-fire)"/>
+      <path d="M24 42 C14 42 8 34 10 26 C11 20 16 16 18 10 C20 16 18 20 22 22 C22 18 24 12 28 8 C28 16 32 18 34 24 C36 18 34 14 32 10 C38 16 40 22 40 28 C40 36 33 42 24 42Z" fill="rgba(255,255,255,0.12)"/>
+      <!-- inner flame -->
+      <path d="M24 38 C19 38 16 34 17 30 C18 26 22 24 22 20 C24 24 22 28 26 30 C28 26 26 22 26 18 C30 22 32 28 30 34 C29 37 27 38 24 38Z" fill="rgba(255,248,200,0.6)"/>
+      <ellipse cx="24" cy="44" rx="7" ry="1.5" fill="rgba(180,60,0,0.15)"/>
+    </symbol>
+
+    <!-- TAG / SALE (💰) -->
+    <symbol id="ico-sale" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-sale" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#A5D6A7"/>
+          <stop offset="50%" stop-color="#43A047"/>
+          <stop offset="100%" stop-color="#1B5E20"/>
+        </linearGradient>
+      </defs>
+      <path d="M8 8 L24 8 L40 24 L24 40 L8 24Z" fill="url(#lg-sale)"/>
+      <path d="M8 8 L24 8 L40 24 L24 40 L8 24Z" fill="rgba(255,255,255,0.15)"/>
+      <circle cx="18" cy="18" r="3" fill="white"/>
+      <text x="24" y="28" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="system-ui">%</text>
+      <ellipse cx="24" cy="44" rx="7" ry="1.5" fill="rgba(27,94,32,0.15)"/>
+    </symbol>
+
+    <!-- BRAIN / FOCUS (🧠) -->
+    <symbol id="ico-brain" viewBox="0 0 48 48">
+      <defs>
+        <radialGradient id="lg-brain" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#F48FB1"/>
+          <stop offset="60%" stop-color="#E91E63"/>
+          <stop offset="100%" stop-color="#880E4F"/>
+        </radialGradient>
+      </defs>
+      <path d="M24 38 C16 38 10 32 10 24 C10 18 13 14 18 12 C18 8 22 6 26 8 C30 6 34 8 34 12 C39 14 42 18 42 24 C42 32 36 38 28 38Z" fill="url(#lg-brain)"/>
+      <path d="M24 38 C16 38 10 32 10 24 C10 18 13 14 18 12 C18 8 22 6 26 8 C30 6 34 8 34 12 C39 14 42 18 42 24 C42 32 36 38 28 38Z" fill="rgba(255,255,255,0.15)"/>
+      <!-- wrinkles -->
+      <path d="M18 20 Q22 18 26 20 Q30 22 34 20" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" fill="none"/>
+      <path d="M16 26 Q20 24 24 26 Q28 28 32 26 Q36 24 38 26" stroke="rgba(255,255,255,0.3)" stroke-width="1" fill="none"/>
+      <path d="M20 32 Q24 30 28 32" stroke="rgba(255,255,255,0.3)" stroke-width="1" fill="none"/>
+      <!-- shine -->
+      <ellipse cx="19" cy="15" rx="4" ry="3" fill="rgba(255,255,255,0.25)" transform="rotate(-20,19,15)"/>
+      <ellipse cx="24" cy="43" rx="7" ry="1.5" fill="rgba(136,14,79,0.15)"/>
+    </symbol>
+
+    <!-- MUSCLE / IMMUNITY (💪) -->
+    <symbol id="ico-muscle" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-muscle" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FFAB76"/>
+          <stop offset="50%" stop-color="#F4511E"/>
+          <stop offset="100%" stop-color="#BF360C"/>
+        </linearGradient>
+      </defs>
+      <path d="M12 34 C10 30 10 24 14 20 C16 18 18 18 20 16 C22 14 22 10 26 8 C30 10 30 14 28 16 L32 12 C36 14 38 18 36 22 L38 20 C42 22 42 28 38 32 C36 34 32 36 28 38 C24 40 16 38 12 34Z" fill="url(#lg-muscle)"/>
+      <path d="M12 34 C10 30 10 24 14 20 C16 18 18 18 20 16 C22 14 22 10 26 8 C30 10 30 14 28 16 L32 12 C36 14 38 18 36 22 L38 20 C42 22 42 28 38 32 C36 34 32 36 28 38 C24 40 16 38 12 34Z" fill="rgba(255,255,255,0.15)"/>
+      <ellipse cx="22" cy="18" rx="5" ry="3" fill="rgba(255,255,255,0.3)" transform="rotate(-30,22,18)"/>
+      <ellipse cx="24" cy="44" rx="8" ry="1.5" fill="rgba(180,50,0,0.12)"/>
+    </symbol>
+
+    <!-- GIFT / COMBO (🎁) -->
+    <symbol id="ico-gift" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-gift-box" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#EF5350"/>
+          <stop offset="100%" stop-color="#B71C1C"/>
+        </linearGradient>
+        <linearGradient id="lg-gift-lid" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FF7043"/>
+          <stop offset="100%" stop-color="#E53935"/>
+        </linearGradient>
+      </defs>
+      <!-- box -->
+      <rect x="8" y="22" width="32" height="20" rx="2" fill="url(#lg-gift-box)"/>
+      <!-- lid -->
+      <rect x="6" y="16" width="36" height="8" rx="2" fill="url(#lg-gift-lid)"/>
+      <!-- ribbon vertical -->
+      <rect x="21" y="16" width="6" height="26" rx="0" fill="#FFD700"/>
+      <!-- ribbon horizontal -->
+      <rect x="6" y="20" width="36" height="4" rx="0" fill="#FFD700"/>
+      <!-- bow -->
+      <path d="M24 16 C20 12 14 12 16 16Z" fill="#FFE57A"/>
+      <path d="M24 16 C28 12 34 12 32 16Z" fill="#FFE57A"/>
+      <circle cx="24" cy="16" r="3" fill="#FFC107"/>
+      <!-- shine -->
+      <rect x="10" y="24" width="12" height="4" rx="1" fill="rgba(255,255,255,0.15)"/>
+      <ellipse cx="24" cy="44" rx="8" ry="1.5" fill="rgba(180,0,0,0.12)"/>
+    </symbol>
+
+    <!-- NEW / LAUNCH (🆕) -->
+    <symbol id="ico-new" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-new" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#80DEEA"/>
+          <stop offset="50%" stop-color="#00ACC1"/>
+          <stop offset="100%" stop-color="#006064"/>
+        </linearGradient>
+      </defs>
+      <rect x="4" y="12" width="40" height="24" rx="6" fill="url(#lg-new)"/>
+      <rect x="4" y="12" width="40" height="8" rx="6" fill="rgba(255,255,255,0.15)"/>
+      <text x="24" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="800" font-family="system-ui" letter-spacing="0.5">NEW</text>
+      <ellipse cx="24" cy="40" rx="10" ry="1.5" fill="rgba(0,96,100,0.15)"/>
+    </symbol>
+
+    <!-- SKIN / GLOW (⭐ skin) -->
+    <symbol id="ico-glow" viewBox="0 0 48 48">
+      <defs>
+        <radialGradient id="lg-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FFF9C4"/>
+          <stop offset="40%" stop-color="#FFD54F"/>
+          <stop offset="100%" stop-color="#FF6F00"/>
+        </radialGradient>
+      </defs>
+      <!-- rays -->
+      <line x1="24" y1="4" x2="24" y2="10" stroke="#FFD54F" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="24" y1="38" x2="24" y2="44" stroke="#FFD54F" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="4" y1="24" x2="10" y2="24" stroke="#FFD54F" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="38" y1="24" x2="44" y2="24" stroke="#FFD54F" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="9" y1="9" x2="13" y2="13" stroke="#FFD54F" stroke-width="2" stroke-linecap="round"/>
+      <line x1="35" y1="9" x2="39" y2="13" stroke="#FFD54F" stroke-width="2" stroke-linecap="round" transform="rotate(90,37,11)"/>
+      <line x1="9" y1="39" x2="13" y2="35" stroke="#FFD54F" stroke-width="2" stroke-linecap="round"/>
+      <line x1="35" y1="39" x2="39" y2="35" stroke="#FFD54F" stroke-width="2" stroke-linecap="round"/>
+      <!-- sun -->
+      <circle cx="24" cy="24" r="10" fill="url(#lg-glow)"/>
+      <ellipse cx="20" cy="20" rx="3" ry="2" fill="rgba(255,255,255,0.4)" transform="rotate(-30,20,20)"/>
+    </symbol>
+
+    <!-- TRUCK / SHIPPING (🚚) -->
+    <symbol id="ico-truck" viewBox="0 0 48 48">
+      <defs>
+        <linearGradient id="lg-truck" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#66BB6A"/>
+          <stop offset="100%" stop-color="#2E7D32"/>
+        </linearGradient>
+      </defs>
+      <!-- truck body -->
+      <rect x="4" y="16" width="26" height="18" rx="2" fill="url(#lg-truck)"/>
+      <rect x="4" y="16" width="26" height="5" rx="1" fill="rgba(255,255,255,0.15)"/>
+      <!-- cab -->
+      <path d="M30 22 L30 34 L44 34 L44 26 L38 22Z" fill="#388E3C"/>
+      <!-- windshield -->
+      <path d="M31 23 L31 28 L42 28 L42 26 L37 23Z" fill="#B3E5FC"/>
+      <!-- wheels -->
+      <circle cx="12" cy="34" r="5" fill="#1A237E"/>
+      <circle cx="12" cy="34" r="2.5" fill="#90CAF9"/>
+      <circle cx="36" cy="34" r="5" fill="#1A237E"/>
+      <circle cx="36" cy="34" r="2.5" fill="#90CAF9"/>
+      <!-- window on body -->
+      <rect x="8" y="20" width="10" height="7" rx="1.5" fill="#B3E5FC"/>
+    </symbol>
+
+    <!-- PHONE / WHATSAPP (📞) -->
+    <symbol id="ico-phone" viewBox="0 0 48 48">
+      <defs>
+        <radialGradient id="lg-phone" cx="40%" cy="30%" r="70%">
+          <stop offset="0%" stop-color="#81C784"/>
+          <stop offset="60%" stop-color="#2E7D32"/>
+          <stop offset="100%" stop-color="#1B5E20"/>
+        </radialGradient>
+      </defs>
+      <circle cx="24" cy="24" r="20" fill="url(#lg-phone)"/>
+      <circle cx="24" cy="24" r="20" fill="rgba(255,255,255,0.1)"/>
+      <ellipse cx="20" cy="17" rx="6" ry="4" fill="rgba(255,255,255,0.2)" transform="rotate(-30,20,17)"/>
+      <path d="M16 14 C15 12 15 10 17 10 L19 10 C20 10 21 11 21 12 L21 15 C21 16 20 17 19 17 C22 19 25 22 27 26 C27 25 28 24 29 24 L32 24 C33 24 34 25 34 26 L34 28 C34 30 32 30 30 29 C26 27 20 21 16 14Z" fill="white"/>
+    </symbol>
+
+    <!-- FLAG INDIA (🇮🇳) -->
+    <symbol id="ico-india" viewBox="0 0 48 48">
+      <rect x="6" y="12" width="36" height="10" rx="2" fill="#FF9933"/>
+      <rect x="6" y="22" width="36" height="10" fill="white"/>
+      <rect x="6" y="32" width="36" height="6" rx="2" fill="#138808"/>
+      <!-- ashoka wheel -->
+      <circle cx="24" cy="27" r="4" fill="none" stroke="#000080" stroke-width="1"/>
+      <circle cx="24" cy="27" r="0.8" fill="#000080"/>
+      <!-- spokes -->
+      <line x1="24" y1="23" x2="24" y2="31" stroke="#000080" stroke-width="0.6"/>
+      <line x1="20" y1="27" x2="28" y2="27" stroke="#000080" stroke-width="0.6"/>
+      <line x1="21.2" y1="24.2" x2="26.8" y2="29.8" stroke="#000080" stroke-width="0.6"/>
+      <line x1="26.8" y1="24.2" x2="21.2" y2="29.8" stroke="#000080" stroke-width="0.6"/>
+    </symbol>
+
+    <!-- SEARCH (🔍) -->
+    <symbol id="ico-search" viewBox="0 0 48 48">
+      <circle cx="20" cy="20" r="12" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="29" y1="29" x2="42" y2="42" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- CART (🛒) -->
+    <symbol id="ico-cart" viewBox="0 0 48 48">
+      <path d="M6 8 L12 8 L18 30 L36 30 L42 14 L16 14" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="20" cy="36" r="3" fill="currentColor"/>
+      <circle cx="32" cy="36" r="3" fill="currentColor"/>
+    </symbol>
+
+    <!-- USER (👤) -->
+    <symbol id="ico-user" viewBox="0 0 48 48">
+      <circle cx="24" cy="16" r="10" fill="none" stroke="currentColor" stroke-width="3"/>
+      <path d="M6 42 C6 34 13 28 24 28 C35 28 42 34 42 42" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </symbol>
+
+    <!-- HEART WISHLIST (♡) -->
+    <symbol id="ico-heart" viewBox="0 0 48 48">
+      <path d="M24 40 C24 40 6 28 6 18 C6 12 10 8 16 8 C20 8 23 10 24 12 C25 10 28 8 32 8 C38 8 42 12 42 18 C42 28 24 40 24 40Z" stroke="currentColor" stroke-width="3" fill="none" stroke-linejoin="round"/>
+    </symbol>
+
+  </defs>
+</svg>
+
 <!-- ANNOUNCEMENT BAR -->
 <div class="ann-bar">
   <div class="ann-inner">
-    <span>🌿 Buy 4 Get 50% OFF on select products</span>
-    <span>🚚 Free shipping on orders above ₹599</span>
-    <span>✅ FSSAI Approved &amp; Lab Tested</span>
-    <span>🇮🇳 Made in India | Anand, Gujarat</span>
-    <span>📞 +91 9898 582 650</span>
-    <span>🌿 Buy 4 Get 50% OFF on select products</span>
-    <span>🚚 Free shipping on orders above ₹599</span>
-    <span>✅ FSSAI Approved &amp; Lab Tested</span>
-    <span>🇮🇳 Made in India | Anand, Gujarat</span>
-    <span>📞 +91 9898 582 650</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-leaf"/></svg> Buy 4 Get 50% OFF on select products</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-truck"/></svg> Free shipping on orders above ₹599</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-check"/></svg> FSSAI Approved &amp; Lab Tested</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-india"/></svg> Made in India | Anand, Gujarat</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-phone"/></svg> +91 9898 582 650</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-leaf"/></svg> Buy 4 Get 50% OFF on select products</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-truck"/></svg> Free shipping on orders above ₹599</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-check"/></svg> FSSAI Approved &amp; Lab Tested</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-india"/></svg> Made in India | Anand, Gujarat</span>
+    <span><svg class="ann-svg" width="16" height="16"><use href="#ico-phone"/></svg> +91 9898 582 650</span>
   </div>
 </div>
 
@@ -1427,7 +2542,7 @@ textarea.form-input { resize:vertical; min-height:90px; }
     <a href="#" class="nav-logo" onclick="showPage('home')">
       <img src="https://static.wixstatic.com/media/f0adaf_05a2b4385ab84453aa9c2e9a1cec4b97~mv2.png/v1/fill/w_346,h_166,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/f0adaf_05a2b4385ab84453aa9c2e9a1cec4b97~mv2.png" alt="Ascovita Logo" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
       <div id="logoFallback" class="nav-logo-fallback" style="display:none">
-        <div class="nav-logo-leaf">🌿</div>
+        <div class="nav-logo-leaf"><svg width="22" height="22"><use href="#ico-leaf"/></svg></div>
         <div>
           <span class="nav-logo-text">Ascovita</span>
           <span class="nav-logo-sub">Organic Vitamins</span>
@@ -1445,8 +2560,8 @@ textarea.form-input { resize:vertical; min-height:90px; }
       <li><a href="#" data-page="advisor" onclick="showPage('advisor')" style="color:var(--green);font-weight:700">🌿 AI Advisor</a></li>
     </ul>
     <div class="nav-actions">
-      <button class="nav-icon-btn" onclick="showPage('shop')" title="Search">🔍</button>
-      <button class="nav-icon-btn" id="accountNavBtn" onclick="handleAccountNavClick()" title="Account" style="position:relative">👤</button>
+      <button class="nav-icon-btn" onclick="showPage('shop')" title="Search"><svg width="20" height="20"><use href="#ico-search"/></svg></button>
+      <button class="nav-icon-btn" id="accountNavBtn" onclick="handleAccountNavClick()" title="Account" style="position:relative"><svg width="20" height="20"><use href="#ico-user"/></svg></button>
       <button class="nav-icon-btn" onclick="showPage('wishlist')" title="Wishlist" style="position:relative">
         ♡ <span class="wish-badge" id="wishBadge" style="display:none">0</span>
       </button>
@@ -1484,10 +2599,13 @@ textarea.form-input { resize:vertical; min-height:90px; }
 
     <!-- SLIDE 1 — GLUTATHIONE -->
     <div class="hero-slide hero-slide-1 active" id="hslide-0">
+      <!-- Morphing ambient orbs -->
+      <div class="bg-orb" style="width:400px;height:400px;background:radial-gradient(circle,rgba(78,138,40,0.10),transparent);top:-80px;right:10%;animation-duration:12s"></div>
+      <div class="bg-orb" style="width:250px;height:250px;background:radial-gradient(circle,rgba(184,134,11,0.08),transparent);bottom:10%;left:5%;animation-duration:9s;animation-delay:3s"></div>
       <div class="container" style="width:100%">
         <div class="slide-inner">
           <div>
-            <div class="slide-tag green">✨ Skin &amp; Glow — Effervescent Range</div>
+            <div class="slide-tag green"><svg width="16" height="16" style="vertical-align:middle;margin-right:5px"><use href="#ico-glow"/></svg> Skin &amp; Glow — Effervescent Range</div>
             <div class="slide-headline" style="color:var(--dark)">Radiance<br>Begins <em style="color:var(--green-light);font-style:italic">Inside</em></div>
             <p class="slide-sub" style="color:var(--gray)">Advanced Effervescent Glutathione for brighter, healthier skin. The master antioxidant — fast-absorbing, visibly effective.</p>
             <div class="slide-offer pill-green">🔥 20% OFF on First Order — Use code GREEN20</div>
@@ -1501,8 +2619,8 @@ textarea.form-input { resize:vertical; min-height:90px; }
             <div class="slide-img-frame">
               <img src="https://static.wixstatic.com/media/f0adaf_059d2c1e15c0421da19fa9495e205e37~mv2.jpg/v1/fill/w_980,h_980,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/f0adaf_059d2c1e15c0421da19fa9495e205e37~mv2.jpg" alt="Glutathione Effervescent" style="height:460px;object-fit:cover" onerror="this.src='https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&q=80'">
             </div>
-            <div class="slide-bubble b1"><div class="bi">⭐</div><div><div class="bv">4.9 / 5 Rating</div><div class="bl">312+ Reviews</div></div></div>
-            <div class="slide-bubble b2"><div class="bi">🌿</div><div><div class="bv">500mg Glutathione</div><div class="bl">+ Vitamin C 1000mg</div></div></div>
+            <div class="slide-bubble b1"><div class="bi"><svg width="32" height="32"><use href="#ico-star"/></svg></div><div><div class="bv">4.9 / 5 Rating</div><div class="bl">312+ Reviews</div></div></div>
+            <div class="slide-bubble b2"><div class="bi"><svg width="32" height="32"><use href="#ico-leaf"/></svg></div><div><div class="bv">500mg Glutathione</div><div class="bl">+ Vitamin C 1000mg</div></div></div>
           </div>
         </div>
       </div>
@@ -1513,10 +2631,10 @@ textarea.form-input { resize:vertical; min-height:90px; }
       <div class="container" style="width:100%">
         <div class="slide-inner">
           <div>
-            <div class="slide-tag white">💚 Pure Spirulina Power</div>
+            <div class="slide-tag white"><svg width="16" height="16" style="vertical-align:middle;margin-right:5px"><use href="#ico-leaf"/></svg> Pure Spirulina Power</div>
             <div class="slide-headline" style="color:white">Stronger Immunity.<br><em style="color:#a8d878;font-style:italic">Better Energy.</em><br>Total Balance.</div>
             <p class="slide-sub" style="color:rgba(255,255,255,0.8)">Spirulina + Calcium + Magnesium + B12 — complete superfood support in one combo. Boost energy, strengthen immunity, support daily vitality.</p>
-            <div class="slide-offer pill-white">⚡ Special Combo Price — Only ₹999</div>
+            <div class="slide-offer pill-white"><svg width="16" height="16" style="vertical-align:middle;margin-right:5px"><use href="#ico-energy"/></svg> Special Combo Price — Only ₹999</div>
             <div class="slide-btns">
               <button class="btn-primary" style="background:white;color:var(--green);font-size:0.92rem;padding:14px 30px" onclick="openProduct(10)">Get the Combo →</button>
               <button style="background:transparent;color:white;border:2px solid rgba(255,255,255,0.5);padding:13px 28px;border-radius:100px;font-weight:600;font-size:0.88rem;cursor:pointer;font-family:var(--font-body)" onclick="showShop('spirulina')">View All Spirulina</button>
@@ -1553,8 +2671,8 @@ textarea.form-input { resize:vertical; min-height:90px; }
             <div class="slide-img-frame">
               <img src="https://static.wixstatic.com/media/f0adaf_ab29bcd839104fbca2ce25f572dd0796~mv2.jpg/v1/fill/w_768,h_768,al_c,q_85,enc_avif,quality_auto/f0adaf_ab29bcd839104fbca2ce25f572dd0796~mv2.jpg" alt="Maltidiata Multivitamin" style="height:460px;object-fit:cover" onerror="this.src='https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80'">
             </div>
-            <div class="slide-bubble b1"><div class="bi">💊</div><div><div class="bv">23 Vitamins</div><div class="bl">&amp; Minerals</div></div></div>
-            <div class="slide-bubble b2"><div class="bi">✅</div><div><div class="bv">FSSAI Approved</div><div class="bl">Safe &amp; Certified</div></div></div>
+            <div class="slide-bubble b1"><div class="bi"><svg width="32" height="32"><use href="#ico-check"/></svg></div><div><div class="bv">23 Vitamins</div><div class="bl">&amp; Minerals</div></div></div>
+            <div class="slide-bubble b2"><div class="bi"><svg width="32" height="32"><use href="#ico-check"/></svg></div><div><div class="bv">FSSAI Approved</div><div class="bl">Safe &amp; Certified</div></div></div>
           </div>
         </div>
       </div>
@@ -1575,18 +2693,18 @@ textarea.form-input { resize:vertical; min-height:90px; }
     <div style="overflow:hidden">
       <div style="display:flex">
         <div class="trust-bar-track">
-          <div class="trust-item"><div class="trust-item-dot"></div>✅ 10,000+ Happy Customers</div>
+          <div class="trust-item"><div class="trust-item-dot"></div><svg width="18" height="18" style="vertical-align:middle;margin-right:6px"><use href="#ico-check"/></svg> 10,000+ Happy Customers</div>
           <div class="trust-item"><div class="trust-item-dot"></div>🚚 Free Shipping Above ₹599</div>
           <div class="trust-item"><div class="trust-item-dot"></div>🇮🇳 Made in India — Anand, Gujarat</div>
           <div class="trust-item"><div class="trust-item-dot"></div>🔒 100% Secure Payment via Cashfree</div>
-          <div class="trust-item"><div class="trust-item-dot"></div>✅ FSSAI Approved &amp; Lab Certified</div>
+          <div class="trust-item"><div class="trust-item-dot"></div><svg width="18" height="18" style="vertical-align:middle;margin-right:6px"><use href="#ico-check"/></svg> FSSAI Approved &amp; Lab Certified</div>
           <div class="trust-item"><div class="trust-item-dot"></div>🌿 100% Organic Ingredients</div>
           <div class="trust-item"><div class="trust-item-dot"></div>📦 Ships within 24 Hours</div>
-          <div class="trust-item"><div class="trust-item-dot"></div>✅ 10,000+ Happy Customers</div>
+          <div class="trust-item"><div class="trust-item-dot"></div><svg width="18" height="18" style="vertical-align:middle;margin-right:6px"><use href="#ico-check"/></svg> 10,000+ Happy Customers</div>
           <div class="trust-item"><div class="trust-item-dot"></div>🚚 Free Shipping Above ₹599</div>
           <div class="trust-item"><div class="trust-item-dot"></div>🇮🇳 Made in India — Anand, Gujarat</div>
           <div class="trust-item"><div class="trust-item-dot"></div>🔒 100% Secure Payment via Cashfree</div>
-          <div class="trust-item"><div class="trust-item-dot"></div>✅ FSSAI Approved &amp; Lab Certified</div>
+          <div class="trust-item"><div class="trust-item-dot"></div><svg width="18" height="18" style="vertical-align:middle;margin-right:6px"><use href="#ico-check"/></svg> FSSAI Approved &amp; Lab Certified</div>
           <div class="trust-item"><div class="trust-item-dot"></div>🌿 100% Organic Ingredients</div>
           <div class="trust-item"><div class="trust-item-dot"></div>📦 Ships within 24 Hours</div>
         </div>
@@ -1603,23 +2721,23 @@ textarea.form-input { resize:vertical; min-height:90px; }
         <p class="section-sub">From spirulina superfoods to effervescent wellness — find exactly what your body needs.</p>
       </div>
       <div class="cat-grid-new" style="margin-bottom:20px">
-        <a class="cat-card" onclick="showShop('premium')"><span class="cat-icon">🏆</span><span class="cat-name">Ascovita Premium</span><span class="cat-count">Maltidiata</span></a>
-        <a class="cat-card" onclick="showShop('spirulina')"><span class="cat-icon">🌊</span><span class="cat-name">Spirulina Range</span><span class="cat-count">3 products</span></a>
-        <a class="cat-card" onclick="showShop('effervescent')"><span class="cat-icon">🫧</span><span class="cat-name">Effervescent Range</span><span class="cat-count">6 products</span></a>
-        <a class="cat-card" onclick="showShop('ayurvedic')"><span class="cat-icon">🌿</span><span class="cat-name">Ayurvedic Wellness</span><span class="cat-count">Moringa Tablets</span></a>
-        <a class="cat-card" onclick="showShop('energy')"><span class="cat-icon">⚡</span><span class="cat-name">Energy &amp; Performance</span><span class="cat-count">Energy Pro</span></a>
+        <a class="cat-card" onclick="showShop('premium')"><span class="cat-icon"><svg width="44" height="44"><use href="#ico-trophy"/></svg></span><span class="cat-name">Ascovita Premium</span><span class="cat-count">Maltidiata</span></a>
+        <a class="cat-card" onclick="showShop('spirulina')"><span class="cat-icon"><svg width="44" height="44"><use href="#ico-wave"/></svg></span><span class="cat-name">Spirulina Range</span><span class="cat-count">3 products</span></a>
+        <a class="cat-card" onclick="showShop('effervescent')"><span class="cat-icon"><svg width="44" height="44"><use href="#ico-bubble"/></svg></span><span class="cat-name">Effervescent Range</span><span class="cat-count">6 products</span></a>
+        <a class="cat-card" onclick="showShop('ayurvedic')"><span class="cat-icon"><svg width="44" height="44"><use href="#ico-leaf"/></svg></span><span class="cat-name">Ayurvedic Wellness</span><span class="cat-count">Moringa Tablets</span></a>
+        <a class="cat-card" onclick="showShop('energy')"><span class="cat-icon"><svg width="44" height="44"><use href="#ico-energy"/></svg></span><span class="cat-name">Energy &amp; Performance</span><span class="cat-count">Energy Pro</span></a>
       </div>
       <div style="font-size:0.72rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:12px">Shop by Goal</div>
       <div class="cat-grid-marketing">
-        <div class="cat-card-sm" onclick="showShop('bestsellers')"><div class="ci">🔥</div><div class="cn">Best Sellers</div></div>
-        <div class="cat-card-sm" onclick="showShop('sale')"><div class="ci">💰</div><div class="cn">On Sale</div></div>
-        <div class="cat-card-sm" onclick="showShop('new')"><div class="ci">🆕</div><div class="cn">New Launch</div></div>
-        <div class="cat-card-sm" onclick="showShop('skin')"><div class="ci">⭐</div><div class="cn">Skin &amp; Glow</div></div>
-        <div class="cat-card-sm" onclick="showShop('immunity')"><div class="ci">💪</div><div class="cn">Immunity</div></div>
-        <div class="cat-card-sm" onclick="showShop('energy')"><div class="ci">⚡</div><div class="cn">Energy</div></div>
-        <div class="cat-card-sm" onclick="showShop('brain')"><div class="ci">🧠</div><div class="cn">Brain &amp; Focus</div></div>
-        <div class="cat-card-sm" onclick="showShop('weight')"><div class="ci">🏋</div><div class="cn">Weight Mgmt</div></div>
-        <div class="cat-card-sm" onclick="showShop('combos')"><div class="ci">🎁</div><div class="cn">Combos</div></div>
+        <div class="cat-card-sm" onclick="showShop('bestsellers')"><div class="ci"><svg width="32" height="32"><use href="#ico-fire"/></svg></div><div class="cn">Best Sellers</div></div>
+        <div class="cat-card-sm" onclick="showShop('sale')"><div class="ci"><svg width="32" height="32"><use href="#ico-sale"/></svg></div><div class="cn">On Sale</div></div>
+        <div class="cat-card-sm" onclick="showShop('new')"><div class="ci"><svg width="32" height="32"><use href="#ico-new"/></svg></div><div class="cn">New Launch</div></div>
+        <div class="cat-card-sm" onclick="showShop('skin')"><div class="ci"><svg width="32" height="32"><use href="#ico-glow"/></svg></div><div class="cn">Skin &amp; Glow</div></div>
+        <div class="cat-card-sm" onclick="showShop('immunity')"><div class="ci"><svg width="32" height="32"><use href="#ico-muscle"/></svg></div><div class="cn">Immunity</div></div>
+        <div class="cat-card-sm" onclick="showShop('energy')"><div class="ci"><svg width="32" height="32"><use href="#ico-energy"/></svg></div><div class="cn">Energy</div></div>
+        <div class="cat-card-sm" onclick="showShop('brain')"><div class="ci"><svg width="32" height="32"><use href="#ico-brain"/></svg></div><div class="cn">Brain &amp; Focus</div></div>
+        <div class="cat-card-sm" onclick="showShop('weight')"><div class="ci"><svg width="32" height="32"><use href="#ico-muscle"/></svg></div><div class="cn">Weight Mgmt</div></div>
+        <div class="cat-card-sm" onclick="showShop('combos')"><div class="ci"><svg width="32" height="32"><use href="#ico-gift"/></svg></div><div class="cn">Combos</div></div>
       </div>
     </div>
   </section>
@@ -1661,10 +2779,10 @@ textarea.form-input { resize:vertical; min-height:90px; }
         <p class="section-sub">Every Ascovita product meets the highest standards of purity, safety and efficacy.</p>
       </div>
       <div class="cert-grid">
-        <div class="cert-card"><div class="cert-ico">✅</div><div class="cert-t">FSSAI Approved</div><div class="cert-d">All products carry valid FSSAI licence under Indian food safety regulations</div></div>
-        <div class="cert-card"><div class="cert-ico">🔬</div><div class="cert-t">3rd Party Lab Tested</div><div class="cert-d">Independent laboratory testing for purity, potency, and absence of contaminants</div></div>
-        <div class="cert-card"><div class="cert-ico">🌿</div><div class="cert-t">Organic Certified</div><div class="cert-d">Key ingredients sourced from certified organic farms with full traceability</div></div>
-        <div class="cert-card"><div class="cert-ico">🏭</div><div class="cert-t">GMP Manufacturing</div><div class="cert-d">Produced in WHO-GMP compliant facility in Anand, Gujarat, India</div></div>
+        <div class="cert-card"><div class="cert-ico"><svg width="52" height="52"><use href="#ico-check"/></svg></div><div class="cert-t">FSSAI Approved</div><div class="cert-d">All products carry valid FSSAI licence under Indian food safety regulations</div></div>
+        <div class="cert-card"><div class="cert-ico"><svg width="52" height="52"><use href="#ico-lab"/></svg></div><div class="cert-t">3rd Party Lab Tested</div><div class="cert-d">Independent laboratory testing for purity, potency, and absence of contaminants</div></div>
+        <div class="cert-card"><div class="cert-ico"><svg width="52" height="52"><use href="#ico-organic"/></svg></div><div class="cert-t">Organic Certified</div><div class="cert-d">Key ingredients sourced from certified organic farms with full traceability</div></div>
+        <div class="cert-card"><div class="cert-ico"><svg width="52" height="52"><use href="#ico-factory"/></svg></div><div class="cert-t">GMP Manufacturing</div><div class="cert-d">Produced in WHO-GMP compliant facility in Anand, Gujarat, India</div></div>
       </div>
     </div>
   </section>
@@ -1695,6 +2813,323 @@ textarea.form-input { resize:vertical; min-height:90px; }
       </div>
     </div>
   </section>
+
+  <!-- ══════════ INSTAGRAM FEED ══════════ -->
+  <section class="section ig-section" id="igSection">
+    <div class="container">
+      <div class="text-center" style="margin-bottom:40px">
+        <div class="section-label">Follow Us</div>
+        <h2 class="section-title" data-reveal="up" data-delay="2">
+          <span style="color:var(--green)">@ascovitahealthcare</span> on Instagram
+        </h2>
+        <p class="section-sub" data-reveal="up" data-delay="3">
+          Real results, daily wellness tips & behind-the-scenes from our team. Follow along for your daily dose of health.
+        </p>
+        <a href="https://instagram.com/ascovitahealthcare" target="_blank" rel="noopener"
+           class="ig-follow-btn" data-reveal="up" data-delay="4">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/>
+            <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+          Follow @ascovitahealthcare
+        </a>
+      </div>
+
+      <!-- Slider -->
+      <div class="ig-slider-wrap" data-reveal="up" data-delay="2">
+        <button class="ig-nav ig-prev" onclick="igSlide(-1)" aria-label="Previous">&#8592;</button>
+        <div class="ig-track-outer">
+          <div class="ig-track" id="igTrack">
+            <!-- Skeleton loaders shown while fetching -->
+            <div class="ig-skeleton"></div>
+            <div class="ig-skeleton"></div>
+            <div class="ig-skeleton"></div>
+            <div class="ig-skeleton"></div>
+            <div class="ig-skeleton"></div>
+            <div class="ig-skeleton"></div>
+          </div>
+        </div>
+        <button class="ig-nav ig-next" onclick="igSlide(1)" aria-label="Next">&#8594;</button>
+      </div>
+
+      <!-- Dots -->
+      <div class="ig-dots" id="igDots"></div>
+
+      <!-- Error / fallback state -->
+      <div class="ig-error" id="igError" style="display:none">
+        <div style="font-size:2rem;margin-bottom:10px">📷</div>
+        <div style="font-weight:600;margin-bottom:6px">Instagram not connected yet</div>
+        <div style="font-size:0.82rem;color:var(--gray);margin-bottom:16px">
+          Add your Instagram token to your backend to show live posts here.
+        </div>
+        <a href="https://instagram.com/ascovitahealthcare" target="_blank" class="btn-primary" style="font-size:0.82rem;padding:10px 22px">
+          View on Instagram →
+        </a>
+      </div>
+    </div>
+  </section>
+
+<style>
+/* ── INSTAGRAM SECTION ── */
+.ig-section { background:linear-gradient(180deg, var(--white) 0%, var(--green-wash) 100%); overflow:hidden; }
+
+.ig-follow-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  background:linear-gradient(135deg,#833ab4,#fd1d1d,#f77737);
+  color:white; padding:10px 24px; border-radius:100px;
+  font-size:0.82rem; font-weight:700; text-decoration:none;
+  letter-spacing:0.3px; transition:all 0.3s ease;
+  box-shadow:0 6px 20px rgba(131,58,180,0.3);
+}
+.ig-follow-btn:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(131,58,180,0.4); }
+
+/* Slider container */
+.ig-slider-wrap {
+  position:relative; display:flex; align-items:center; gap:12px;
+}
+.ig-track-outer {
+  flex:1; overflow:hidden; border-radius:16px;
+}
+.ig-track {
+  display:flex; gap:14px;
+  transition:transform 0.55s cubic-bezier(0.25,0.46,0.45,0.94);
+  will-change:transform;
+}
+
+/* Individual card */
+.ig-card {
+  flex:0 0 calc(20% - 12px);
+  border-radius:14px; overflow:hidden;
+  position:relative; cursor:pointer;
+  background:var(--light-gray);
+  aspect-ratio:1;
+  box-shadow:0 4px 16px rgba(0,0,0,0.08);
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease;
+}
+.ig-card:hover { transform:scale(1.05) translateY(-4px); box-shadow:0 16px 40px rgba(0,0,0,0.16); }
+.ig-card img {
+  width:100%; height:100%; object-fit:cover;
+  display:block; transition:transform 0.5s ease;
+}
+.ig-card:hover img { transform:scale(1.08); }
+
+/* Overlay on hover */
+.ig-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(26,36,9,0.85) 0%, rgba(26,36,9,0.1) 60%, transparent 100%);
+  opacity:0; transition:opacity 0.3s ease;
+  display:flex; flex-direction:column;
+  justify-content:flex-end; padding:14px 12px;
+}
+.ig-card:hover .ig-overlay { opacity:1; }
+.ig-caption {
+  color:white; font-size:0.72rem; line-height:1.5;
+  display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical;
+  overflow:hidden; margin-bottom:8px;
+}
+.ig-meta {
+  display:flex; align-items:center; gap:10px;
+  font-size:0.68rem; color:rgba(255,255,255,0.75); font-weight:600;
+}
+.ig-meta span { display:flex; align-items:center; gap:4px; }
+.ig-type-badge {
+  position:absolute; top:8px; right:8px;
+  background:rgba(0,0,0,0.5); color:white;
+  font-size:0.7rem; padding:3px 7px; border-radius:6px;
+  backdrop-filter:blur(4px);
+}
+
+/* Nav arrows */
+.ig-nav {
+  flex-shrink:0; width:42px; height:42px; border-radius:50%;
+  background:white; border:2px solid var(--light-gray);
+  font-size:1rem; cursor:pointer; display:flex;
+  align-items:center; justify-content:center;
+  box-shadow:0 4px 14px rgba(0,0,0,0.1);
+  transition:all 0.25s ease; color:var(--text); z-index:2;
+}
+.ig-nav:hover { background:var(--green); color:white; border-color:var(--green); transform:scale(1.1); }
+.ig-nav:disabled { opacity:0.3; cursor:default; transform:none; }
+
+/* Dots */
+.ig-dots {
+  display:flex; justify-content:center; gap:6px; margin-top:20px;
+}
+.ig-dot {
+  width:7px; height:7px; border-radius:50%;
+  background:var(--light-gray); border:none; cursor:pointer;
+  transition:all 0.3s ease; padding:0;
+}
+.ig-dot.active { background:var(--green); transform:scale(1.3); width:20px; border-radius:4px; }
+
+/* Skeleton loader */
+.ig-skeleton {
+  flex:0 0 calc(20% - 12px); aspect-ratio:1;
+  border-radius:14px; background:linear-gradient(90deg,#f0f0ea 25%,#e4e4dc 50%,#f0f0ea 75%);
+  background-size:400px 100%;
+  animation:skeletonWave 1.4s ease-in-out infinite;
+}
+
+/* Error state */
+.ig-error {
+  text-align:center; padding:40px 20px;
+  color:var(--text); font-size:0.9rem;
+}
+
+/* Responsive */
+@media(max-width:900px) {
+  .ig-card { flex:0 0 calc(33.33% - 10px); }
+  .ig-skeleton { flex:0 0 calc(33.33% - 10px); }
+}
+@media(max-width:600px) {
+  .ig-card { flex:0 0 calc(50% - 8px); }
+  .ig-skeleton { flex:0 0 calc(50% - 8px); }
+  .ig-nav { width:34px; height:34px; font-size:0.85rem; }
+}
+</style>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// INSTAGRAM FEED — Live from Render backend
+// Backend fetches from Instagram Graph API using your token
+// Setup: add INSTAGRAM_TOKEN to Render env vars
+// ══════════════════════════════════════════════════════════
+
+(function() {
+
+  var IG_API = 'https://ascovita-backend.onrender.com/api/instagram';
+  var CARDS_VISIBLE = window.innerWidth < 600 ? 2 : window.innerWidth < 900 ? 3 : 5;
+  var igPosts = [];
+  var igIndex = 0;
+  var igTotal = 0;
+  var igAutoTimer = null;
+
+  // ── FETCH POSTS ──
+  async function loadInstagram() {
+    try {
+      var r = await fetch(IG_API, { signal: AbortSignal.timeout(10000) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var data = await r.json();
+      igPosts = (data.data || data).filter(function(p) {
+        return p.media_type !== 'VIDEO' || p.thumbnail_url;
+      }).slice(0, 12);
+      if (!igPosts.length) throw new Error('No posts');
+      renderIgSlider();
+    } catch(e) {
+      // Show fallback / error state
+      document.getElementById('igError').style.display = 'block';
+      document.getElementById('igTrack').style.display = 'none';
+      document.getElementById('igDots').style.display = 'none';
+      document.querySelector('.ig-prev').style.display = 'none';
+      document.querySelector('.ig-next').style.display = 'none';
+    }
+  }
+
+  // ── RENDER CARDS ──
+  function renderIgSlider() {
+    var track = document.getElementById('igTrack');
+    if (!track) return;
+    igTotal = igPosts.length;
+
+    track.innerHTML = igPosts.map(function(p, i) {
+      var imgSrc = p.media_type === 'VIDEO' ? p.thumbnail_url : p.media_url;
+      var caption = (p.caption || '').replace(/[#@]\S+/g, '').trim().slice(0, 120);
+      var typeLabel = p.media_type === 'VIDEO' ? '▶ Reel' : p.media_type === 'CAROUSEL_ALBUM' ? '⊞ Album' : '';
+      return '<a class="ig-card" href="' + p.permalink + '" target="_blank" rel="noopener" data-reveal="scale" data-delay="' + Math.min(i % 5 + 1, 5) + '">' +
+        '<img src="' + imgSrc + '" alt="Ascovita Instagram post" loading="lazy" onerror="this.closest(\'.ig-card\').style.display=\'none\'">' +
+        (typeLabel ? '<div class="ig-type-badge">' + typeLabel + '</div>' : '') +
+        '<div class="ig-overlay">' +
+          (caption ? '<div class="ig-caption">' + escHtml(caption) + '</div>' : '') +
+          '<div class="ig-meta">' +
+            '<span>❤️ ' + fmtNum(p.like_count || 0) + '</span>' +
+            '<span>💬 ' + fmtNum(p.comments_count || 0) + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+
+    buildDots();
+    updateSlider();
+    startAutoPlay();
+
+    // Re-trigger scroll reveal for new cards
+    if (typeof tagSections === 'function') setTimeout(tagSections, 100);
+  }
+
+  // ── DOTS ──
+  function buildDots() {
+    var el = document.getElementById('igDots');
+    if (!el) return;
+    var pages = Math.ceil(igTotal / CARDS_VISIBLE);
+    el.innerHTML = Array.from({length: pages}, function(_, i) {
+      return '<button class="ig-dot' + (i === 0 ? ' active' : '') + '" onclick="igGoTo(' + i + ')"></button>';
+    }).join('');
+  }
+
+  // ── SLIDE ──
+  window.igSlide = function(dir) {
+    var pages = Math.ceil(igTotal / CARDS_VISIBLE);
+    igIndex = (igIndex + dir + pages) % pages;
+    updateSlider();
+    resetAutoPlay();
+  };
+
+  window.igGoTo = function(page) {
+    igIndex = page;
+    updateSlider();
+    resetAutoPlay();
+  };
+
+  function updateSlider() {
+    var track = document.getElementById('igTrack');
+    if (!track) return;
+    var cardW = track.querySelector('.ig-card');
+    if (!cardW) return;
+    var gap = 14;
+    var cardWidth = cardW.getBoundingClientRect().width + gap;
+    track.style.transform = 'translateX(-' + (igIndex * CARDS_VISIBLE * cardWidth) + 'px)';
+
+    // Update dots
+    document.querySelectorAll('.ig-dot').forEach(function(d, i) {
+      d.classList.toggle('active', i === igIndex);
+    });
+
+    // Update nav buttons
+    var pages = Math.ceil(igTotal / CARDS_VISIBLE);
+    var prev = document.querySelector('.ig-prev');
+    var next = document.querySelector('.ig-next');
+    if (prev) prev.disabled = igTotal <= CARDS_VISIBLE;
+    if (next) next.disabled = igTotal <= CARDS_VISIBLE;
+  }
+
+  function startAutoPlay() {
+    igAutoTimer = setInterval(function() { igSlide(1); }, 4000);
+  }
+  function resetAutoPlay() {
+    clearInterval(igAutoTimer);
+    startAutoPlay();
+  }
+
+  // ── HELPERS ──
+  function fmtNum(n) { return n > 999 ? (n/1000).toFixed(1) + 'k' : n; }
+  function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ── INIT ──
+  document.addEventListener('DOMContentLoaded', function() {
+    // Only load when section scrolls into view (saves bandwidth)
+    var section = document.getElementById('igSection');
+    if (!section) return;
+    var obs = new IntersectionObserver(function(entries) {
+      if (entries[0].isIntersecting) {
+        loadInstagram();
+        obs.disconnect();
+      }
+    }, { threshold: 0.1 });
+    obs.observe(section);
+  });
+
+})();
+</script>
 
   <!-- FAQ PREVIEW -->
   <section class="section" style="background:var(--green-wash)">
@@ -1811,27 +3246,135 @@ textarea.form-input { resize:vertical; min-height:90px; }
   </div>
 </section>
 
-<!-- ═══════════ UGC / INSTAGRAM ═══════════ -->
-<section class="ugc-section">
+<!-- ═══════════ UGC / INSTAGRAM — LIVE FEED ═══════════ -->
+<section class="ugc-section" id="ugcSection">
   <div class="container">
-    <div style="text-align:center;margin-bottom:6px">
+    <div style="text-align:center;margin-bottom:24px">
       <span class="cf-section-label">Real People. Real Results.</span>
       <h2 class="cf-section-title">Our Community in Action</h2>
-      <p class="cf-section-sub" style="margin:0 auto 10px">Tag <strong>@ascovita_healthcare</strong> on Instagram to get featured. Join thousands of customers sharing their Ascovita journey.</p>
+      <p class="cf-section-sub" style="margin:0 auto 10px">
+        Tag <strong>@ascovita_healthcare</strong> on Instagram to get featured.
+        Join thousands of customers sharing their Ascovita journey.
+      </p>
     </div>
-    <div class="ugc-grid">
-      <div class="ugc-tile" onclick="window.open('https://instagram.com/ascovita_healthcare','_blank')" style="background:linear-gradient(135deg,#EAF2E0,#D4E8C0)">💚<div class="ugc-tile-ov"><div class="ugc-tile-ov-ico">📸</div><div class="ugc-tile-ov-txt">View on Instagram</div></div></div>
-      <div class="ugc-tile" onclick="window.open('https://instagram.com/ascovita_healthcare','_blank')" style="background:linear-gradient(135deg,#FDF6E3,#EAF2E0)">🌿<div class="ugc-tile-ov"><div class="ugc-tile-ov-ico">📸</div><div class="ugc-tile-ov-txt">View on Instagram</div></div></div>
-      <div class="ugc-tile" onclick="window.open('https://instagram.com/ascovita_healthcare','_blank')" style="background:linear-gradient(135deg,#EAF2E0,#F4F8EF)">✨<div class="ugc-tile-ov"><div class="ugc-tile-ov-ico">📸</div><div class="ugc-tile-ov-txt">View on Instagram</div></div></div>
-      <div class="ugc-tile" onclick="window.open('https://instagram.com/ascovita_healthcare','_blank')" style="background:linear-gradient(135deg,#F4F8EF,#EAF2E0)">🌱<div class="ugc-tile-ov"><div class="ugc-tile-ov-ico">📸</div><div class="ugc-tile-ov-txt">View on Instagram</div></div></div>
-      <div class="ugc-tile" onclick="window.open('https://instagram.com/ascovita_healthcare','_blank')" style="background:linear-gradient(135deg,#D4E8C0,#EAF2E0)">💊<div class="ugc-tile-ov"><div class="ugc-tile-ov-ico">📸</div><div class="ugc-tile-ov-txt">View on Instagram</div></div></div>
+
+    <!-- Live 5-post grid -->
+    <div class="ugc-grid" id="ugcGrid">
+      <!-- Skeleton placeholders while loading -->
+      <div class="ugc-tile ugc-skel"></div>
+      <div class="ugc-tile ugc-skel"></div>
+      <div class="ugc-tile ugc-skel"></div>
+      <div class="ugc-tile ugc-skel"></div>
+      <div class="ugc-tile ugc-skel"></div>
     </div>
+
     <div class="ugc-handle">
       Follow us <a href="https://instagram.com/ascovita_healthcare" target="_blank">@ascovita_healthcare</a> &nbsp;|&nbsp;
       Tag your results with <span class="ugc-hashtag">#AscovitaHealthcare</span>
     </div>
   </div>
 </section>
+
+<style>
+/* skeleton pulse */
+.ugc-skel {
+  background: linear-gradient(90deg,#EAF2E0 25%,#D4E8C0 50%,#EAF2E0 75%);
+  background-size: 400px 100%;
+  animation: skeletonWave 1.4s ease-in-out infinite;
+}
+/* video badge */
+.ugc-vid-badge {
+  position:absolute; top:7px; right:7px;
+  background:rgba(0,0,0,0.55); color:#fff;
+  font-size:.62rem; font-weight:700; padding:2px 7px;
+  border-radius:6px; backdrop-filter:blur(4px);
+  pointer-events:none;
+}
+/* caption overlay */
+.ugc-tile-caption {
+  color:rgba(255,255,255,.88);
+  font-size:.68rem; line-height:1.4;
+  display:-webkit-box; -webkit-line-clamp:4;
+  -webkit-box-orient:vertical; overflow:hidden;
+  max-width:90%; text-align:center; padding:0 6px;
+}
+/* likes row */
+.ugc-tile-likes {
+  color:rgba(255,255,255,.8);
+  font-size:.65rem; font-weight:600;
+  display:flex; gap:8px; margin-top:5px;
+}
+</style>
+
+<script>
+(function(){
+  var IG_BACKEND = 'https://ascovita-backend.onrender.com/api/instagram';
+
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmtN(n){ return n > 999 ? (n/1000).toFixed(1)+'k' : (n||0); }
+
+  async function loadUGC(){
+    var grid = document.getElementById('ugcGrid');
+    if(!grid) return;
+    try {
+      var r = await fetch(IG_BACKEND, { signal: AbortSignal.timeout(10000) });
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      var data = await r.json();
+      var posts = (data.data || data)
+        .filter(function(p){ return p.media_url || p.thumbnail_url; })
+        .slice(0, 5);   // always latest 5
+      if(!posts.length) throw new Error('empty');
+
+      grid.innerHTML = posts.map(function(p){
+        var img  = p.media_type === 'VIDEO' ? p.thumbnail_url : p.media_url;
+        var cap  = (p.caption||'').replace(/[#@]\S+/g,'').trim().slice(0,100);
+        var isVid = p.media_type === 'VIDEO';
+        var isAlb = p.media_type === 'CAROUSEL_ALBUM';
+        return '<a class="ugc-tile" href="'+p.permalink+'" target="_blank" rel="noopener" title="View on Instagram">'
+          + '<img src="'+img+'" alt="Ascovita Instagram" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s ease" onerror="this.closest(\'.ugc-tile\').style.display=\'none\'">'
+          + (isVid  ? '<div class="ugc-vid-badge">▶ Reel</div>' : '')
+          + (isAlb  ? '<div class="ugc-vid-badge">⊞</div>'      : '')
+          + '<div class="ugc-tile-ov">'
+          +   '<div class="ugc-tile-ov-ico">📸</div>'
+          +   (cap ? '<div class="ugc-tile-caption">'+esc(cap)+'</div>' : '')
+          +   '<div class="ugc-tile-likes"><span>❤️ '+fmtN(p.like_count)+'</span><span>💬 '+fmtN(p.comments_count)+'</span></div>'
+          + '</div>'
+          + '</a>';
+      }).join('');
+
+      /* zoom-on-hover for real images */
+      grid.querySelectorAll('.ugc-tile img').forEach(function(img){
+        img.closest('.ugc-tile').addEventListener('mouseenter',function(){ img.style.transform='scale(1.07)'; });
+        img.closest('.ugc-tile').addEventListener('mouseleave',function(){ img.style.transform='scale(1)'; });
+      });
+
+    } catch(e){
+      /* fallback — keep the emoji placeholders but make them clickable */
+      grid.innerHTML = [
+        {bg:'linear-gradient(135deg,#EAF2E0,#D4E8C0)', ico:'💚'},
+        {bg:'linear-gradient(135deg,#FDF6E3,#EAF2E0)', ico:'🌿'},
+        {bg:'linear-gradient(135deg,#EAF2E0,#F4F8EF)', ico:'✨'},
+        {bg:'linear-gradient(135deg,#F4F8EF,#EAF2E0)', ico:'🌱'},
+        {bg:'linear-gradient(135deg,#D4E8C0,#EAF2E0)', ico:'💊'}
+      ].map(function(t){
+        return '<a class="ugc-tile" href="https://instagram.com/ascovita_healthcare" target="_blank" style="background:'+t.bg+';font-size:2.5rem;display:flex;align-items:center;justify-content:center;text-decoration:none">'
+          + t.ico
+          + '<div class="ugc-tile-ov"><div class="ugc-tile-ov-ico">📸</div><div class="ugc-tile-ov-txt">View on Instagram</div></div>'
+          + '</a>';
+      }).join('');
+    }
+  }
+
+  /* lazy-load: fire only when section scrolls into view */
+  document.addEventListener('DOMContentLoaded', function(){
+    var sec = document.getElementById('ugcSection');
+    if(!sec) return;
+    new IntersectionObserver(function(entries, obs){
+      if(entries[0].isIntersecting){ loadUGC(); obs.disconnect(); }
+    }, {threshold:0.1}).observe(sec);
+  });
+})();
+</script>
 
 <!-- ═══════════ BUNDLE BUILDER ═══════════ -->
 <section class="bundle-section" id="bundle-builder">
@@ -2344,20 +3887,20 @@ textarea.form-input { resize:vertical; min-height:90px; }
           <p style="font-size:.95rem;opacity:.85;line-height:1.85;margin-bottom:28px">Founded in Anand, Gujarat — India's nutraceutical capital — Ascovita Healthcare began with a single mission: make premium-grade nutrition accessible to every Indian family, without compromise on quality or affordability.</p>
           <!-- Hero Stats Row -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px">
-            <div style="text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 8px">
-              <div style="font-size:1.9rem;font-weight:800;color:#D4A520;font-family:var(--font-display)">10K+</div>
+            <div data-reveal="up" data-delay="1" style="text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 8px">
+              <div data-count="10000" data-suffix="+" style="font-size:1.9rem;font-weight:800;color:#D4A520;font-family:var(--font-display)">10K+</div>
               <div style="font-size:.7rem;opacity:.75;margin-top:3px">Happy Customers</div>
             </div>
-            <div style="text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 8px">
-              <div style="font-size:1.9rem;font-weight:800;color:#D4A520;font-family:var(--font-display)">12+</div>
+            <div data-reveal="up" data-delay="2" style="text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 8px">
+              <div data-count="12" data-suffix="+" style="font-size:1.9rem;font-weight:800;color:#D4A520;font-family:var(--font-display)">12+</div>
               <div style="font-size:.7rem;opacity:.75;margin-top:3px">Products</div>
             </div>
-            <div style="text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 8px">
-              <div style="font-size:1.9rem;font-weight:800;color:#D4A520;font-family:var(--font-display)">4.8&#11088;</div>
+            <div data-reveal="up" data-delay="3" style="text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 8px">
+              <div style="font-size:1.9rem;font-weight:800;color:#D4A520;font-family:var(--font-display)">4.8⭐</div>
               <div style="font-size:.7rem;opacity:.75;margin-top:3px">Avg Rating</div>
             </div>
-            <div style="text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 8px">
-              <div style="font-size:1.9rem;font-weight:800;color:#D4A520;font-family:var(--font-display)">50+</div>
+            <div data-reveal="up" data-delay="4" style="text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:16px 8px">
+              <div data-count="50" data-suffix="+" style="font-size:1.9rem;font-weight:800;color:#D4A520;font-family:var(--font-display)">50+</div>
               <div style="font-size:.7rem;opacity:.75;margin-top:3px">B2B Partners</div>
             </div>
           </div>
@@ -3483,7 +5026,7 @@ textarea.form-input { resize:vertical; min-height:90px; }
         <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px">Subscription Benefits</div>
         <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:0.82rem;color:var(--gray)">
           <span>✅ Up to 20% savings vs one-time price</span>
-          <span>🚚 Free shipping on every order</span>
+          <span><svg class="ann-svg" width="16" height="16"><use href="#ico-truck"/></svg> Free shipping on every order</span>
           <span>🔒 Cancel anytime, no lock-in</span>
           <span>⚡ Priority dispatch</span>
           <span>🎁 Subscriber-only offers</span>
@@ -3663,9 +5206,9 @@ textarea.form-input { resize:vertical; min-height:90px; }
 </footer>
 
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-// ── CASHFREE SDK LOADER (v3 SANDBOX) ──
+// ── CASHFREE SDK LOADER (v3 PRODUCTION) ──
 (function() {
-  // Only official Cashfree v3 CDN works reliably with SANDBOX mode
+  // Only official Cashfree v3 CDN works reliably with PRODUCTION mode
   var SOURCES = [
     'https://sdk.cashfree.com/js/v3/cashfree.js',
     'https://sdk.cashfree.com/js/v3/cashfree.min.js',
@@ -3675,15 +5218,15 @@ textarea.form-input { resize:vertical; min-height:90px; }
     // Try all possible ways Cashfree v3 exposes itself
     if (typeof Cashfree === 'function') {
       try {
-        window.cashfree = Cashfree({ mode: 'SANDBOX' });
-        console.log('✅ Cashfree SDK v3 ready — SANDBOX mode');
+        window.cashfree = Cashfree({ mode: 'PRODUCTION' });
+        console.log('✅ Cashfree SDK v3 ready — PRODUCTION mode');
         return true;
       } catch(e) { console.warn('Cashfree() init error:', e.message); }
     }
     if (typeof window.Cashfree === 'function') {
       try {
-        window.cashfree = window.Cashfree({ mode: 'SANDBOX' });
-        console.log('✅ Cashfree SDK v3 ready (window) — SANDBOX mode');
+        window.cashfree = window.Cashfree({ mode: 'PRODUCTION' });
+        console.log('✅ Cashfree SDK v3 ready (window) — PRODUCTION mode');
         return true;
       } catch(e) { console.warn('window.Cashfree() init error:', e.message); }
     }
@@ -3773,13 +5316,99 @@ function submitB2BEnquiry() {
 // ASCOVITA STORE — PRODUCT DATA & ENGINE
 // ═══════════════════════════════════════════════════════
 // ========== ASCOVITA PRODUCT DATA ==========
+// ══════════════════════════════════════════════════════════════
+// BACKEND CONNECTION — Supabase via Render API
+// Admin changes (products, stock, coupons) reflect here live
+// ══════════════════════════════════════════════════════════════
+const API_BASE = 'https://ascovita-backend.onrender.com';
+
+// Merge backend product data over static product array
+// Backend fields: id, name, price, sale_price, stock, active, image, image2, badge, description, category, brand, tags, rating
+function mergeBackendProducts(backendProducts) {
+  if (!backendProducts || !backendProducts.length) return;
+  backendProducts.forEach(bp => {
+    const idx = PRODUCTS.findIndex(p => p.id === bp.id);
+    if (idx >= 0) {
+      // Update live fields from backend (price, stock, active, images, badge)
+      const p = PRODUCTS[idx];
+      if (bp.price       != null) p.price      = parseFloat(bp.price);
+      if (bp.sale_price  != null) p.salePrice   = parseFloat(bp.sale_price); else if (bp.sale_price === null) p.salePrice = null;
+      if (bp.stock       != null) p.stock       = parseInt(bp.stock);
+      if (bp.active      != null) p.active      = bp.active;
+      if (bp.image       )        p.image       = bp.image;
+      if (bp.image2      )        p.image2      = bp.image2;
+      if (bp.badge       )        p.badge       = bp.badge;
+      if (bp.name        )        p.name        = bp.name;
+      if (bp.description )        p.description = bp.description;
+      if (bp.offer_text  )        p.offer       = bp.offer_text;
+    } else if (bp.active !== false) {
+      // New product added from admin — add it to the store
+      PRODUCTS.push({
+        id: bp.id, name: bp.name, brand: bp.brand || 'Ascovita',
+        category: bp.category || 'effervescent',
+        tags: bp.tags ? bp.tags.split(',').map(t=>t.trim()) : ['featured'],
+        price: parseFloat(bp.price) || 499,
+        salePrice: bp.sale_price ? parseFloat(bp.sale_price) : null,
+        offer: bp.offer_text || null,
+        image: bp.image || '', image2: bp.image2 || '',
+        rating: parseFloat(bp.rating) || 4.5, reviews: 0,
+        stock: parseInt(bp.stock) || 100,
+        badge: bp.badge || '',
+        description: bp.description || '',
+        keyIngredients: [], howToUse: ''
+      });
+    }
+  });
+  // Hide inactive products
+  const toHide = backendProducts.filter(bp => bp.active === false).map(bp => bp.id);
+  toHide.forEach(id => {
+    const p = PRODUCTS.find(p => p.id === id);
+    if (p) p._hidden = true;
+  });
+}
+
+// Live coupon validation against backend (used in applyPromoCode below)
+async function validateCouponWithBackend(code, subtotal) {
+  try {
+    const r = await fetch(`${API_BASE}/api/coupons/validate`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({code, subtotal}),
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.valid ? d : null;
+  } catch(e) { return null; }
+}
+
+// Fetch live products from backend on page load (non-blocking)
+async function syncProductsFromBackend() {
+  try {
+    const r = await fetch(`${API_BASE}/api/products`, {signal: AbortSignal.timeout(8000)});
+    if (!r.ok) return;
+    const data = await r.json();
+    const products = data.data || data;
+    if (Array.isArray(products) && products.length) {
+      mergeBackendProducts(products);
+      // Re-render any already-shown grids with updated data
+      try { renderFeatured(); } catch(e){}
+      try { renderNewArrivals(); } catch(e){}
+      try { const sg = document.getElementById('shopGrid'); if(sg && sg.children.length > 0) renderShopGrid(); } catch(e){}
+      console.log(`✅ Ascovita: Synced ${products.length} products from backend`);
+    }
+  } catch(e) {
+    console.log('ℹ️ Ascovita: Using static product data (backend offline or waking up)');
+  }
+}
+
 // Updated: New products, Cashfree payment, Shiprocket integration
 
 const ASCOVITA_LOGO = "https://static.wixstatic.com/media/f0adaf_05a2b4385ab84453aa9c2e9a1cec4b97~mv2.png/v1/fill/w_346,h_166,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/f0adaf_05a2b4385ab84453aa9c2e9a1cec4b97~mv2.png";
 
 const CASHFREE_CONFIG = {
-  appId: 'TEST10909359a2b60b1dde0c88c62dda9539090',
-  mode: 'SANDBOX',
+  appId: 'YOUR_LIVE_CASHFREE_APP_ID', // ⚠️ Replace with your LIVE App ID from Cashfree dashboard
+  mode: 'PRODUCTION',
 };
 
 const SHIPROCKET_CONFIG = {
@@ -4888,6 +6517,8 @@ function bootApp() {
   try { initCashfree(); } catch(e) {}
   try { renderFullFaq(); } catch(e) {}
   try { const hfw2=document.getElementById('homeFaqWrap'); if(hfw2) hfw2.innerHTML = FAQS.slice(0,5).map(renderFaqItem).join(''); } catch(e) {}
+  // 🔗 Sync live product data from Supabase backend (non-blocking)
+  syncProductsFromBackend();
 
   // ── Handle Cashfree redirect return ──
   var sp = new URLSearchParams(window.location.search);
@@ -4952,7 +6583,7 @@ function initCashfree() {
   // This function is kept for compatibility but init happens in onload.
   if (typeof Cashfree !== 'undefined' && !window.cashfree) {
     try {
-      window.cashfree = Cashfree({ mode: 'SANDBOX' });
+      window.cashfree = Cashfree({ mode: 'PRODUCTION' });
       console.log('✅ Cashfree SDK ready (late init)');
     } catch(e) {}
   }
@@ -5255,10 +6886,10 @@ async function startPayment(method) {
         // Try all ways SDK might be available
         if (window.cashfree) { cashfree = window.cashfree; break; }
         if (typeof Cashfree === 'function') {
-          try { cashfree = window.cashfree = Cashfree({ mode: 'SANDBOX' }); break; } catch(e) {}
+          try { cashfree = window.cashfree = Cashfree({ mode: 'PRODUCTION' }); break; } catch(e) {}
         }
         if (typeof window.Cashfree === 'function') {
-          try { cashfree = window.cashfree = window.Cashfree({ mode: 'SANDBOX' }); break; } catch(e) {}
+          try { cashfree = window.cashfree = window.Cashfree({ mode: 'PRODUCTION' }); break; } catch(e) {}
         }
         updateProcessingStatus(45, 'Loading payment gateway... (' + (i+1) + 's)');
       }
@@ -5526,6 +7157,35 @@ async function finalizeOrder(orderId, formData, total, method) {
     });
     localStorage.setItem('asc_orders', JSON.stringify(orders));
   } catch(e) {}
+
+  // ── 2b. Save order to Supabase via backend (shows in Admin) ────
+  if (method !== 'demo') {
+    try {
+      await fetch('https://ascovita-backend.onrender.com/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(10000),
+        body: JSON.stringify({
+          id: orderId,
+          customer_name: `${formData.firstName} ${formData.lastName}`,
+          customer_email: formData.email,
+          customer_phone: formData.phone,
+          address_line1: formData.addr1,
+          address_line2: formData.addr2 || '',
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pin,
+          total: total,
+          payment_status: 'Paid',
+          fulfillment: 'Pending',
+          payment_method: method,
+          cf_order_id: orderId,
+          shiprocket_id: srOrderId || null,
+          items: JSON.stringify(srItems.map(i=>({name:i.name,qty:i.units,price:i.selling_price,id:cartSnapshot.find(c=>PRODUCTS.find(p=>p.id===c.id)?.name===i.name.split(' (')[0])?.id}))),
+        })
+      });
+    } catch(e) { console.warn('Order save to backend failed:', e.message); }
+  }
 
   // ── 3. Generate invoice ────────────────────────────────────
   let invoiceHtml = null;
@@ -7322,23 +8982,42 @@ const PROMO_CODES = {
 
 let activePromoCode = null;
 
-function applyPromoCode() {
+async function applyPromoCode() {
   const input = document.getElementById('promoCodeInput');
   const status = document.getElementById('promoStatus');
   if (!input || !status) return;
   const code = input.value.trim().toUpperCase();
   if (!code) { status.innerHTML = '<div style="font-size:0.78rem;color:var(--red);margin-top:6px">Please enter a promo code.</div>'; return; }
-  const promo = PROMO_CODES[code];
-  if (!promo) {
-    status.innerHTML = `<div style="font-size:0.78rem;color:var(--red);margin-top:6px">❌ Invalid promo code. Try: GREEN20, FIRST100, TEST100</div>`;
-    activePromoCode = null;
+
+  // Show checking state
+  status.innerHTML = '<div style="font-size:0.78rem;color:var(--gray);margin-top:6px">⏳ Checking code...</div>';
+
+  // First try static codes (instant), then try backend coupons
+  const staticPromo = PROMO_CODES[code];
+  if (staticPromo) {
+    activePromoCode = { code, ...staticPromo };
+    status.innerHTML = `<div class="promo-badge">✅ ${code} applied — ${staticPromo.label} <button class="promo-remove" onclick="removePromoCode()">✕</button></div>`;
     renderCheckoutSummary();
+    showToast(`🏷️ Code ${code} applied!`);
     return;
   }
-  activePromoCode = { code, ...promo };
-  status.innerHTML = `<div class="promo-badge">✅ ${code} applied — ${promo.label} <button class="promo-remove" onclick="removePromoCode()">✕</button></div>`;
+
+  // Try backend (admin-created coupons from Supabase)
+  const subtotal = STORE.getSubtotal();
+  const backendPromo = await validateCouponWithBackend(code, subtotal);
+  if (backendPromo) {
+    // Map backend response to frontend promo format
+    const type = backendPromo.type === 'percent' ? 'pct' : backendPromo.type === 'flat' ? 'flat' : 'flat';
+    activePromoCode = { code, type, value: backendPromo.value, label: backendPromo.label || `${code} applied` };
+    status.innerHTML = `<div class="promo-badge">✅ ${code} applied — ${activePromoCode.label} <button class="promo-remove" onclick="removePromoCode()">✕</button></div>`;
+    renderCheckoutSummary();
+    showToast(`🏷️ Code ${code} applied!`);
+    return;
+  }
+
+  status.innerHTML = `<div style="font-size:0.78rem;color:var(--red);margin-top:6px">❌ Invalid or expired promo code.</div>`;
+  activePromoCode = null;
   renderCheckoutSummary();
-  showToast(`🏷️ Code ${code} applied!`);
 }
 
 function removePromoCode() {
@@ -7624,7 +9303,57 @@ function startSubscription(plan) {
 // Init wishlist badge on load
 document.addEventListener('DOMContentLoaded', function() {
   try { updateWishBadge(); } catch(e) {}
+
+  // ── 3D TILT EFFECT on cert cards, cat cards, product cards ──
+  function addTilt(selector, maxTilt, scale) {
+    document.querySelectorAll(selector).forEach(card => {
+      card.style.transformStyle = 'preserve-3d';
+      card.style.transition = 'transform 0.15s ease, box-shadow 0.15s ease';
+      card.addEventListener('mousemove', function(e) {
+        const rect = card.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top  + rect.height / 2;
+        const dx = (e.clientX - cx) / (rect.width  / 2);
+        const dy = (e.clientY - cy) / (rect.height / 2);
+        const rotX = -dy * maxTilt;
+        const rotY =  dx * maxTilt;
+        card.style.transform = `perspective(600px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale(${scale})`;
+      });
+      card.addEventListener('mouseleave', function() {
+        card.style.transform = 'perspective(600px) rotateX(0deg) rotateY(0deg) scale(1)';
+      });
+    });
+  }
+
+  // Apply tilt after a short delay to ensure DOM is ready
+  setTimeout(function() {
+    addTilt('.cert-card', 8, 1.04);
+    addTilt('.cat-card', 6, 1.03);
+    addTilt('.cat-card-sm', 10, 1.06);
+  }, 500);
+
+  // ── SCROLL-REVEAL for SVG icons ──
+  const revealObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0) scale(1)';
+        revealObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2 });
+
+  setTimeout(function() {
+    document.querySelectorAll('.cert-card, .cat-card, .cat-card-sm').forEach(function(el, i) {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px) scale(0.95)';
+      el.style.transition = 'opacity 0.5s ease ' + (i * 0.07) + 's, transform 0.5s ease ' + (i * 0.07) + 's';
+      revealObs.observe(el);
+    });
+  }, 100);
 });
+
+
 
 // ═══════════════════════════════════════════════════════
 let heroCurrentSlide = 0;
