@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Ascovita</title>
+  <script>
+    // GitHub Pages SPA redirect trick
+    // When GitHub 404s on /about, /shop etc., this page catches it
+    // and redirects to index.html with the path encoded as a query param
+    var path = window.location.pathname;
+    var search = window.location.search;
+    // Encode the path into a query string so index.html can read it
+    var redirect = window.location.origin + '/?p=' + encodeURIComponent(path + search);
+    window.location.replace(redirect);
+  </script>
+</head>
+<body></body>
+</html>
