@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- ═══ MAIN PAGES ═══ -->
+  <url>
+    <loc>https://www.ascovita.com/</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/shop</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/about</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/b2b</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/blog</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/contact</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/faq</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/advisor</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- ═══ PRODUCT PAGES ═══ -->
+  <url>
+    <loc>https://www.ascovita.com/product/maltidiata-premium-multivitamin</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+    <!-- Maltidiata – Premium Multivitamin – 25% OFF | Price: ₹150 | Keywords: multivitamin under 200 rupees best multivitamin India -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/spirulina-calcium</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- Spirulina + Calcium | Price: ₹349 | Keywords: spirulina calcium tablet India bone health supplement -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/spirulina-magnesium</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- Spirulina + Magnesium | Price: ₹349 | Keywords: spirulina magnesium supplement India sleep supplement -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/spirulina-vitamin-b12</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- Spirulina + Vitamin B12 | Price: ₹399 | Keywords: spirulina B12 tablet India energy supplement -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/glutathione-effervescent</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- Glutathione Effervescent – 20% OFF | Price: ₹720 | Keywords: glutathione effervescent India skin whitening supplement -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/apple-cider-vinegar-lemon</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- Apple Cider Vinegar – Lemon – 14% OFF | Price: ₹299 | Keywords: apple cider vinegar lemon effervescent India weight loss -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/apple-cider-vinegar-green-apple</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- Apple Cider Vinegar – Green Apple – 14% OFF | Price: ₹299 | Keywords: apple cider vinegar green apple tablet India metabolism -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/biotin-effervescent</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+    <!-- Biotin Effervescent – 25% OFF | Price: ₹449 | Keywords: biotin effervescent India hair growth supplement -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/l-lysine-effervescent</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- L-Lysine Effervescent – 16% OFF | Price: ₹379 | Keywords: l-lysine effervescent India immunity supplement -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/vitamin-c-effervescent</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+    <!-- Vitamin C Effervescent – 29% OFF | Price: ₹249 | Keywords: vitamin c effervescent India immunity booster -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/moringa-tablets</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- Moringa Tablets | Price: ₹299 | Keywords: moringa tablets India moringa oleifera supplement -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/energy-pro</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- Energy Pro – 18% OFF | Price: ₹449 | Keywords: energy supplement India ashwagandha KSM-66 fatigue -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/spirulina-combo-pack</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- Spirulina Combo Pack – 9% OFF | Price: ₹999 | Keywords: spirulina combo pack India supplement bundle -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/complete-glow-kit</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+    <!-- Complete Glow Kit – 34% OFF | Price: ₹1199 | Keywords: skin glow kit India glutathione biotin multivitamin bundle -->
+  </url>
+  <url>
+    <loc>https://www.ascovita.com/product/acv-duo-bundle</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+    <!-- ACV Duo Bundle – 21% OFF | Price: ₹549 | Keywords: apple cider vinegar duo bundle India ACV weight loss -->
+  </url>
+</urlset>

@@ -1,0 +1,12 @@
+# Ascovita SPA — clean URL routing
+# All page and product paths serve index.html
+/shop                       /index.html  200
+/blog                       /index.html  200
+/about                      /index.html  200
+/b2b                        /index.html  200
+/contact                    /index.html  200
+/faq                        /index.html  200
+/advisor                    /index.html  200
+/wishlist                   /index.html  200
+/subscriptions              /index.html  200
+/product/*                  /index.html  200
