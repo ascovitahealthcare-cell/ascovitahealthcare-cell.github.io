@@ -1,0 +1,17 @@
+# Ascovita SPA — Apache rewrite rules for clean URLs
+# Upload this .htaccess to your public_html root
+
+Options -MultiViews
+RewriteEngine On
+RewriteBase /
+
+# Don't rewrite actual files or directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Route all SPA paths to index.html
+RewriteRule ^(shop|blog|about|b2b|contact|faq|advisor|wishlist|subscriptions)/?$ /index.html [L]
+
+# Redirect old hash URLs to clean URLs (SEO)
+RewriteCond %{THE_REQUEST} \s/#(shop|blog|about|b2b|contact|faq|advisor)
+RewriteRule .* /%1? [R=301,L]
