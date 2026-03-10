@@ -1208,24 +1208,12 @@ const SESSION_DURATION = 2 * 60 * 60 * 1000;
 let analyticsCurrentPeriod = 'today';
 
 // ═══════════════════════════════════════════════════
-// MOCK DATA
+// LIVE DATA ONLY — no mock/demo data
+// All data comes from the real Supabase backend
 // ═══════════════════════════════════════════════════
-const MOCK_STATS = {totalRevenue:248500,totalOrders:312,totalCustomers:189,pendingOrders:7,todayRevenue:8200,todayOrders:11,totalProducts:14,revenue7d:[12000,8500,15200,9800,18600,11200,8200],labels7d:[]};
-(()=>{const d=new Date();for(let i=6;i>=0;i--){const dd=new Date(d);dd.setDate(d.getDate()-i);MOCK_STATS.labels7d.push(dd.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));}})();
-const MOCK_ORDERS = [
-  {id:'ORD-001',customer_name:'Priya Sharma',customer_email:'priya@gmail.com',customer_phone:'+91 98765 43210',total:999,payment_status:'Paid',fulfillment:'Delivered',created_at:new Date(Date.now()-86400000*2).toISOString(),items:[{name:'Glutathione Effervescent',qty:2,price:499}]},
-  {id:'ORD-002',customer_name:'Rahul Mehta',customer_email:'rahul@gmail.com',customer_phone:'+91 87654 32109',total:499,payment_status:'Paid',fulfillment:'Shipped',created_at:new Date(Date.now()-86400000).toISOString(),items:[{name:'Spirulina + B12',qty:1,price:499}]},
-  {id:'ORD-003',customer_name:'Ananya Patel',customer_email:'ananya@gmail.com',customer_phone:'+91 76543 21098',total:1497,payment_status:'Paid',fulfillment:'Processing',created_at:new Date(Date.now()-3600000).toISOString(),items:[{name:'ACV Effervescent',qty:3,price:499}]},
-  {id:'ORD-004',customer_name:'Vikram Singh',customer_email:'vikram@gmail.com',customer_phone:'+91 65432 10987',total:749,payment_status:'Pending',fulfillment:'Pending',created_at:new Date().toISOString(),items:[{name:'Vitamin D3+K2',qty:1,price:749}]},
-  {id:'ORD-005',customer_name:'Deepa Nair',customer_email:'deepa@gmail.com',customer_phone:'+91 54321 09876',total:599,payment_status:'Failed',fulfillment:'Cancelled',created_at:new Date(Date.now()-7200000).toISOString(),items:[{name:'Ashwagandha KSM-66',qty:1,price:599}]},
-];
-const MOCK_PRODUCTS = [
-  {id:1,name:'Glutathione Effervescent',brand:'Ascovita',category:'effervescent',price:899,sale_price:584,stock:45,rating:4.8,reviews:124,active:true,badge:'🔥 Best Seller',image:'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=80&q=80'},
-  {id:2,name:'Spirulina + B12 Effervescent',brand:'Ascovita',category:'spirulina',price:549,sale_price:349,stock:78,rating:4.7,reviews:89,active:true,badge:'💚 New',image:'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?w=80&q=80'},
-  {id:3,name:'ACV Effervescent',brand:'Ascovita',category:'effervescent',price:549,sale_price:349,stock:12,rating:4.5,reviews:56,active:true,badge:''},
-  {id:4,name:'Vitamin D3+K2',brand:'Ascovita',category:'premium',price:749,sale_price:null,stock:95,rating:4.6,reviews:34,active:true,badge:'⭐ Premium'},
-  {id:5,name:'Ashwagandha KSM-66',brand:'Ascovita',category:'ayurvedic',price:599,sale_price:499,stock:8,rating:4.4,reviews:67,active:false,badge:''},
-];
+// Empty stats structure — filled by /api/admin/stats
+const EMPTY_STATS = {totalRevenue:0,totalOrders:0,totalCustomers:0,pendingOrders:0,todayRevenue:0,todayOrders:0,totalProducts:0,lowStockCount:0,revenue7d:[0,0,0,0,0,0,0],labels7d:[]};
+(()=>{const d=new Date();for(let i=6;i>=0;i--){const dd=new Date(d);dd.setDate(d.getDate()-i);EMPTY_STATS.labels7d.push(dd.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));}})();
 
 // ═══════════════════════════════════════════════════
 // STATE
@@ -1314,8 +1302,11 @@ async function retryBackend(){
   }
 
   if(!serverUp){
-    showOfflineBanner(false); // true offline
-    if(ADMIN_JWT){ showAdminApp(); } // show demo data mode
+    // Server unreachable — stay on login, don't show fake data
+    hideOfflineBanner();
+    ADMIN_JWT=''; sessionStorage.removeItem('asc_admin_jwt');
+    const errEl=document.querySelector('.login-err');
+    if(errEl){errEl.style.display='block';errEl.textContent='Cannot reach server. Please try again.';}
     return;
   }
 
@@ -1386,16 +1377,10 @@ async function api(path,method='GET',body=null){
     // Only mark offline + show banner on true network failure (no response at all)
     if(e instanceof TypeError||e.name==='TimeoutError'||e.name==='AbortError'){
       BACKEND_ONLINE=false;
-      showOfflineBanner(true); // show as "waking" not "offline" — may just be slow
-      if(method==='GET'){
-        if(path.includes('/orders'))  return {data:MOCK_ORDERS,stats:MOCK_STATS};
-        if(path.includes('/products'))return {data:MOCK_PRODUCTS};
-        if(path.includes('/stats'))   return {stats:MOCK_STATS};
-        if(path.includes('/customers'))return {data:[]};
-        if(path.includes('/coupons')) return {data:[]};
-        return {data:[]};
-      }
-      showToast('Backend slow / offline — check connection','error');
+      showOfflineBanner(true);
+      // No demo fallback — show empty state so user knows data is not loaded
+      if(method==='GET') return {data:[],stats:{totalRevenue:0,totalOrders:0,totalCustomers:0,pendingOrders:0,todayRevenue:0,todayOrders:0,totalProducts:0,lowStockCount:0,revenue7d:[0,0,0,0,0,0,0],labels7d:EMPTY_STATS.labels7d}};
+      showToast('Cannot save — server unreachable','error');
     }
     throw e;
   }
@@ -1536,24 +1521,21 @@ async function loadDashboard(retryCount=0){
     const pb=document.getElementById('pendingBadge');if(pb&&s.pendingOrders>0){pb.textContent=s.pendingOrders;pb.style.display='inline-flex';}
     renderDashboardCharts(s); renderRecentOrders(); renderTodayStats(s); renderLowStock(); loadPhotoLibrary();
     renderAnalytics(s);
-    hideOfflineBanner(); // ✅ ensure banner hidden on success
+    hideOfflineBanner();
   }catch(e){
     if(e.message==='Session expired') return;
     if(!BACKEND_ONLINE && retryCount===0){
-      // First failure — wait 5s and retry once (Supabase may need a moment after cold start)
       console.log('Dashboard load failed, retrying in 5s…');
       setTimeout(()=>loadDashboard(1), 5000);
       return;
     }
-    if(!BACKEND_ONLINE){
-      // Genuinely offline after retry — show demo data
-      const s=MOCK_STATS;
-      setEl('ds-rev','₹'+s.totalRevenue.toLocaleString('en-IN'));setEl('ds-ord',s.totalOrders);setEl('ds-cust',s.totalCustomers);setEl('ds-pend',s.pendingOrders);
-      setEl('ds-rev2','₹'+s.todayRevenue.toLocaleString('en-IN')+' today');setEl('ds-ord2',s.todayOrders+' today');
-      ORDERS=MOCK_ORDERS;PRODUCTS=MOCK_PRODUCTS;
-      renderDashboardCharts(s);renderRecentOrders();renderTodayStats(s);renderLowStock();
-      renderAnalytics(s);
-    }
+    // Show empty/zero state — no fake data
+    const s=EMPTY_STATS;
+    setEl('ds-rev','₹0');setEl('ds-ord',0);setEl('ds-cust',0);setEl('ds-pend',0);
+    setEl('ds-rev2','No data yet');setEl('ds-ord2','—');
+    ORDERS=[];PRODUCTS=[];
+    renderDashboardCharts(s);renderRecentOrders();renderTodayStats(s);renderLowStock();
+    showToast('Could not load data — retrying…','error');
   }
 }
 
@@ -1570,7 +1552,22 @@ function setAnalyticsPeriod(period, btn){
 }
 
 function renderAnalyticsForPeriod(period){
-  const s=MOCK_STATS;
+  // Build stats from real ORDERS data
+  const _anPaid=ORDERS.filter(o=>o.payment_status==='Paid');
+  const _anToday=new Date().toISOString().split('T')[0];
+  const s={
+    totalRevenue:_anPaid.reduce((a,o)=>a+parseFloat(o.total||0),0),
+    totalOrders:ORDERS.length,
+    totalCustomers:CUSTOMERS.length,
+    todayRevenue:_anPaid.filter(o=>(o.created_at||'').startsWith(_anToday)).reduce((a,o)=>a+parseFloat(o.total||0),0),
+    todayOrders:ORDERS.filter(o=>(o.created_at||'').startsWith(_anToday)).length,
+    revenue7d:EMPTY_STATS.revenue7d.slice(),labels7d:EMPTY_STATS.labels7d.slice(),
+  };
+  // Build 7-day revenue from real orders
+  const _anNow=new Date();
+  const _rev7=[0,0,0,0,0,0,0],_lbl7=[];
+  for(let i=6;i>=0;i--){const _d=new Date(_anNow);_d.setDate(_anNow.getDate()-i);_lbl7.push(_d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));const _ds=_d.toISOString().split('T')[0];_rev7[6-i]=_anPaid.filter(o=>(o.created_at||'').startsWith(_ds)).reduce((a,o)=>a+parseFloat(o.total||0),0);}
+  s.revenue7d=_rev7;s.labels7d=_lbl7;
   // Generate period data
   let numBars, barData, labels, totalRev, totalOrd, avgOV;
   const today=new Date();
@@ -1593,18 +1590,26 @@ function renderAnalyticsForPeriod(period){
   const lblEl=document.getElementById('anRevLabels');
   if(lblEl){const step=Math.max(1,Math.floor(labels.length/8));lblEl.innerHTML=labels.filter((_,i)=>i%step===0||i===labels.length-1).map(l=>`<span>${l}</span>`).join('');}
 
-  // Status chart
-  renderBarChart('anStatusChart',[{l:'Delivered',v:45,c:'var(--green)'},{l:'Shipped',v:20,c:'var(--accent)'},{l:'Processing',v:15,c:'var(--gold)'},{l:'Pending',v:12,c:'var(--orange)'},{l:'Cancelled',v:8,c:'var(--red)'}]);
-  // Category chart
-  renderBarChart('anCatChart',[{l:'Effervescent',v:52,c:'var(--accent)'},{l:'Spirulina',v:22,c:'var(--green)'},{l:'Premium',v:14,c:'var(--gold)'},{l:'Ayurvedic',v:8,c:'var(--purple)'},{l:'Others',v:4,c:'var(--text3)'}]);
+  // Status chart from real orders
+  const _anStatuses=['Delivered','Shipped','Processing','Pending','Cancelled'];
+  const _anCols=['var(--green)','var(--accent)','var(--gold)','var(--orange)','var(--red)'];
+  const _anSD=_anStatuses.map((st,i)=>({l:st,v:ORDERS.filter(o=>o.fulfillment===st).length,c:_anCols[i]})).filter(x=>x.v>0);
+  if(_anSD.length) renderBarChart('anStatusChart',_anSD);
+  // Category chart from real products
+  const _catMap={};PRODUCTS.forEach(p=>{const c=(p.category||'Other');_catMap[c]=(_catMap[c]||0)+1;});
+  const _catCols=['var(--accent)','var(--green)','var(--gold)','var(--purple)','var(--text3)'];
+  const _catD=Object.entries(_catMap).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([l,v],i)=>({l,v,c:_catCols[i]||'var(--accent)'}));
+  if(_catD.length) renderBarChart('anCatChart',_catD);
 
   // KPI row
   const kpiEl=document.getElementById('anKpiRow');
   if(kpiEl){
+    const _paidCount=ORDERS.filter(o=>o.payment_status==='Paid').length;
+    const _paidRate=ORDERS.length?Math.round((_paidCount/ORDERS.length)*100):0;
     const kpis=[
-      {v:'68%',l:'Paid Rate',c:'up'},{v:'₹'+avgOV.toLocaleString('en-IN'),l:'Avg Order Value',c:'up'},
-      {v:'2.4%',l:'Return Rate',c:'dn'},{v:'3.1d',l:'Avg Delivery',c:'neu'},
-      {v:'32%',l:'Repeat Buyers',c:'up'},{v:'₹'+Math.round(totalRev/( (s.totalCustomers||1))).toLocaleString('en-IN'),l:'Revenue / Customer',c:'up'},
+      {v:_paidRate+'%',l:'Paid Rate',c:'up'},{v:'₹'+avgOV.toLocaleString('en-IN'),l:'Avg Order Value',c:'up'},
+      {v:'—',l:'Return Rate',c:'neu'},{v:'—',l:'Avg Delivery',c:'neu'},
+      {v:s.totalCustomers||0,l:'Total Customers',c:'up'},{v:'₹'+Math.round(totalRev/(s.totalCustomers||1)).toLocaleString('en-IN'),l:'Revenue / Customer',c:'up'},
     ];
     kpiEl.innerHTML=kpis.map(k=>`<div class="kpi-chip"><div class="kv">${k.v}</div><div class="kl">${k.l}</div><div class="kc ${k.c==='up'?'up':k.c==='dn'?'dn':'neu'}">${k.c==='up'?'↑ +vs prev':k.c==='dn'?'↓ -vs prev':'→ stable'}</div></div>`).join('');
   }
@@ -1624,13 +1629,21 @@ function exportAnalyticsExcel(){
 // ═══════════════════════════════════════════════════
 function renderDashboardCharts(s){
   const rev=s.revenue7d||[12000,8500,15200,9800,18600,11200,8200];
-  const labels=s.labels7d||MOCK_STATS.labels7d;
+  const labels=s.labels7d||EMPTY_STATS.labels7d;
   const maxV=Math.max(...rev)||1;
   const rc=document.getElementById('revChart');
   if(rc)rc.innerHTML=rev.map((v,i)=>`<div class="mini-bar ${i===rev.length-1?'hi':''}" style="height:${Math.round((v/maxV)*100)}%" title="₹${v.toLocaleString('en-IN')}"></div>`).join('');
   const rl=document.getElementById('revLabels');if(rl)rl.innerHTML=labels.map(l=>`<span>${l}</span>`).join('');
-  renderBarChart('topProdChart',PRODUCTS.slice(0,5).map(p=>({l:p.name.split(' ')[0],v:Math.round(Math.random()*80+20),c:'var(--accent)'})));
-  renderBarChart('statusChart',[{l:'Delivered',v:45,c:'var(--green)'},{l:'Shipped',v:20,c:'var(--accent)'},{l:'Processing',v:15,c:'var(--gold)'},{l:'Pending',v:12,c:'var(--orange)'},{l:'Cancelled',v:8,c:'var(--red)'}]);
+  // Top products by order count from real data
+  const _prodCounts={};
+  ORDERS.forEach(o=>{const items=typeof o.items==='string'?JSON.parse(o.items||'[]'):(o.items||[]);items.forEach(it=>{if(it.name)_prodCounts[it.name.split(' ')[0]]=(_prodCounts[it.name.split(' ')[0]]||0)+(it.qty||1);});});
+  const _topProds=Object.entries(_prodCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([l,v])=>({l,v,c:'var(--accent)'}));
+  if(_topProds.length) renderBarChart('topProdChart',_topProds);
+  // Order status breakdown from real data
+  const _statuses=['Delivered','Shipped','Processing','Pending','Cancelled'];
+  const _sCols=['var(--green)','var(--accent)','var(--gold)','var(--orange)','var(--red)'];
+  const _statusData=_statuses.map((s,i)=>({l:s,v:ORDERS.filter(o=>o.fulfillment===s).length,c:_sCols[i]})).filter(x=>x.v>0);
+  if(_statusData.length) renderBarChart('statusChart',_statusData);
 }
 
 function renderBarChart(elId,data){
@@ -2279,8 +2292,16 @@ function renderWAHistory(){
 function saveWASettings(){showToast('WhatsApp settings saved!','success');}
 
 function generateWAPreview(){
-  const s=MOCK_STATS;
-  const lowStock=PRODUCTS.filter(p=>p.stock<20);
+  // Build real stats from loaded data
+  const _paid=ORDERS.filter(o=>o.payment_status==='Paid');
+  const _today=new Date().toISOString().split('T')[0];
+  const s={
+    todayRevenue:_paid.filter(o=>(o.created_at||'').startsWith(_today)).reduce((a,o)=>a+parseFloat(o.total||0),0),
+    totalRevenue:_paid.reduce((a,o)=>a+parseFloat(o.total||0),0),
+    todayOrders:ORDERS.filter(o=>(o.created_at||'').startsWith(_today)).length,
+    pendingOrders:ORDERS.filter(o=>!o.fulfillment||o.fulfillment==='Pending').length,
+  };
+  const lowStock=PRODUCTS.filter(p=>(p.stock||0)<20);
   const includeRev=document.getElementById('wa-chk-rev')?.checked;
   const includeOrd=document.getElementById('wa-chk-ord')?.checked;
   const includeStock=document.getElementById('wa-chk-stock')?.checked;
@@ -2451,7 +2472,14 @@ function showPage(id){
   else if(id==='invoices')loadInvoices();
   else if(id==='inventory')loadInventory();
   else if(id==='discounts')loadDiscounts();
-  else if(id==='analytics'){renderAnalytics(MOCK_STATS);if(GA4_PROPERTY_ID)connectGALive();else{updateGARealtimeUI({});setEl('gaFeedStatus','Configure GA4 in Settings');}}
+  else if(id==='analytics'){
+    // Compute real stats from loaded ORDERS
+    const _paid=ORDERS.filter(o=>o.payment_status==='Paid');
+    const _today=new Date().toISOString().split('T')[0];
+    const _s={totalRevenue:_paid.reduce((a,o)=>a+parseFloat(o.total||0),0),totalOrders:ORDERS.length,totalCustomers:CUSTOMERS.length,todayRevenue:_paid.filter(o=>(o.created_at||'').startsWith(_today)).reduce((a,o)=>a+parseFloat(o.total||0),0),todayOrders:ORDERS.filter(o=>(o.created_at||'').startsWith(_today)).length,revenue7d:EMPTY_STATS.revenue7d,labels7d:EMPTY_STATS.labels7d};
+    renderAnalytics(_s);
+    if(GA4_PROPERTY_ID)connectGALive();else{updateGARealtimeUI({});setEl('gaFeedStatus','Configure GA4 in Settings');}
+  }
   else if(id==='photos'){loadPhotoLibrary();renderPhotoGrid();}
   else if(id==='integrations')renderIntegrations();
   else if(id==='whatsapp')renderWAHistory();
@@ -2538,7 +2566,7 @@ async function connectGALive(){
 
   // Fallback: simulate with realistic numbers + explain how to connect
   gaConnected = false;
-  setEl('gaFeedStatus','⚠️ Demo mode (backend offline)');
+  setEl('gaFeedStatus','⚠️ Simulation mode (configure GA4 in Settings)');
   startGALivePolling(propId, 'demo');
   const tr = document.getElementById('ga4TestResult');
   if(tr){ tr.style.display='block'; tr.style.color='var(--gold)'; tr.textContent='⚠️ Backend offline — showing simulated data. To get real data:\n1. Add GA4 Realtime API to your backend (/api/admin/ga4/realtime)\n2. Or set GA4_ACCESS_TOKEN in backend env vars\nProperty ID saved: '+propId; }
