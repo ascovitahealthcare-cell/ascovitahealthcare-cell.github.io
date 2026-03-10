@@ -6,15 +6,16 @@
 <title>Ascovita — Admin Backoffice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg: #0A0D0A;
-  --bg2: #0F1410;
-  --bg3: #141A10;
-  --surface: #161D12;
-  --surface2: #1C2418;
-  --border: rgba(78,138,40,0.15);
-  --border2: rgba(78,138,40,0.25);
+  --bg: #060A06;
+  --bg2: #0B100B;
+  --bg3: #101610;
+  --surface: #121912;
+  --surface2: #182018;
+  --border: rgba(78,138,40,0.18);
+  --border2: rgba(78,138,40,0.3);
   --green: #4A8A28;
   --green-bright: #5EAB30;
   --green-glow: rgba(74,138,40,0.25);
@@ -25,6 +26,7 @@
   --red-soft: rgba(229,53,53,0.15);
   --orange: #E87020;
   --blue: #2080E8;
+  --cyan: #00D4FF;
   --text: #E8EDE0;
   --text2: #9EAA90;
   --text3: #6A7860;
@@ -37,6 +39,7 @@
   --shadow: 0 4px 24px rgba(0,0,0,0.4);
   --shadow-lg: 0 12px 48px rgba(0,0,0,0.6);
   --glow: 0 0 24px rgba(74,138,40,0.2);
+  --glow-strong: 0 0 40px rgba(74,138,40,0.35);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
@@ -125,16 +128,88 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
 .grid-auto{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
 
-/* ═══ KPI CARDS ═══ */
-.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;}
+/* ═══ KPI CARDS — 3D Futuristic ═══ */
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;transition:transform 0.2s, box-shadow 0.2s;cursor:default;}
 .kpi::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--green-glow),transparent);transform:translate(20px,-20px);}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);opacity:0;transition:opacity 0.3s;}
+.kpi:hover{transform:translateY(-3px) perspective(800px) rotateX(2deg);box-shadow:0 8px 32px rgba(74,138,40,0.25), 0 0 0 1px var(--border2);}
+.kpi:hover::after{opacity:1;}
 .kpi-label{font-size:0.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
 .kpi-val{font-family:var(--display);font-size:1.8rem;font-weight:800;color:var(--white);}
 .kpi-change{font-size:0.75rem;margin-top:6px;display:flex;align-items:center;gap:4px;}
-.kpi-ico{font-size:1.8rem;position:absolute;bottom:14px;right:16px;opacity:0.15;}
+.kpi-ico{font-size:1.8rem;position:absolute;bottom:14px;right:16px;opacity:0.12;}
+.kpi-sparkline{position:absolute;bottom:0;left:0;width:100%;height:32px;opacity:0.3;}
 .up{color:#4CAF50;} .down{color:var(--red);}
 
-/* ═══ TABLE ═══ */
+/* ═══ 3D CHART CONTAINER ═══ */
+.chart-container{position:relative;width:100%;} 
+.chart-3d-wrap{perspective:1000px;transform-style:preserve-3d;}
+.chart-inner{transition:transform 0.4s;transform-origin:center;}
+.card:hover .chart-inner{transform:rotateX(1deg);}
+
+/* ═══ GLOWING SIDEBAR ═══ */
+.sidebar::before{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(180deg,transparent,var(--green),var(--green-bright),var(--green),transparent);opacity:0.5;}
+
+/* ═══ FUTURISTIC TOPBAR ═══ */
+.topbar::after{content:'';position:absolute;bottom:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--green-bright),var(--green),transparent);}
+.topbar{position:relative;}
+
+/* ═══ DATE RANGE FILTER BAR ═══ */
+.date-filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.date-filter-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:0.75rem;font-family:var(--font);cursor:pointer;transition:all 0.15s;font-weight:500;}
+.date-filter-btn:hover{border-color:var(--green);color:var(--green-text);}
+.date-filter-btn.active{background:rgba(74,138,40,0.15);border-color:var(--green);color:var(--green-text);}
+.date-custom{display:flex;gap:6px;align-items:center;margin-left:auto;}
+.date-custom input{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-family:var(--font);font-size:0.75rem;outline:none;}
+.date-custom input:focus{border-color:var(--green);}
+.date-label{font-size:0.7rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:1px;}
+
+/* ═══ PRODUCT CARD GRID VIEW ═══ */
+.prod-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+.prod-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:all 0.2s;position:relative;}
+.prod-card:hover{transform:translateY(-4px);box-shadow:var(--glow-strong);border-color:var(--border2);}
+.prod-card-img{width:100%;aspect-ratio:1;object-fit:contain;background:var(--surface2);padding:12px;}
+.prod-card-body{padding:12px;}
+.prod-card-name{font-size:0.82rem;font-weight:600;color:var(--white);margin-bottom:4px;line-height:1.3;}
+.prod-card-price{font-size:0.78rem;color:var(--green-text);font-weight:700;}
+.prod-card-actions{display:flex;gap:4px;padding:8px 12px;border-top:1px solid var(--border);background:var(--surface2);}
+.prod-card-stock{position:absolute;top:8px;right:8px;}
+
+/* ═══ IMAGE UPLOAD ZONE — enhanced ═══ */
+.img-upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:28px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg2);position:relative;}
+.img-upload-zone:hover,.img-upload-zone.drag-over{border-color:var(--green-bright);background:rgba(74,138,40,0.06);box-shadow:0 0 20px rgba(74,138,40,0.15);}
+.img-upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.uico{font-size:2rem;margin-bottom:8px;}
+.img-preview-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.img-preview-thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:2px solid var(--border);}
+.img-preview-thumb img{width:100%;height:100%;object-fit:contain;background:var(--surface2);}
+.img-preview-thumb .rm-btn{position:absolute;top:2px;right:2px;background:var(--red);border:none;border-radius:4px;color:white;width:18px;height:18px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;}
+.img-preview-thumb.primary-img{border-color:var(--green);}
+
+/* ═══ GRAPH CARDS ═══ */
+.graph-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;}
+.graph-card::before{content:'';position:absolute;top:-50%;right:-20%;width:200px;height:200px;background:radial-gradient(circle,rgba(74,138,40,0.06),transparent);border-radius:50%;}
+.graph-title{font-family:var(--display);font-size:0.9rem;font-weight:700;color:var(--text);margin-bottom:4px;}
+.graph-sub{font-size:0.72rem;color:var(--text3);margin-bottom:16px;}
+
+/* ═══ NEON GLOW BADGES ═══ */
+.badge-neon-green{background:rgba(74,138,40,0.12);color:var(--green-text);border:1px solid rgba(74,138,40,0.3);box-shadow:0 0 8px rgba(74,138,40,0.15);}
+.badge-neon-gold{background:rgba(196,146,14,0.12);color:var(--gold-text);border:1px solid rgba(196,146,14,0.3);box-shadow:0 0 8px rgba(196,146,14,0.12);}
+.badge-neon-red{background:rgba(229,53,53,0.12);color:#ff6b6b;border:1px solid rgba(229,53,53,0.3);box-shadow:0 0 8px rgba(229,53,53,0.12);}
+
+/* ═══ SCAN LINE EFFECT on main ═══ */
+.main::before{content:'';position:fixed;top:0;left:220px;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(74,138,40,0.012) 2px,rgba(74,138,40,0.012) 4px);pointer-events:none;z-index:0;}
+.page{position:relative;z-index:1;}
+
+/* ═══ PRODUCT STATUS ACTIONS ═══ */
+.prod-actions-row{display:flex;gap:4px;align-items:center;}
+.action-btn-edit{background:rgba(32,128,232,0.12);border:1px solid rgba(32,128,232,0.25);color:#60a5fa;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.72rem;font-family:var(--font);transition:all 0.15s;}
+.action-btn-edit:hover{background:rgba(32,128,232,0.25);}
+.action-btn-toggle{background:rgba(196,146,14,0.12);border:1px solid rgba(196,146,14,0.25);color:var(--gold-text);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.72rem;font-family:var(--font);transition:all 0.15s;}
+.action-btn-toggle:hover{background:rgba(196,146,14,0.25);}
+.action-btn-del{background:var(--red-soft);border:1px solid rgba(229,53,53,0.25);color:#ff6b6b;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.72rem;font-family:var(--font);transition:all 0.15s;}
+.action-btn-del:hover{background:rgba(229,53,53,0.25);}
+.action-btn-restore{background:rgba(74,138,40,0.12);border:1px solid rgba(74,138,40,0.3);color:var(--green-text);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:0.72rem;font-family:var(--font);transition:all 0.15s;}
 .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);}
 table{width:100%;border-collapse:collapse;}
 th{background:var(--surface2);font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:10px 14px;text-align:left;white-space:nowrap;}
@@ -385,6 +460,20 @@ input[type=file]{display:none;}
       <button class="btn btn-gold" onclick="showPage('analytics')">📈 Analytics</button>
     </div>
   </div>
+  <!-- Date Range Filter -->
+  <div class="date-filter-bar">
+    <span class="date-label">Period:</span>
+    <button class="date-filter-btn active" onclick="setDashPeriod('today',this)">Today</button>
+    <button class="date-filter-btn" onclick="setDashPeriod('7',this)">7 Days</button>
+    <button class="date-filter-btn" onclick="setDashPeriod('30',this)">30 Days</button>
+    <button class="date-filter-btn" onclick="setDashPeriod('month',this)">This Month</button>
+    <button class="date-filter-btn" onclick="setDashPeriod('year',this)">This Year</button>
+    <div class="date-custom">
+      <input type="date" id="dashDateFrom" onchange="setDashPeriod('custom',null)">
+      <span style="color:var(--text3);font-size:0.75rem;">→</span>
+      <input type="date" id="dashDateTo" onchange="setDashPeriod('custom',null)">
+    </div>
+  </div>
   <div class="grid-4" id="kpiCards" style="margin-bottom:20px">
     <div class="kpi skel" style="height:100px"></div>
     <div class="kpi skel" style="height:100px"></div>
@@ -392,21 +481,34 @@ input[type=file]{display:none;}
     <div class="kpi skel" style="height:100px"></div>
   </div>
   <div class="grid-2" style="margin-bottom:20px">
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">Revenue Trend (7 days)</span></div>
-      <div id="revenueChart" style="height:120px;display:flex;align-items:flex-end;gap:6px;padding:0 4px;"></div>
+    <div class="graph-card">
+      <div class="graph-title">Revenue Trend</div>
+      <div class="graph-sub" id="dashRevSubtitle">Last 7 days</div>
+      <div class="chart-container" style="height:180px;">
+        <canvas id="dashRevenueChart"></canvas>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">⚠️ Low Stock Alert</span><span class="badge badge-red" id="lowStockBadge">0</span></div>
-      <div id="lowStockList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    <div class="graph-card">
+      <div class="graph-title">Order Status Breakdown</div>
+      <div class="graph-sub">Current period</div>
+      <div class="chart-container" style="height:180px;display:flex;align-items:center;justify-content:center;">
+        <canvas id="dashDonutChart" style="max-height:180px;max-width:180px;"></canvas>
+        <div id="dashDonutLegend" style="margin-left:16px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-hdr"><span class="card-title">Recent Orders</span><button class="btn btn-secondary btn-sm" onclick="showPage('orders')">View All →</button></div>
-    <div class="table-wrap"><table id="dashOrdersTable">
-      <thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Time</th></tr></thead>
-      <tbody id="dashOrdersTbody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
-    </table></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">⚠️ Low Stock Alert</span><span class="badge badge-neon-red" id="lowStockBadge">0</span></div>
+      <div id="lowStockList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Recent Orders</span><button class="btn btn-secondary btn-sm" onclick="showPage('orders')">View All →</button></div>
+      <div class="table-wrap"><table id="dashOrdersTable">
+        <thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Time</th></tr></thead>
+        <tbody id="dashOrdersTbody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+      </table></div>
+    </div>
   </div>
 </div>
 
@@ -415,13 +517,21 @@ input[type=file]{display:none;}
   <div class="page-hdr">
     <div><div class="page-title">Analytics</div><div class="page-sub">Revenue insights & business performance</div></div>
     <div class="page-actions">
-      <select class="filter-select" id="analyticsFilter" onchange="loadAnalytics()">
-        <option value="7">Last 7 Days</option>
-        <option value="30" selected>Last 30 Days</option>
-        <option value="90">Last 90 Days</option>
-        <option value="365">All Time</option>
-      </select>
-      <button class="btn btn-primary" onclick="exportAnalytics()">📊 Export Excel</button>
+      <button class="btn btn-primary" onclick="exportAnalytics()">📊 Export CSV</button>
+    </div>
+  </div>
+  <!-- Date Range Filter -->
+  <div class="date-filter-bar">
+    <span class="date-label">Period:</span>
+    <button class="date-filter-btn" onclick="setAnalyticsPeriod('7',this)">7 Days</button>
+    <button class="date-filter-btn active" onclick="setAnalyticsPeriod('30',this)">30 Days</button>
+    <button class="date-filter-btn" onclick="setAnalyticsPeriod('90',this)">3 Months</button>
+    <button class="date-filter-btn" onclick="setAnalyticsPeriod('month',this)">This Month</button>
+    <button class="date-filter-btn" onclick="setAnalyticsPeriod('year',this)">This Year</button>
+    <div class="date-custom">
+      <input type="date" id="analyticsDateFrom" onchange="setAnalyticsPeriod('custom',null)">
+      <span style="color:var(--text3);font-size:0.75rem;">→</span>
+      <input type="date" id="analyticsDateTo" onchange="setAnalyticsPeriod('custom',null)">
     </div>
   </div>
   <div class="grid-4" style="margin-bottom:20px" id="analyticsKpis">
@@ -430,19 +540,35 @@ input[type=file]{display:none;}
     <div class="kpi skel" style="height:90px"></div>
     <div class="kpi skel" style="height:90px"></div>
   </div>
-  <div class="grid-2" style="margin-bottom:20px">
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">Revenue by Category</span></div>
-      <div id="categoryRevChart"></div>
-    </div>
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">Top Products</span></div>
-      <div id="topProductsChart"></div>
+  <div class="graph-card" style="margin-bottom:20px;">
+    <div class="graph-title">Revenue Over Time</div>
+    <div class="graph-sub" id="analyticsRevSubtitle">Daily revenue</div>
+    <div class="chart-container" style="height:220px;">
+      <canvas id="analyticsLineChart"></canvas>
     </div>
   </div>
-  <div class="card">
-    <div class="card-hdr"><span class="card-title">Order Volume by Day</span></div>
-    <div id="orderVolumeChart" style="height:100px;display:flex;align-items:flex-end;gap:4px;padding:0 4px;overflow-x:auto;"></div>
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="graph-card">
+      <div class="graph-title">Revenue by Category</div>
+      <div class="graph-sub">Share of total revenue</div>
+      <div class="chart-container" style="height:220px;">
+        <canvas id="analyticsCategoryChart"></canvas>
+      </div>
+    </div>
+    <div class="graph-card">
+      <div class="graph-title">Top Products</div>
+      <div class="graph-sub">Units sold in period</div>
+      <div class="chart-container" style="height:220px;">
+        <canvas id="analyticsTopProdsChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="graph-card">
+    <div class="graph-title">Order Volume</div>
+    <div class="graph-sub">Daily order count</div>
+    <div class="chart-container" style="height:160px;">
+      <canvas id="analyticsVolumeChart"></canvas>
+    </div>
   </div>
 </div>
 
@@ -476,6 +602,19 @@ input[type=file]{display:none;}
       <button class="btn btn-secondary" onclick="loadOrders()">↺ Refresh</button>
     </div>
   </div>
+  <div class="date-filter-bar">
+    <span class="date-label">Period:</span>
+    <button class="date-filter-btn active" onclick="setOrderPeriod('all',this)">All</button>
+    <button class="date-filter-btn" onclick="setOrderPeriod('today',this)">Today</button>
+    <button class="date-filter-btn" onclick="setOrderPeriod('7',this)">7 Days</button>
+    <button class="date-filter-btn" onclick="setOrderPeriod('30',this)">30 Days</button>
+    <button class="date-filter-btn" onclick="setOrderPeriod('month',this)">This Month</button>
+    <div class="date-custom">
+      <input type="date" id="orderDateFrom" onchange="setOrderPeriod('custom',null)">
+      <span style="color:var(--text3);font-size:0.75rem;">→</span>
+      <input type="date" id="orderDateTo" onchange="setOrderPeriod('custom',null)">
+    </div>
+  </div>
   <div class="filter-bar">
     <input class="filter-input" placeholder="🔍 Search order ID, customer..." id="orderSearch" oninput="filterOrders()">
     <select class="filter-select" id="orderStatusFilter" onchange="filterOrders()">
@@ -507,7 +646,8 @@ input[type=file]{display:none;}
     <div><div class="page-title">Products</div><div class="page-sub">Full product catalogue management</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary btn-sm" onclick="loadProducts()">↺ Refresh</button>
-      <button class="btn btn-secondary btn-sm" onclick="toggleShowDeleted()">🗑️ Deleted</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleShowDeleted()" id="showDeletedBtn">🗑️ Show Deleted</button>
+      <button class="btn btn-secondary btn-sm" onclick="toggleProductView()" id="prodViewBtn">⊞ Grid View</button>
       <button class="btn btn-primary" onclick="openProductModal(null)">＋ New Product</button>
     </div>
   </div>
@@ -522,15 +662,26 @@ input[type=file]{display:none;}
       <option value="weight">Weight</option>
       <option value="skin">Skin</option>
     </select>
-    <div class="filter-chip active" data-filter="all" onclick="setProductFilter('all',this)">All</div>
-    <div class="filter-chip" data-filter="active" onclick="setProductFilter('active',this)">Active</div>
-    <div class="filter-chip" data-filter="lowstock" onclick="setProductFilter('lowstock',this)">Low Stock</div>
+    <select class="filter-select" id="productStatusFilter" onchange="filterProducts()">
+      <option value="">All Status</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="lowstock">Low Stock</option>
+      <option value="outofstock">Out of Stock</option>
+    </select>
   </div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>MRP</th><th>Sale</th><th>Stock</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="productsTbody"><tr><td colspan="9"><div class="empty-state"><div class="loading-dots">Loading</div></div></td></tr></tbody>
-    </table>
+  <!-- Table View -->
+  <div id="prodTableView">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>MRP</th><th>Sale</th><th>Stock</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="productsTbody"><tr><td colspan="9"><div class="empty-state"><div class="loading-dots">Loading</div></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Grid View (hidden by default) -->
+  <div id="prodGridView" style="display:none;">
+    <div class="prod-card-grid" id="productsGrid"></div>
   </div>
 </div>
 
@@ -624,12 +775,46 @@ input[type=file]{display:none;}
   <div class="page-hdr">
     <div><div class="page-title">Payments</div><div class="page-sub">Payment transactions overview</div></div>
     <div class="page-actions">
-      <select class="filter-select" id="payFilterStatus" onchange="filterPayments()">
-        <option value="">All</option><option value="Paid">Paid</option><option value="COD - Pending">COD</option><option value="Failed">Failed</option>
-      </select>
+      <button class="btn btn-secondary" onclick="loadPayments()">↺ Refresh</button>
+    </div>
+  </div>
+  <div class="date-filter-bar">
+    <span class="date-label">Period:</span>
+    <button class="date-filter-btn active" onclick="setPayPeriod('all',this)">All</button>
+    <button class="date-filter-btn" onclick="setPayPeriod('today',this)">Today</button>
+    <button class="date-filter-btn" onclick="setPayPeriod('7',this)">7 Days</button>
+    <button class="date-filter-btn" onclick="setPayPeriod('30',this)">30 Days</button>
+    <button class="date-filter-btn" onclick="setPayPeriod('month',this)">This Month</button>
+    <div class="date-custom">
+      <input type="date" id="payDateFrom" onchange="setPayPeriod('custom',null)">
+      <span style="color:var(--text3);font-size:0.75rem;">→</span>
+      <input type="date" id="payDateTo" onchange="setPayPeriod('custom',null)">
     </div>
   </div>
   <div class="grid-3" style="margin-bottom:20px" id="payKpis"></div>
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="graph-card">
+      <div class="graph-title">Payment Methods</div>
+      <div class="graph-sub">Transaction split</div>
+      <div class="chart-container" style="height:180px;display:flex;align-items:center;justify-content:center;">
+        <canvas id="payMethodChart" style="max-height:180px;max-width:180px;"></canvas>
+        <div id="payMethodLegend" style="margin-left:16px;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+    <div class="graph-card">
+      <div class="graph-title">Daily Revenue</div>
+      <div class="graph-sub">Revenue trend in period</div>
+      <div class="chart-container" style="height:180px;">
+        <canvas id="payRevenueChart"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="filter-bar">
+    <input class="filter-input" placeholder="🔍 Search order, customer..." id="paySearch" oninput="filterPayments()">
+    <select class="filter-select" id="payFilterStatus" onchange="filterPayments()">
+      <option value="">All Status</option><option value="Paid">Paid</option><option value="COD - Pending">COD</option><option value="Failed">Failed</option>
+    </select>
+  </div>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr></thead>
@@ -911,12 +1096,17 @@ input[type=file]{display:none;}
       </div>
       <!-- Images -->
       <div class="tab-pane" id="prod-images">
-        <div class="img-upload-zone" id="imgDropZone" onclick="document.getElementById('prodImgInput').click()">
-          <input type="file" id="prodImgInput" accept="image/*,.svg,.png,.jpg,.jpeg" onchange="uploadProductImage(this)">
+        <div class="img-upload-zone" id="imgDropZone" 
+             ondragover="event.preventDefault();this.classList.add('drag-over')" 
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleImgDrop(event)">
+          <input type="file" id="prodImgInput" accept="image/*,.svg,.png,.jpg,.jpeg,.webp,.gif" multiple onchange="handleImgFiles(this.files)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;">
           <div class="uico">🖼️</div>
-          <div style="font-size:0.85rem;font-weight:600;color:var(--text)">Click or drag to upload</div>
-          <div style="font-size:0.75rem;color:var(--text3);margin-top:4px;">JPG, PNG, WebP, SVG · Max 10MB</div>
+          <div style="font-size:0.85rem;font-weight:600;color:var(--text)">Click or drag to upload images</div>
+          <div style="font-size:0.75rem;color:var(--text3);margin-top:4px;">JPG · PNG · WebP · SVG · GIF · Max 10MB each · Multiple files OK</div>
+          <div id="imgUploadStatus" style="font-size:0.75rem;color:var(--green-text);margin-top:8px;display:none;"></div>
         </div>
+        <div class="img-preview-strip" id="imgPreviewStrip" style="margin-top:12px;"></div>
         <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;" id="productImagesList"></div>
         <div style="margin-top:14px;font-size:0.78rem;color:var(--text3);">Or paste URL directly:</div>
         <div class="form-row col2" style="margin-top:8px;">
@@ -1219,104 +1409,297 @@ async function loadDashboard() {
   } catch(e) { toast('Dashboard load error: '+e.message, 'error'); }
 }
 
-function renderRevenueChart(orders) {
-  const days = 7;
-  const buckets = Array.from({length:days}, (_,i) => {
-    const d = new Date(); d.setDate(d.getDate() - (days-1-i));
-    return { label: d.toLocaleDateString('en-IN',{weekday:'short'}), date: d.toISOString().split('T')[0], rev: 0 };
-  });
-  orders.filter(o => o.payment_status === 'Paid').forEach(o => {
-    const d = (o.created_at||'').split('T')[0];
-    const b = buckets.find(b => b.date === d);
-    if(b) b.rev += parseFloat(o.total||0);
-  });
-  const max = Math.max(...buckets.map(b=>b.rev), 1);
-  document.getElementById('revenueChart').innerHTML = buckets.map(b => `
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <div style="flex:1;width:100%;display:flex;align-items:flex-end;">
-        <div style="width:100%;height:${Math.max(8, (b.rev/max)*100)}%;background:linear-gradient(180deg,var(--green-bright),var(--green));border-radius:3px 3px 0 0;opacity:${b.rev>0?1:0.3};min-height:8px;" title="₹${fmtNum(b.rev)}"></div>
-      </div>
-      <div style="font-size:0.65rem;color:var(--text3);">${b.label}</div>
-    </div>
-  `).join('');
+// ═══════════════════════════════════════════════
+// DATE PERIOD HELPERS
+// ═══════════════════════════════════════════════
+let dashPeriod = 'today';
+let orderPeriod = 'all';
+let analyticsPeriod = '30';
+let payPeriod = 'all';
+
+function getDateRange(period, fromId, toId) {
+  const now = new Date();
+  let from, to = new Date();
+  to.setHours(23,59,59,999);
+  if(period === 'today') {
+    from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if(period === '7') {
+    from = new Date(now); from.setDate(from.getDate()-6); from.setHours(0,0,0,0);
+  } else if(period === '30') {
+    from = new Date(now); from.setDate(from.getDate()-29); from.setHours(0,0,0,0);
+  } else if(period === '90') {
+    from = new Date(now); from.setDate(from.getDate()-89); from.setHours(0,0,0,0);
+  } else if(period === 'month') {
+    from = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if(period === 'year') {
+    from = new Date(now.getFullYear(), 0, 1);
+  } else if(period === 'custom' && fromId && toId) {
+    const f = document.getElementById(fromId)?.value;
+    const t = document.getElementById(toId)?.value;
+    from = f ? new Date(f) : null;
+    to   = t ? new Date(t+'T23:59:59') : to;
+  } else { return null; } // 'all' = no filter
+  return {from, to};
 }
+
+function filterByPeriod(list, period, fromId, toId, dateField='created_at') {
+  const range = getDateRange(period, fromId, toId);
+  if(!range) return list;
+  return list.filter(o => {
+    const d = new Date(o[dateField]);
+    return d >= range.from && d <= range.to;
+  });
+}
+
+function setPeriodBtns(containerSelector, activeEl) {
+  if(!activeEl) return;
+  document.querySelectorAll(containerSelector+' .date-filter-btn').forEach(b=>b.classList.remove('active'));
+  activeEl.classList.add('active');
+}
+
+function setDashPeriod(p, el) {
+  dashPeriod = p;
+  setPeriodBtns('#page-dashboard .date-filter-bar', el);
+  refreshDashCharts();
+}
+function setOrderPeriod(p, el) {
+  orderPeriod = p;
+  setPeriodBtns('#page-orders .date-filter-bar', el);
+  filterOrders();
+}
+function setAnalyticsPeriod(p, el) {
+  analyticsPeriod = p;
+  setPeriodBtns('#page-analytics .date-filter-bar', el);
+  loadAnalytics();
+}
+function setPayPeriod(p, el) {
+  payPeriod = p;
+  setPeriodBtns('#page-payments .date-filter-bar', el);
+  loadPayments();
+}
+
+// ═══════════════════════════════════════════════
+// CHART.JS HELPERS
+// ═══════════════════════════════════════════════
+const CHART_DEFAULTS = {
+  color: 'rgba(230,237,224,0.85)',
+  gridColor: 'rgba(78,138,40,0.12)',
+  font: { family: "'DM Sans', sans-serif", size: 11 }
+};
+const chartInstances = {};
+
+function destroyChart(id) {
+  if(chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
+
+function mkLineChart(id, labels, data, label='Revenue ₹', color='#5EAB30') {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  chartInstances[id] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label, data,
+        borderColor: color,
+        backgroundColor: color.replace(')',',0.08)').replace('rgb','rgba').replace('#5EAB30','rgba(94,171,48,0.08)'),
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: color,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{display:false}, tooltip:{
+        backgroundColor:'#161D12', borderColor:'rgba(94,171,48,0.4)', borderWidth:1,
+        titleColor:'#7EC850', bodyColor:'#E8EDE0', padding:10,
+        callbacks: { label: ctx => label.includes('₹') ? ' ₹'+ctx.raw.toLocaleString('en-IN') : ' '+ctx.raw }
+      }},
+      scales: {
+        x: { grid:{color:CHART_DEFAULTS.gridColor}, ticks:{color:CHART_DEFAULTS.color, font:CHART_DEFAULTS.font} },
+        y: { grid:{color:CHART_DEFAULTS.gridColor}, ticks:{color:CHART_DEFAULTS.color, font:CHART_DEFAULTS.font, callback: v => label.includes('₹') ? '₹'+v.toLocaleString('en-IN') : v } }
+      }
+    }
+  });
+}
+
+function mkBarChart(id, labels, data, label='Orders', color='#2080E8') {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  chartInstances[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label, data,
+        backgroundColor: labels.map((_,i) => `hsla(${100+i*12},60%,45%,0.7)`),
+        borderColor: labels.map((_,i) => `hsla(${100+i*12},60%,55%,1)`),
+        borderWidth: 1, borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{display:false}, tooltip:{backgroundColor:'#161D12', borderColor:'rgba(94,171,48,0.4)', borderWidth:1, titleColor:'#7EC850', bodyColor:'#E8EDE0', padding:10} },
+      scales: {
+        x: { grid:{color:CHART_DEFAULTS.gridColor}, ticks:{color:CHART_DEFAULTS.color, font:{...CHART_DEFAULTS.font, size:10}, maxRotation:45} },
+        y: { grid:{color:CHART_DEFAULTS.gridColor}, ticks:{color:CHART_DEFAULTS.color, font:CHART_DEFAULTS.font} }
+      }
+    }
+  });
+}
+
+function mkHorizBarChart(id, labels, data, label='Value') {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  chartInstances[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label, data,
+        backgroundColor: ['rgba(94,171,48,0.7)','rgba(94,171,48,0.6)','rgba(94,171,48,0.5)','rgba(94,171,48,0.4)','rgba(94,171,48,0.35)','rgba(94,171,48,0.3)'],
+        borderColor: 'rgba(94,171,48,0.9)', borderWidth:1, borderRadius:4,
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false}, tooltip:{backgroundColor:'#161D12', borderColor:'rgba(94,171,48,0.4)', borderWidth:1, titleColor:'#7EC850', bodyColor:'#E8EDE0', padding:10} },
+      scales: {
+        x: { grid:{color:CHART_DEFAULTS.gridColor}, ticks:{color:CHART_DEFAULTS.color, font:CHART_DEFAULTS.font} },
+        y: { grid:{display:false}, ticks:{color:CHART_DEFAULTS.color, font:CHART_DEFAULTS.font} }
+      }
+    }
+  });
+}
+
+function mkDonutChart(id, labels, data, colors, legendId) {
+  destroyChart(id);
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  chartInstances[id] = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets:[{data, backgroundColor:colors, borderColor:'#121912', borderWidth:3, hoverOffset:8}] },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'65%',
+      plugins: {
+        legend:{display:false},
+        tooltip:{backgroundColor:'#161D12', borderColor:'rgba(94,171,48,0.4)', borderWidth:1, titleColor:'#7EC850', bodyColor:'#E8EDE0', padding:10}
+      }
+    }
+  });
+  if(legendId) {
+    document.getElementById(legendId).innerHTML = labels.map((l,i) => `
+      <div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;">
+        <span style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0;"></span>
+        <span style="color:var(--text2);">${l}</span>
+        <span style="color:var(--text);font-weight:600;margin-left:auto;">${data[i]}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function buildTimeSeries(orders, days, valueKey='total', paid=true) {
+  const buckets = Array.from({length:days}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-(days-1-i));
+    return {label:d.getDate()+'/'+(d.getMonth()+1), date:d.toISOString().split('T')[0], val:0};
+  });
+  (paid ? orders.filter(o=>o.payment_status==='Paid') : orders).forEach(o => {
+    const b = buckets.find(b=>b.date===(o.created_at||'').split('T')[0]);
+    if(b) b.val += valueKey==='count' ? 1 : parseFloat(o[valueKey]||o.total||0);
+  });
+  return {labels:buckets.map(b=>b.label), data:buckets.map(b=>b.val)};
+}
+
+function refreshDashCharts() {
+  const range = getDateRange(dashPeriod,'dashDateFrom','dashDateTo');
+  let orders = allOrders;
+  if(range) orders = allOrders.filter(o=>new Date(o.created_at)>=range.from&&new Date(o.created_at)<=range.to);
+
+  // Recalculate KPI for selected period
+  const paid = orders.filter(o=>o.payment_status==='Paid');
+  const revenue = paid.reduce((s,o)=>s+parseFloat(o.total||0),0);
+
+  // Build chart data
+  const days = dashPeriod==='today'?1:dashPeriod==='7'?7:dashPeriod==='month'?new Date().getDate():dashPeriod==='year'?12:30;
+  const dayCount = Math.min(days,30);
+  const ts = buildTimeSeries(orders, dayCount);
+  document.getElementById('dashRevSubtitle').textContent = `₹${revenue.toLocaleString('en-IN')} · ${paid.length} paid orders`;
+  mkLineChart('dashRevenueChart', ts.labels, ts.data, 'Revenue ₹', '#5EAB30');
+
+  // Donut - order status
+  const statuses = ['Pending','Processing','Shipped','Delivered','Cancelled'];
+  const statusColors = ['#C4920E','#2080E8','#00D4FF','#5EAB30','#E53535'];
+  const statusData = statuses.map(s=>orders.filter(o=>(o.fulfillment||'Pending')===s).length);
+  mkDonutChart('dashDonutChart', statuses, statusData, statusColors, 'dashDonutLegend');
+}
+
+function renderRevenueChart(orders) { refreshDashCharts(); } // legacy alias
 
 // ═══════════════════════════════════════════════
 // ANALYTICS
 // ═══════════════════════════════════════════════
 async function loadAnalytics() {
-  const days = parseInt(document.getElementById('analyticsFilter').value)||30;
-  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
-  const orders = allOrders.filter(o => new Date(o.created_at) >= cutoff);
+  const range = getDateRange(analyticsPeriod,'analyticsDateFrom','analyticsDateTo');
+  let orders = allOrders;
+  if(range) orders = allOrders.filter(o=>new Date(o.created_at)>=range.from&&new Date(o.created_at)<=range.to);
   const paid   = orders.filter(o => o.payment_status === 'Paid');
   const revenue = paid.reduce((s,o) => s + parseFloat(o.total||0), 0);
   const avgOrder = paid.length ? revenue / paid.length : 0;
 
   document.getElementById('analyticsKpis').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-val">₹${fmtNum(revenue)}</div><span class="kpi-ico">💰</span></div>
-    <div class="kpi"><div class="kpi-label">Orders</div><div class="kpi-val">${orders.length}</div><span class="kpi-ico">📦</span></div>
+    <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-val">₹${fmtNum(revenue)}</div><div class="kpi-change up">↑ ${paid.length} paid orders</div><span class="kpi-ico">💰</span></div>
+    <div class="kpi"><div class="kpi-label">Total Orders</div><div class="kpi-val">${orders.length}</div><span class="kpi-ico">📦</span></div>
     <div class="kpi"><div class="kpi-label">Avg Order Value</div><div class="kpi-val">₹${fmtNum(avgOrder)}</div><span class="kpi-ico">📊</span></div>
-    <div class="kpi"><div class="kpi-label">Conversion Rate</div><div class="kpi-val">${paid.length ? ((paid.length/orders.length)*100).toFixed(1)+'%' : '0%'}</div><span class="kpi-ico">🎯</span></div>
+    <div class="kpi"><div class="kpi-label">Conversion</div><div class="kpi-val">${paid.length && orders.length ? ((paid.length/orders.length)*100).toFixed(1)+'%' : '0%'}</div><span class="kpi-ico">🎯</span></div>
   `;
 
-  // Category breakdown
+  // Line chart — revenue over time
+  const days = analyticsPeriod==='7'?7:analyticsPeriod==='30'?30:analyticsPeriod==='90'?90:analyticsPeriod==='month'?new Date().getDate():analyticsPeriod==='year'?365:30;
+  const dayCount = Math.min(days, 60);
+  const ts = buildTimeSeries(orders, dayCount);
+  document.getElementById('analyticsRevSubtitle').textContent = `${dayCount} day trend`;
+  mkLineChart('analyticsLineChart', ts.labels, ts.data, 'Revenue ₹', '#5EAB30');
+
+  // Category bar chart
   const catRev = {};
   paid.forEach(o => {
     try {
-      const items = typeof o.items === 'string' ? JSON.parse(o.items||'[]') : (o.items||[]);
-      items.forEach(it => {
-        const cat = it.category || 'Other';
-        catRev[cat] = (catRev[cat]||0) + parseFloat(it.price||0) * (it.qty||it.units||1);
-      });
+      const items = typeof o.items==='string'?JSON.parse(o.items||'[]'):(o.items||[]);
+      items.forEach(it => { const cat=it.category||'Other'; catRev[cat]=(catRev[cat]||0)+parseFloat(it.price||0)*(it.qty||it.units||1); });
     } catch {}
   });
-  const sortedCats = Object.entries(catRev).sort((a,b) => b[1]-a[1]);
-  const maxCat = sortedCats[0]?.[1] || 1;
-  document.getElementById('categoryRevChart').innerHTML = sortedCats.length ? sortedCats.map(([cat,rev]) => `
-    <div style="margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;">
-        <span style="color:var(--text);text-transform:capitalize;">${cat}</span>
-        <span style="color:var(--green-text);font-weight:600;">₹${fmtNum(rev)}</span>
-      </div>
-      <div class="revenue-bar"><div class="revenue-fill" style="width:${(rev/maxCat*100).toFixed(1)}%"></div></div>
-    </div>
-  `).join('') : '<div class="empty-state" style="padding:24px 0;">No data for period</div>';
+  const sortedCats = Object.entries(catRev).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if(sortedCats.length) {
+    mkHorizBarChart('analyticsCategoryChart', sortedCats.map(([k])=>k), sortedCats.map(([,v])=>Math.round(v)), 'Revenue ₹');
+  } else {
+    const el = document.getElementById('analyticsCategoryChart');
+    if(el) el.parentElement.innerHTML = '<div class="empty-state" style="padding:40px 0;">No category data for period</div>';
+  }
 
-  // Top products by order count
+  // Top products horizontal bar
   const prodCount = {};
   paid.forEach(o => {
     try {
-      const items = typeof o.items === 'string' ? JSON.parse(o.items||'[]') : (o.items||[]);
-      items.forEach(it => { prodCount[it.name||'?'] = (prodCount[it.name||'?']||0) + (it.qty||it.units||1); });
+      const items = typeof o.items==='string'?JSON.parse(o.items||'[]'):(o.items||[]);
+      items.forEach(it => { prodCount[it.name||'?']=(prodCount[it.name||'?']||0)+(it.qty||it.units||1); });
     } catch {}
   });
-  const topProds = Object.entries(prodCount).sort((a,b) => b[1]-a[1]).slice(0,6);
-  const maxProd = topProds[0]?.[1] || 1;
-  document.getElementById('topProductsChart').innerHTML = topProds.length ? topProds.map(([name,qty]) => `
-    <div style="margin-bottom:8px;">
-      <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:3px;">
-        <span style="color:var(--text);font-size:0.75rem;">${name.length>28?name.slice(0,28)+'…':name}</span>
-        <span style="color:var(--text2);">${qty} sold</span>
-      </div>
-      <div class="revenue-bar"><div class="revenue-fill" style="width:${(qty/maxProd*100).toFixed(1)}%;background:linear-gradient(90deg,var(--gold),var(--gold-text));"></div></div>
-    </div>
-  `).join('') : '<div class="empty-state" style="padding:24px 0;">No data for period</div>';
+  const topProds = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  if(topProds.length) {
+    mkHorizBarChart('analyticsTopProdsChart', topProds.map(([k])=>k.length>20?k.slice(0,20)+'…':k), topProds.map(([,v])=>v), 'Units Sold');
+  } else {
+    const el = document.getElementById('analyticsTopProdsChart');
+    if(el) el.parentElement.innerHTML = '<div class="empty-state" style="padding:40px 0;">No product data for period</div>';
+  }
 
-  // Order volume by day
-  const buckets = Array.from({length:Math.min(days,30)}, (_,i) => {
-    const d = new Date(); d.setDate(d.getDate()-(Math.min(days,30)-1-i));
-    return {label: d.getDate()+'/'+(d.getMonth()+1), date: d.toISOString().split('T')[0], cnt:0};
-  });
-  orders.forEach(o => { const b = buckets.find(b=>b.date===(o.created_at||'').split('T')[0]); if(b) b.cnt++; });
-  const maxOrds = Math.max(...buckets.map(b=>b.cnt),1);
-  document.getElementById('orderVolumeChart').innerHTML = buckets.map(b => `
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:18px;">
-      <div style="flex:1;width:100%;display:flex;align-items:flex-end;">
-        <div style="width:100%;height:${Math.max(8,(b.cnt/maxOrds)*100)}%;background:linear-gradient(180deg,var(--blue),rgba(32,128,232,0.6));border-radius:2px 2px 0 0;opacity:${b.cnt>0?1:0.25};min-height:4px;" title="${b.cnt} orders"></div>
-      </div>
-      <div style="font-size:0.6rem;color:var(--text3);transform:rotate(-45deg);transform-origin:top left;white-space:nowrap;margin-top:4px;">${b.label}</div>
-    </div>
-  `).join('');
+  // Volume bar chart
+  const vts = buildTimeSeries(orders, Math.min(dayCount,30), 'count', false);
+  mkBarChart('analyticsVolumeChart', vts.labels, vts.data, 'Orders', '#2080E8');
 }
 
 function exportAnalytics() {
@@ -1389,6 +1772,8 @@ function filterOrders() {
   const st   = document.getElementById('orderStatusFilter').value;
   const pay  = document.getElementById('orderPayFilter').value;
   let list   = allOrders;
+  // Date period filter
+  list = filterByPeriod(list, orderPeriod, 'orderDateFrom', 'orderDateTo');
   if(q)   list = list.filter(o => (o.id+o.customer_name+o.customer_email).toLowerCase().includes(q));
   if(st)  list = list.filter(o => o.fulfillment === st);
   if(pay) list = list.filter(o => o.payment_status === pay);
@@ -1515,55 +1900,88 @@ async function loadProducts() {
   } catch(e) { toast('Products error: '+e.message,'error'); }
 }
 
-function setProductFilter(f, el) {
-  currentProductFilter = f;
-  document.querySelectorAll('#page-products .filter-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  filterProducts();
-}
-
-function toggleShowDeleted() {
-  showDeletedProducts = !showDeletedProducts;
-  filterProducts();
-}
-
 function filterProducts() {
   const q   = (document.getElementById('productSearch').value||'').toLowerCase();
   const cat = document.getElementById('productCatFilter').value;
+  const st  = document.getElementById('productStatusFilter').value;
   let list  = allProducts;
   if(!showDeletedProducts) list = list.filter(p => !p.deleted_at);
   if(q) list = list.filter(p => (p.name||'').toLowerCase().includes(q));
   if(cat) list = list.filter(p => p.category === cat);
-  if(currentProductFilter === 'active') list = list.filter(p => p.active);
-  if(currentProductFilter === 'lowstock') list = list.filter(p => p.stock < 20);
+  if(st === 'active') list = list.filter(p => p.active && !p.deleted_at);
+  if(st === 'inactive') list = list.filter(p => !p.active && !p.deleted_at);
+  if(st === 'lowstock') list = list.filter(p => p.stock > 0 && p.stock < 20);
+  if(st === 'outofstock') list = list.filter(p => p.stock === 0);
+  renderProducts(list);
+}
+
+let prodViewMode = 'table';
+function toggleProductView() {
+  prodViewMode = prodViewMode === 'table' ? 'grid' : 'table';
+  document.getElementById('prodTableView').style.display = prodViewMode === 'table' ? 'block' : 'none';
+  document.getElementById('prodGridView').style.display  = prodViewMode === 'grid'  ? 'block' : 'none';
+  document.getElementById('prodViewBtn').textContent = prodViewMode === 'table' ? '⊞ Grid View' : '☰ Table View';
+  const q   = (document.getElementById('productSearch').value||'').toLowerCase();
+  const cat = document.getElementById('productCatFilter').value;
+  const st  = document.getElementById('productStatusFilter').value;
+  let list  = allProducts;
+  if(!showDeletedProducts) list = list.filter(p => !p.deleted_at);
+  if(q) list = list.filter(p => (p.name||'').toLowerCase().includes(q));
+  if(cat) list = list.filter(p => p.category === cat);
+  if(st === 'active') list = list.filter(p => p.active && !p.deleted_at);
+  if(st === 'inactive') list = list.filter(p => !p.active && !p.deleted_at);
   renderProducts(list);
 }
 
 function renderProducts(list) {
+  // Table view
   document.getElementById('productsTbody').innerHTML = list.length ? list.map(p => `
-    <tr style="${p.deleted_at?'opacity:0.5;':''}">
-      <td><img class="prod-img" src="${p.image||'https://via.placeholder.com/44'}" onerror="this.src='https://via.placeholder.com/44'" alt=""></td>
+    <tr style="${p.deleted_at?'opacity:0.45;':''}${!p.active&&!p.deleted_at?'opacity:0.7;':''}">
+      <td><img class="prod-img" src="${p.image||'https://placehold.co/44x44/121912/7EC850?text=A'}" onerror="this.src='https://placehold.co/44x44/121912/7EC850?text=A'" alt="" style="border-radius:8px;"></td>
       <td>
         <div style="font-weight:500;font-size:0.83rem;">${p.name}</div>
-        <div style="font-size:0.7rem;color:var(--text3);">${p.brand||'Ascovita'}</div>
+        <div style="font-size:0.7rem;color:var(--text3);">${p.brand||'Ascovita'} ${p.badge?'· <span style="color:var(--gold-text);">'+p.badge+'</span>':''}</div>
       </td>
       <td><span class="badge badge-gray" style="text-transform:capitalize;">${p.category||'-'}</span></td>
-      <td>₹${p.price||0}</td>
-      <td style="color:var(--green-text);">${p.sale_price?'₹'+p.sale_price:'-'}</td>
-      <td><span class="badge ${p.stock===0?'badge-red':p.stock<20?'badge-gold':'badge-green'}">${p.stock}</span></td>
+      <td style="font-family:var(--mono);font-size:0.8rem;">₹${p.price||0}</td>
+      <td style="color:var(--green-text);font-family:var(--mono);font-size:0.8rem;">${p.sale_price?'₹'+p.sale_price:'-'}</td>
+      <td><span class="badge ${p.stock===0?'badge-neon-red':p.stock<20?'badge-neon-gold':'badge-neon-green'}">${p.stock}</span></td>
       <td><span style="color:var(--gold-text);">★</span> ${p.rating||4.5}</td>
-      <td>${p.deleted_at?`<span class="badge badge-red">Deleted</span>`:p.active?`<span class="badge badge-green">Active</span>`:`<span class="badge badge-gray">Inactive</span>`}</td>
+      <td>${p.deleted_at?`<span class="badge badge-neon-red">Deleted</span>`:p.active?`<span class="badge badge-neon-green">Active</span>`:`<span class="badge badge-gray">Inactive</span>`}</td>
       <td>
-        <div style="display:flex;gap:4px;">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="openProductModal(${p.id})" title="Edit">✏️</button>
-          ${p.deleted_at
-            ? `<button class="btn btn-primary btn-sm btn-icon" onclick="restoreProduct(${p.id})" title="Restore">♻️</button>`
-            : `<button class="btn btn-danger btn-sm btn-icon" onclick="deleteProduct(${p.id})" title="Delete">🗑️</button>`
-          }
+        <div class="prod-actions-row">
+          <button class="action-btn-edit" onclick="openProductModal(${p.id})" title="Edit">✏️ Edit</button>
+          ${p.deleted_at ? `
+            <button class="action-btn-restore" onclick="restoreProduct(${p.id})" title="Restore">♻️ Restore</button>
+          ` : `
+            <button class="action-btn-toggle" onclick="toggleProductActive(${p.id})" title="${p.active?'Deactivate':'Activate'}">${p.active?'⏸ Off':'▶ On'}</button>
+            <button class="action-btn-del" onclick="deleteProduct(${p.id})" title="Delete">🗑️</button>
+          `}
         </div>
       </td>
     </tr>
   `).join('') : '<tr><td colspan="9"><div class="empty-state"><div class="empty-ico">🛍️</div><div class="empty-msg">No products found</div></div></td></tr>';
+
+  // Grid view
+  document.getElementById('productsGrid').innerHTML = list.length ? list.map(p => `
+    <div class="prod-card" style="${p.deleted_at?'opacity:0.45;':''}${!p.active&&!p.deleted_at?'opacity:0.7;':''}">
+      <div class="prod-card-stock">
+        <span class="badge ${p.stock===0?'badge-neon-red':p.stock<20?'badge-neon-gold':'badge-neon-green'}" style="font-size:0.62rem;">${p.stock}</span>
+      </div>
+      <img class="prod-card-img" src="${p.image||'https://placehold.co/200x200/121912/7EC850?text=A'}" onerror="this.src='https://placehold.co/200x200/121912/7EC850?text=A'" alt="">
+      <div class="prod-card-body">
+        <div class="prod-card-name">${p.name}</div>
+        <div class="prod-card-price">₹${p.sale_price||p.price||0} ${p.sale_price?`<span style="text-decoration:line-through;color:var(--text3);font-weight:400;">₹${p.price}</span>`:''}</div>
+        <div style="font-size:0.68rem;color:var(--text3);margin-top:4px;text-transform:capitalize;">${p.category||''} · ${p.deleted_at?'<span style="color:var(--red)">Deleted</span>':p.active?'<span style="color:var(--green-text)">Active</span>':'<span style="color:var(--text3)">Inactive</span>'}</div>
+      </div>
+      <div class="prod-card-actions">
+        <button class="action-btn-edit" style="flex:1;font-size:0.7rem;" onclick="openProductModal(${p.id})">✏️ Edit</button>
+        ${p.deleted_at ? `<button class="action-btn-restore" onclick="restoreProduct(${p.id})">♻️</button>` : `
+        <button class="action-btn-toggle" onclick="toggleProductActive(${p.id})">${p.active?'⏸':'▶'}</button>
+        <button class="action-btn-del" onclick="deleteProduct(${p.id})">🗑️</button>`}
+      </div>
+    </div>
+  `).join('') : '<div style="grid-column:1/-1;"><div class="empty-state"><div class="empty-ico">🛍️</div><div class="empty-msg">No products found</div></div></div>';
 }
 
 function openProductModal(productId) {
@@ -1607,6 +2025,10 @@ function openProductModal(productId) {
   }
   updateSeoPreview();
   openModal('productModal');
+  // Reset image preview state
+  pendingImageUrls = [];
+  document.getElementById('imgPreviewStrip').innerHTML = '';
+  document.getElementById('imgUploadStatus').style.display = 'none';
   // Reset to Basic tab
   document.querySelectorAll('#productModal .tab-btn').forEach((b,i) => b.classList.toggle('active',i===0));
   document.querySelectorAll('#productModal .tab-pane').forEach((p,i) => p.classList.toggle('active',i===0));
@@ -1712,17 +2134,74 @@ async function restoreProduct(id) {
   } catch(e) { toast(e.message,'error'); }
 }
 
+async function toggleProductActive(id) {
+  const p = allProducts.find(x=>x.id===id); if(!p) return;
+  try {
+    const r = await apiFetch(`/api/products/${id}`, {method:'PUT', body:JSON.stringify({active:!p.active})});
+    if(!r.ok) throw new Error((await r.json()).error||'Failed');
+    p.active = !p.active;
+    toast(`Product ${p.active?'activated ▶':'deactivated ⏸'}`);
+    filterProducts();
+  } catch(e) { toast(e.message,'error'); }
+}
+
+// Image upload — multi-file with preview
+let pendingImageUrls = [];
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgDropZone').classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/') || f.name.endsWith('.svg'));
+  if(files.length) handleImgFiles(files);
+}
+
+async function handleImgFiles(filesOrList) {
+  const files = Array.from(filesOrList);
+  if(!files.length) return;
+  const status = document.getElementById('imgUploadStatus');
+  status.style.display = 'block';
+  for(let i=0; i<files.length; i++) {
+    const file = files[i];
+    status.textContent = `Uploading ${file.name} (${i+1}/${files.length})…`;
+    const fd = new FormData(); fd.append('image', file);
+    try {
+      const r = await fetch(`${API}/api/upload/image`, {method:'POST', headers:{'Authorization':`Bearer ${authToken}`}, body:fd});
+      const d = await r.json();
+      if(!r.ok) throw new Error(d.error||'Upload failed');
+      pendingImageUrls.push(d.url);
+      // Set to pImage if empty, pImage2 if pImage filled
+      if(!document.getElementById('pImage').value) document.getElementById('pImage').value = d.url;
+      else if(!document.getElementById('pImage2').value) document.getElementById('pImage2').value = d.url;
+      addImgPreview(d.url, pendingImageUrls.length-1);
+      toast(`✅ ${file.name} uploaded`);
+    } catch(e) { toast(`❌ ${file.name}: ${e.message}`,'error'); }
+  }
+  status.textContent = `✅ All ${files.length} image(s) uploaded`;
+  setTimeout(()=>status.style.display='none', 2500);
+  document.getElementById('prodImgInput').value = '';
+}
+
+function addImgPreview(url, idx) {
+  const strip = document.getElementById('imgPreviewStrip');
+  const div = document.createElement('div');
+  div.className = 'img-preview-thumb' + (idx===0?' primary-img':'');
+  div.id = `imgthumb_${idx}`;
+  div.innerHTML = `<img src="${url}" onerror="this.src='https://placehold.co/72x72/121912/7EC850?text=IMG'">
+    <button class="rm-btn" onclick="removeImgPreview(${idx},'${url}')">✕</button>`;
+  div.title = idx===0 ? 'Primary image' : 'Additional image';
+  strip.appendChild(div);
+}
+
+function removeImgPreview(idx, url) {
+  document.getElementById(`imgthumb_${idx}`)?.remove();
+  pendingImageUrls = pendingImageUrls.filter(u=>u!==url);
+  if(document.getElementById('pImage').value === url) document.getElementById('pImage').value = '';
+  if(document.getElementById('pImage2').value === url) document.getElementById('pImage2').value = '';
+}
+
 async function uploadProductImage(input) {
   const file = input.files[0]; if(!file) return;
-  const fd = new FormData(); fd.append('image', file);
-  try {
-    const r = await fetch(`${API}/api/upload/image`, {method:'POST', headers:{'Authorization':`Bearer ${authToken}`}, body:fd});
-    const d = await r.json();
-    if(!r.ok) throw new Error(d.error||'Upload failed');
-    document.getElementById('pImage').value = d.url;
-    toast('Image uploaded ✅');
-    updateImagePreview();
-  } catch(e) { toast(e.message,'error'); }
+  await handleImgFiles([file]);
 }
 
 // ═══════════════════════════════════════════════
@@ -1918,20 +2397,33 @@ function filterCustomers() {
 async function loadPayments() {
   if(!allOrders.length) { const r = await apiFetch('/api/admin/orders'); allOrders = (await r.json()).data||[]; }
   allPayments = allOrders;
-  filterPayments();
-  const paid = allOrders.filter(o=>o.payment_status==='Paid');
-  const cod  = allOrders.filter(o=>(o.payment_status||'').includes('COD'));
+  let orders = filterByPeriod(allOrders, payPeriod, 'payDateFrom', 'payDateTo');
+  const paid = orders.filter(o=>o.payment_status==='Paid');
+  const cod  = orders.filter(o=>(o.payment_status||'').includes('COD'));
   const rev  = paid.reduce((s,o)=>s+parseFloat(o.total||0),0);
   document.getElementById('payKpis').innerHTML = `
     <div class="kpi"><div class="kpi-label">Online Paid</div><div class="kpi-val">₹${fmtNum(rev)}</div><div class="kpi-change up">✅ ${paid.length} orders</div></div>
     <div class="kpi"><div class="kpi-label">COD Pending</div><div class="kpi-val">${cod.length}</div><div class="kpi-change" style="color:var(--gold-text)">⏳ Orders</div></div>
-    <div class="kpi"><div class="kpi-label">Total Orders</div><div class="kpi-val">${allOrders.length}</div><span class="kpi-ico">📦</span></div>
+    <div class="kpi"><div class="kpi-label">Total Orders</div><div class="kpi-val">${orders.length}</div><span class="kpi-ico">📦</span></div>
   `;
+  // Payment method donut
+  const methods = {};
+  orders.forEach(o => { const m=o.payment_mode||o.payment_method||'UPI'; methods[m]=(methods[m]||0)+1; });
+  const mKeys = Object.keys(methods);
+  const mColors = ['#5EAB30','#2080E8','#C4920E','#E53535','#00D4FF'];
+  mkDonutChart('payMethodChart', mKeys, mKeys.map(k=>methods[k]), mColors.slice(0,mKeys.length), 'payMethodLegend');
+  // Revenue line
+  const ts = buildTimeSeries(orders, Math.min(30, orders.length||30));
+  mkLineChart('payRevenueChart', ts.labels, ts.data, 'Revenue ₹', '#5EAB30');
+  filterPayments();
 }
 
 function filterPayments() {
   const f = document.getElementById('payFilterStatus').value;
-  const list = f ? allOrders.filter(o=>o.payment_status===f) : allOrders;
+  const q = (document.getElementById('paySearch')?.value||'').toLowerCase();
+  let list = filterByPeriod(allOrders, payPeriod, 'payDateFrom', 'payDateTo');
+  if(f) list = list.filter(o=>o.payment_status===f);
+  if(q) list = list.filter(o=>(o.id+o.customer_name).toLowerCase().includes(q));
   document.getElementById('paymentsTbody').innerHTML = list.slice(0,200).map(o => `
     <tr>
       <td class="td-id">${o.id}</td>
@@ -1941,7 +2433,7 @@ function filterPayments() {
       <td>${payBadge(o.payment_status)}</td>
       <td style="font-size:0.72rem;color:var(--text3);">${fmtDate(o.created_at)}</td>
     </tr>
-  `).join('') || '<tr><td colspan="6" class="empty-state">No payments</td></tr>';
+  `).join('') || '<tr><td colspan="6" class="empty-state">No payments found</td></tr>';
 }
 
 // ═══════════════════════════════════════════════
