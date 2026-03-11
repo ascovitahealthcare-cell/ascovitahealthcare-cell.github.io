@@ -1209,10 +1209,9 @@ async function initApp() {
   document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long'});
   checkServerStatus();
   setInterval(checkServerStatus, 60000);
-  // Load products first (inventory depends on allProducts)
-  await loadProducts();
   loadDashboard();
   loadOrders();
+  loadProducts();
   loadCustomers();
   loadDiscounts();
   loadInventory();
@@ -1391,15 +1390,8 @@ function renderRevenueChart(orders) {
 // ANALYTICS
 // ═══════════════════════════════════════════════
 async function loadAnalytics() {
-  try {
-    const r = await apiFetch('/api/admin/orders');
-    allOrders = (await r.json()).data || [];
-  } catch(e) { toast('Analytics load error: '+e.message,'error'); }
-
   const days = parseInt(document.getElementById('analyticsFilter').value)||30;
-  const cutoff = new Date();
-  if (days < 365) cutoff.setDate(cutoff.getDate() - days);
-  else cutoff.setFullYear(2000); // "All Time"
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
   const orders = allOrders.filter(o => new Date(o.created_at) >= cutoff);
   const paid   = orders.filter(o => o.payment_status === 'Paid');
   const revenue = paid.reduce((s,o) => s + parseFloat(o.total||0), 0);
@@ -1813,24 +1805,20 @@ function inlineDoExport() {
 // ═══════════════════════════════════════════════
 async function updateLiveVisitors() {
   try {
-    const r = await fetch(`${API}/api/visitors/active`, {
-      headers: { 'Authorization': `Bearer ${authToken}` },
-      signal: AbortSignal.timeout(8000)
-    });
+    const r = await fetch(`${API}/api/visitors/active`, { signal: AbortSignal.timeout(8000) });
     if (!r.ok) throw new Error('not ok');
     const d = await r.json();
 
-    // Backend returns: { count, data: [{session_id, ip, page, duration_sec, ...}] }
-    const sessions = Array.isArray(d.data) ? d.data : [];
-    const cnt = d.count || sessions.length || 0;
-    const views = sessions.length || 0;
+    const sessions = Array.isArray(d.sessions) ? d.sessions : [];
+    const cnt = d.active_count || sessions.length || 0;
+    const views = d.page_views_today || 0;
 
     document.getElementById('liveCount').textContent = cnt;
     document.getElementById('lvActive').textContent = cnt;
     document.getElementById('lvViews').textContent = views.toLocaleString();
 
     if (sessions.length > 0) {
-      const avgSec = Math.round(sessions.reduce((s, v) => s + (v.duration_sec || 0), 0) / sessions.length);
+      const avgSec = Math.round(sessions.reduce((s, v) => s + (v.duration || 0), 0) / sessions.length);
       document.getElementById('lvSession').textContent = Math.floor(avgSec/60) + 'm ' + String(avgSec%60).padStart(2,'0') + 's';
     } else {
       document.getElementById('lvSession').textContent = '–';
@@ -1844,10 +1832,10 @@ async function updateLiveVisitors() {
       document.getElementById('liveSessionsTbody').innerHTML = sessions.map(s => `
         <tr>
           <td style="font-size:0.8rem;">${s.page || '–'}</td>
-          <td><span style="font-size:0.78rem;">🌐 ${s.ip || 'Unknown'}</span></td>
-          <td style="font-size:0.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(s.user_agent||'').split(' ').slice(-1)[0] || '–'}</td>
-          <td style="font-family:var(--mono);font-size:0.75rem;">${Math.floor((s.duration_sec||0)/60)}:${String((s.duration_sec||0)%60).padStart(2,'0')}</td>
-          <td><span class="badge badge-gray">${s.referrer || 'Direct'}</span></td>
+          <td><span style="font-size:0.78rem;">🇮🇳 ${s.city || 'Unknown'}</span></td>
+          <td>${s.device || '–'}</td>
+          <td style="font-family:var(--mono);font-size:0.75rem;">${Math.floor((s.duration||0)/60)}:${String((s.duration||0)%60).padStart(2,'0')}</td>
+          <td><span class="badge badge-gray">${s.source || 'Direct'}</span></td>
         </tr>
       `).join('');
     }
@@ -2179,6 +2167,14 @@ async function saveProduct() {
   const price = parseFloat(document.getElementById('pPrice').value)||0;
   if(!price) { toast('MRP is required','error'); return; }
 
+  // Warn if no image added (frontend website won't display product properly)
+  const mediaData = getMediaSlotData();
+  const imageUrl = (mediaData[0]||{}).url || document.getElementById('pImage').value || '';
+  if (!imageUrl) {
+    const proceed = confirm('⚠️ No image added!\n\nProducts without images may not display correctly on the website.\n\nContinue saving without an image?');
+    if (!proceed) return;
+  }
+
   const tiers = [];
   document.querySelectorAll('#tiersList > div').forEach(row => {
     const tabs = parseInt(row.querySelector('.tier-tabs')?.value);
@@ -2199,18 +2195,21 @@ async function saveProduct() {
     badge:            document.getElementById('pBadge').value,
     description:      document.getElementById('pDescription').value,
     stock:            parseInt(document.getElementById('pStock').value) || 0,
-    active:           document.getElementById('pActive').value !== 'false',   // DB column: active
-    mrp:              price,                                                   // DB column: mrp
-    price:            price,                                                   // alias fallback
+    active:           document.getElementById('pActive').value !== 'false',
+    mrp:              price,
+    price:            price,
     sale_price:       parseFloat(document.getElementById('pSalePrice').value) || null,
     offer_text:       document.getElementById('pOfferText').value,
     hsn:              document.getElementById('pHsn').value || '30049099',
     how_to_use:       document.getElementById('pHowToUse').value,
     key_ingredients:  document.getElementById('pIngredients').value.split(',').map(s=>s.trim()).filter(Boolean),
     tags:             document.getElementById('pTags').value.split(',').map(s=>s.trim()).filter(Boolean),
-    media:            getMediaSlotData(),
-    image:            (getMediaSlotData()[0]||{}).url || document.getElementById('pImage').value || '',
-    image2:           (getMediaSlotData()[1]||{}).url || document.getElementById('pImage2').value || '',
+    image:            imageUrl,
+    image2:           (mediaData[1]||{}).url || document.getElementById('pImage2').value || '',
+    image3:           (mediaData[2]||{}).url || '',
+    image4:           (mediaData[3]||{}).url || '',
+    image5:           (mediaData[4]||{}).url || '',
+    images:           mediaData.map(m => m.url).filter(Boolean),
     seo_title:        document.getElementById('pSeoTitle').value,
     meta_description: document.getElementById('pMetaDesc').value,
     seo_keywords:     document.getElementById('pSeoKeywords').value.split(',').map(s=>s.trim()).filter(Boolean),
@@ -2236,9 +2235,25 @@ async function saveProduct() {
       throw new Error(`Server error ${r.status} — deploy latest server.js to Render (check browser console for details)`);
     }
     if(!r.ok) throw new Error(d.error || d.message || d.msg || `Request failed (${r.status})`);
-    toast(editingProductId ? 'Product updated ✅' : 'Product created ✅');
+    const savedId = d.id;
+    toast(editingProductId ? 'Product updated ✅' : 'Product saved ✅ Checking if live…');
     closeModal('productModal');
     loadProducts();
+    loadInventory();
+    // Verify product is live on frontend after a brief delay
+    if (savedId) {
+      setTimeout(async () => {
+        try {
+          const syncR = await apiFetch(`/api/products/sync?id=${savedId}`);
+          const syncD = await syncR.json();
+          if (syncD.visible) {
+            toast(`✅ Product is LIVE on website!`, 'success');
+          } else {
+            toast(`⚠️ Product saved but NOT visible: ${syncD.reason}`, 'warning');
+          }
+        } catch(e) { /* sync check optional — ignore errors */ }
+      }, 1500);
+    }
   } catch(e) { console.error('[saveProduct] error:', e); toast(e.message,'error'); }
 }
 
@@ -2402,11 +2417,7 @@ async function uploadMediaFile(input) {
 // ═══════════════════════════════════════════════
 // INVENTORY
 // ═══════════════════════════════════════════════
-async function loadInventory() {
-  try {
-    const r = await apiFetch('/api/admin/products');
-    allProducts = (await r.json()).data || [];
-  } catch(e) { toast('Inventory load error: '+e.message,'error'); }
+function loadInventory() {
   filterInventory();
 }
 
