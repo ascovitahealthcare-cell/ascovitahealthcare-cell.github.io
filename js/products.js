@@ -182,14 +182,22 @@ async function syncProductsFromBackend() {
 
       console.log('[Ascovita] ✅ Loaded ' + PRODUCTS.length + ' products from backend');
 
-      // Re-render everything
+      // Re-render everything now that PRODUCTS is populated
       try { renderFeatured(); } catch(e) {}
       try { renderNewArrivals(); } catch(e) {}
-      try { if (document.getElementById('shopGrid')) renderShopGrid(); } catch(e) {}
+      // ✅ KEY FIX: if shop page is open (or was opened before sync), re-run applyFilters
+      try {
+        var shopPage = document.getElementById('page-shop');
+        if (shopPage && shopPage.classList.contains('active')) {
+          applyFilters();
+        } else if (document.getElementById('shopGrid')) {
+          renderShopGrid();
+        }
+      } catch(e) {}
       try { updateAllProductCards(); } catch(e) {}
       try {
         var pp = document.getElementById('page-product');
-        if (pp && pp.style.display !== 'none' && window._currentProductId) {
+        if (pp && pp.classList.contains('active') && window._currentProductId) {
           var cp = PRODUCTS.find(p => p.id === window._currentProductId);
           if (cp) buildProductPage(cp);
         }
