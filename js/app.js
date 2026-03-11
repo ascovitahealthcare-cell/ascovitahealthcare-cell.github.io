@@ -159,7 +159,26 @@ function initHome() {
 }
 
 // ── SHOP ──
-function initShop() { applyFilters(); }
+function initShop() {
+  if (!PRODUCTS.length) {
+    const grid = document.getElementById('shopGrid');
+    const cnt  = document.getElementById('shopCount');
+    const empty = document.getElementById('shopEmpty');
+    if (cnt)  cnt.textContent = 'Loading products…';
+    if (empty) empty.style.display = 'none';
+    if (grid) grid.innerHTML = Array(6).fill(0).map(() => \`
+      <div class="product-card" style="pointer-events:none">
+        <div class="p-img-wrap" style="background:#eaf2e0;height:220px;border-radius:12px;animation:pulse 1.2s infinite alternate"></div>
+        <div class="p-info">
+          <div style="height:12px;background:#eaf2e0;border-radius:6px;margin:10px 0 6px;animation:pulse 1.2s infinite alternate"></div>
+          <div style="height:16px;background:#eaf2e0;border-radius:6px;width:70%;animation:pulse 1.2s infinite alternate"></div>
+          <div style="height:14px;background:#eaf2e0;border-radius:6px;width:40%;margin-top:8px;animation:pulse 1.2s infinite alternate"></div>
+        </div>
+      </div>\`).join('');
+    return;
+  }
+  applyFilters();
+}
 
 function filterCat(cat, btn) {
   currentCat = cat;
