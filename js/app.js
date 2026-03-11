@@ -84,6 +84,15 @@ function showPage(pg) {
   if (footer) {
     footer.style.display = noFooterPages.includes(pg) ? 'none' : '';
   }
+
+  // Sticky cart bar: ONLY show on product page, hide everywhere else
+  const stickyCart = document.getElementById('stickyCart');
+  if (stickyCart) {
+    if (pg !== 'product') {
+      stickyCart.style.display = 'none';
+      stickyCart.style.transform = 'translateY(100%)';
+    }
+  }
 }
 
 function showShop(cat) {
