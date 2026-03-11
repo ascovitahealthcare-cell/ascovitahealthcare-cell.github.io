@@ -868,6 +868,63 @@ input[type=file]{display:none;}
       </div>
       <button class="btn btn-secondary btn-sm" onclick="changePassword()">Update Password</button>
     </div>
+
+    <!-- ══ EXPORT CENTER ══ -->
+    <div class="card" style="grid-column:1/-1;">
+      <div class="card-hdr"><span class="card-title">📤 Export Center</span><span style="font-size:0.75rem;color:var(--text3);">Download your store data</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <!-- Left: controls -->
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px;">Dataset</div>
+          <select class="form-control" id="inlineExportPage" onchange="inlineUpdatePreview()" style="margin-bottom:14px;">
+            <option value="orders">Orders</option>
+            <option value="products">Products Catalogue</option>
+            <option value="inventory">Inventory</option>
+            <option value="customers">Customers</option>
+            <option value="discounts">Coupons & Discounts</option>
+            <option value="payments">Payments</option>
+            <option value="invoices">Invoices (Paid only)</option>
+            <option value="analytics">Analytics Report</option>
+          </select>
+
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px;">Date Range</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+            <button class="export-range-btn active" onclick="inlineSetRange('all',this)">All Time</button>
+            <button class="export-range-btn" onclick="inlineSetRange('today',this)">Today</button>
+            <button class="export-range-btn" onclick="inlineSetRange('week',this)">This Week</button>
+            <button class="export-range-btn" onclick="inlineSetRange('month',this)">This Month</button>
+            <button class="export-range-btn" onclick="inlineSetRange('custom',this)" style="grid-column:1/-1;">Custom Range</button>
+          </div>
+          <div id="inlineCustomRange" style="display:none;gap:8px;grid-template-columns:1fr 1fr;margin-bottom:10px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div>
+                <div style="font-size:0.72rem;color:var(--text3);margin-bottom:4px;">From</div>
+                <input type="date" id="inlineDateFrom" class="form-control" style="font-size:0.82rem;" onchange="inlineUpdatePreview()">
+              </div>
+              <div>
+                <div style="font-size:0.72rem;color:var(--text3);margin-bottom:4px;">To</div>
+                <input type="date" id="inlineDateTo" class="form-control" style="font-size:0.82rem;" onchange="inlineUpdatePreview()">
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px;">Format</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <button class="export-fmt-btn active" onclick="inlineSetFormat('csv',this)">📄 CSV</button>
+            <button class="export-fmt-btn" onclick="inlineSetFormat('json',this)">📋 JSON</button>
+          </div>
+        </div>
+
+        <!-- Right: preview + download -->
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;">Preview</div>
+          <div id="inlineExportPreview" style="flex:1;font-size:0.78rem;color:var(--text3);background:var(--bg2);border-radius:8px;padding:12px 14px;min-height:80px;">
+            Select a dataset and range…
+          </div>
+          <button class="btn btn-primary" style="width:100%;margin-top:auto;" onclick="inlineDoExport()">⬇️ Download Export</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1202,6 +1259,7 @@ function showPage(name) {
   if(name === 'payments') loadPayments();
   if(name === 'invoices') loadInvoices();
   if(name === 'banners') loadBanners();
+  if(name === 'settings') { loadSettings(); setTimeout(inlineUpdatePreview, 100); }
 }
 
 function toggleSidebar() {
@@ -1653,6 +1711,84 @@ function doExport() {
 // Legacy shim - kept for compatibility
 function exportAnalytics() { openExportModal('analytics'); }
 
+// ═══════════════════════════════════════════════
+// INLINE EXPORT CENTER (Settings page)
+// ═══════════════════════════════════════════════
+let _inlineRange = 'all';
+let _inlineFormat = 'csv';
+
+function inlineSetRange(range, el) {
+  _inlineRange = range;
+  document.querySelectorAll('#page-settings .export-range-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('inlineCustomRange').style.display = range === 'custom' ? 'block' : 'none';
+  inlineUpdatePreview();
+}
+
+function inlineSetFormat(fmt, el) {
+  _inlineFormat = fmt;
+  document.querySelectorAll('#page-settings .export-fmt-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function inlineGetDateRange() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if(_inlineRange === 'all') return { from: null, to: null };
+  if(_inlineRange === 'today') { const t = ymd(now); return { from:t, to:t }; }
+  if(_inlineRange === 'week') { const mon = new Date(now); mon.setDate(now.getDate()-now.getDay()+1); return { from:ymd(mon), to:ymd(now) }; }
+  if(_inlineRange === 'month') { const first = new Date(now.getFullYear(),now.getMonth(),1); return { from:ymd(first), to:ymd(now) }; }
+  if(_inlineRange === 'custom') return { from: document.getElementById('inlineDateFrom').value, to: document.getElementById('inlineDateTo').value };
+  return { from:null, to:null };
+}
+
+function inlineGetExportData() {
+  const page = document.getElementById('inlineExportPage').value;
+  // Temporarily swap global range vars to reuse getExportData
+  const savedRange = _exportRange;
+  const savedFrom  = document.getElementById('exportDateFrom').value;
+  const savedTo    = document.getElementById('exportDateTo').value;
+  _exportRange = _inlineRange;
+  const { from, to } = inlineGetDateRange();
+  if(from) document.getElementById('exportDateFrom').value = from;
+  if(to)   document.getElementById('exportDateTo').value   = to;
+  const data = getExportData(page);
+  // Restore
+  _exportRange = savedRange;
+  document.getElementById('exportDateFrom').value = savedFrom;
+  document.getElementById('exportDateTo').value   = savedTo;
+  return data;
+}
+
+function inlineUpdatePreview() {
+  const el = document.getElementById('inlineExportPreview');
+  if(!el) return;
+  const data = inlineGetExportData();
+  const rangeLabel = {all:'All Time',today:'Today',week:'This Week',month:'This Month',custom:'Custom'}[_inlineRange]||'';
+  el.innerHTML = data.rows.length === 0
+    ? `<span style="color:var(--gold-text);">⚠️ 0 rows for <strong>${rangeLabel}</strong>. Try "All Time".</span>`
+    : `<strong style="color:var(--text);">${data.rows.length} rows</strong> &nbsp;·&nbsp; ${rangeLabel} &nbsp;·&nbsp; ${data.columns.length} columns<br>
+       <span style="color:var(--text3);font-size:0.72rem;">Fields: ${data.columns.slice(0,5).join(', ')}${data.columns.length>5?' + '+(data.columns.length-5)+' more':''}</span>`;
+}
+
+function inlineDoExport() {
+  const page = document.getElementById('inlineExportPage').value;
+  const data = inlineGetExportData();
+  if(!data.rows.length) { toast('No data for the selected range — try "All Time"','warning'); return; }
+  const { from, to } = inlineGetDateRange();
+  const rangeStr = {all:'all',today:'today',week:'week',month:'month'}[_inlineRange] || `${from}-to-${to}`;
+  const filename = `ascovita-${page}-${rangeStr}.${_inlineFormat}`;
+  let content, mime;
+  if(_inlineFormat === 'csv') { content = rowsToCSV(data.columns, data.rows); mime = 'text/csv;charset=utf-8,'; }
+  else { content = rowsToJSON(data.columns, data.rows); mime = 'application/json;charset=utf-8,'; }
+  const a = document.createElement('a');
+  a.href = 'data:' + mime + encodeURIComponent(content);
+  a.download = filename;
+  a.click();
+  toast(`✅ Exported ${data.rows.length} rows → ${filename}`);
+}
+
 
 // ═══════════════════════════════════════════════
 // LIVE VISITORS — Real data from backend
@@ -2035,46 +2171,51 @@ async function saveProduct() {
   tiers.sort((a, b) => a.tabs - b.tabs);
 
   const body = {
-    name, brand: document.getElementById('pBrand').value||'Ascovita',
-    category: document.getElementById('pCategory').value,
-    badge: document.getElementById('pBadge').value,
-    description: document.getElementById('pDescription').value,
-    stock: parseInt(document.getElementById('pStock').value)||0,
-    active: document.getElementById('pActive').value !== 'false',
-    price, sale_price: parseFloat(document.getElementById('pSalePrice').value)||null,
-    offer_text: document.getElementById('pOfferText').value,  // DB column is offer_text (NOT 'offer')
-    hsn: document.getElementById('pHsn').value||'30049099',
-    how_to_use: document.getElementById('pHowToUse').value,
-    key_ingredients: document.getElementById('pIngredients').value.split(',').map(s=>s.trim()).filter(Boolean),
-    tags: document.getElementById('pTags').value.split(',').map(s=>s.trim()).filter(Boolean),
-    media: getMediaSlotData(),  // [{url, type, thumb}] — up to 10 items
-    image: (getMediaSlotData()[0]||{}).url || document.getElementById('pImage').value || '',
-    image2: (getMediaSlotData()[1]||{}).url || document.getElementById('pImage2').value || '',
-    seo_title: document.getElementById('pSeoTitle').value,
+    name,
+    brand:            document.getElementById('pBrand').value || 'Ascovita',
+    category:         document.getElementById('pCategory').value,
+    badge:            document.getElementById('pBadge').value,
+    description:      document.getElementById('pDescription').value,
+    stock:            parseInt(document.getElementById('pStock').value) || 0,
+    is_active:        document.getElementById('pActive').value !== 'false',   // DB column: is_active
+    active:           document.getElementById('pActive').value !== 'false',   // alias fallback
+    mrp:              price,                                                   // DB column: mrp
+    price:            price,                                                   // alias fallback
+    sale_price:       parseFloat(document.getElementById('pSalePrice').value) || null,
+    offer_text:       document.getElementById('pOfferText').value,
+    hsn:              document.getElementById('pHsn').value || '30049099',
+    how_to_use:       document.getElementById('pHowToUse').value,
+    key_ingredients:  document.getElementById('pIngredients').value.split(',').map(s=>s.trim()).filter(Boolean),
+    tags:             document.getElementById('pTags').value.split(',').map(s=>s.trim()).filter(Boolean),
+    media:            getMediaSlotData(),
+    image:            (getMediaSlotData()[0]||{}).url || document.getElementById('pImage').value || '',
+    image2:           (getMediaSlotData()[1]||{}).url || document.getElementById('pImage2').value || '',
+    seo_title:        document.getElementById('pSeoTitle').value,
     meta_description: document.getElementById('pMetaDesc').value,
-    seo_keywords: document.getElementById('pSeoKeywords').value.split(',').map(s=>s.trim()).filter(Boolean),
-    has_tiers: tiers.length > 0, tiers,
+    seo_keywords:     document.getElementById('pSeoKeywords').value.split(',').map(s=>s.trim()).filter(Boolean),
+    has_tiers:        tiers.length > 0,
+    tiers,
   };
 
   try {
     const url  = editingProductId ? `/api/admin/products/${editingProductId}` : '/api/admin/products';
     const meth = editingProductId ? 'PUT' : 'POST';
+    console.log(`[saveProduct] ${meth} ${url}`, body);
     const r    = await apiFetch(url, {method:meth, body:JSON.stringify(body)});
     let d = {};
     const ct = r.headers.get('content-type') || '';
     if (ct.includes('application/json')) {
       d = await r.json();
     } else {
-      // Backend returned HTML (error page) instead of JSON
       const text = await r.text();
-      console.error('saveProduct non-JSON response:', text);
-      throw new Error(`Server error (${r.status}) — check backend logs`);
+      console.error('saveProduct non-JSON response:', r.status, text);
+      throw new Error(`Server error ${r.status} — route may not exist. Check browser console.`);
     }
-    if(!r.ok) throw new Error(d.error || d.message || `Request failed (${r.status})`);
+    if(!r.ok) throw new Error(d.error || d.message || d.msg || `Request failed (${r.status})`);
     toast(editingProductId ? 'Product updated ✅' : 'Product created ✅');
     closeModal('productModal');
     loadProducts();
-  } catch(e) { toast(e.message,'error'); }
+  } catch(e) { console.error('[saveProduct] error:', e); toast(e.message,'error'); }
 }
 
 async function deleteProduct(id) {
@@ -3164,7 +3305,8 @@ async function checkIntegrations() {
 // ═══════════════════════════════════════════════
 async function loadSettings() {
   try {
-    const r = await fetch(`${API}/api/settings`);
+    const r = await apiFetch('/api/admin/settings');
+    if(!r.ok) return; // silently skip if endpoint doesn't exist yet
     const d = await r.json();
     if(d.store_online !== undefined) document.getElementById('storeOnline').checked = d.store_online === 'true' || d.store_online === true;
     if(d.cod_available !== undefined) document.getElementById('codAvailable').checked = d.cod_available === 'true' || d.cod_available === true;
@@ -3185,10 +3327,13 @@ async function saveSettings() {
     razorpay_mode: document.getElementById('pgMode').value,
   };
   try {
-    const r = await apiFetch('/api/settings', {method:'PUT', body:JSON.stringify(settings)});
-    if(!r.ok) throw new Error('Failed');
+    const r = await apiFetch('/api/admin/settings', {method:'PUT', body:JSON.stringify(settings)});
+    const ct = r.headers.get('content-type') || '';
+    let d = {};
+    if(ct.includes('application/json')) d = await r.json();
+    if(!r.ok) throw new Error(d.error || d.message || `Server error (${r.status})`);
     toast('Settings saved ✅');
-  } catch(e) { toast(e.message,'error'); }
+  } catch(e) { toast(e.message, 'error'); }
 }
 
 function changePassword() {
