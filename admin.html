@@ -2060,8 +2060,17 @@ async function saveProduct() {
     const url  = editingProductId ? `/api/admin/products/${editingProductId}` : '/api/admin/products';
     const meth = editingProductId ? 'PUT' : 'POST';
     const r    = await apiFetch(url, {method:meth, body:JSON.stringify(body)});
-    const d    = await r.json();
-    if(!r.ok) throw new Error(d.error||'Failed');
+    let d = {};
+    const ct = r.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      d = await r.json();
+    } else {
+      // Backend returned HTML (error page) instead of JSON
+      const text = await r.text();
+      console.error('saveProduct non-JSON response:', text);
+      throw new Error(`Server error (${r.status}) — check backend logs`);
+    }
+    if(!r.ok) throw new Error(d.error || d.message || `Request failed (${r.status})`);
     toast(editingProductId ? 'Product updated ✅' : 'Product created ✅');
     closeModal('productModal');
     loadProducts();
