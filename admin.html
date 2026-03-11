@@ -3449,4 +3449,125 @@ loadSettings();
 </div>
 
 </body>
+  <!-- ═══════════════════════════════════════════════
+  ASCOVITA MULTI-SERVER PATCH v8.1
+  Drop this <script> block right before </body> in admin.html
+  It adds:
+    1. Dual-server switcher (PRD / NEW)  
+    2. Persisted server selection (localStorage)
+    3. Auto-sync on page load
+  ════════════════════════════════════════════════ -->
+<style>
+.server-btn { background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text2);padding:4px 9px;font-size:0.7rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--mono); }
+.server-btn.active { border-color:var(--green)!important;color:var(--green-text)!important;background:rgba(74,138,40,.14)!important; }
+.server-btn:hover { border-color:var(--green);color:var(--green-text); }
+</style>
+<script>
+// ── MULTI-SERVER CONFIG ───────────────────────────────────────────
+const SERVERS = {
+  primary:   { url: 'https://ascovita-backend.onrender.com',                    label: 'Primary',   badge: 'PRD' },
+  secondary: { url: 'https://ascovitahealthcare-cell-github-io.onrender.com', label: 'Secondary', badge: 'NEW' },
+};
+
+// Patch: replace the single API const already defined above
+(function patchServerConfig() {
+  const saved = localStorage.getItem('ascovita_server') || 'primary';
+  // Override the API variable (already declared as let/const — won't work with const)
+  // So we use a global approach:
+  window._activeServer = saved;
+  // We can't reassign a const, so we rely on apiFetch being patched below
+})();
+
+// Patched apiFetch that reads from the active server
+const _origApiFetch = window.apiFetch;
+window.apiFetch = async function(path, opts = {}) {
+  const serverUrl = SERVERS[window._activeServer || 'primary'].url;
+  const headers = {'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}`, ...(opts.headers || {})};
+  const r = await fetch(`${serverUrl}${path}`, {...opts, headers});
+  if (r.status === 401) { doLogout(); throw new Error('Session expired'); }
+  if (!r.ok) {
+    const ct = r.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      const text = await r.text();
+      const match = text.match(/Cannot (POST|PUT|GET|DELETE) ([^\s<"]+)/);
+      if (match) throw new Error(`Route missing on server: ${match[1]} ${match[2]}`);
+      throw new Error(`Server returned ${r.status} for ${path}`);
+    }
+  }
+  return r;
+};
+
+// Also patch the checkServerStatus direct fetch
+window._checkServerStatus_orig = window.checkServerStatus;
+window.checkServerStatus = async function() {
+  const el = document.getElementById('serverStatus');
+  const serverUrl = SERVERS[window._activeServer || 'primary'].url;
+  try {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 8000);
+    const t0 = Date.now();
+    const r = await fetch(serverUrl + '/', {signal: ctrl.signal});
+    clearTimeout(tid);
+    const d = await r.json().catch(() => ({}));
+    el.innerHTML = `<span class="tb-dot"></span><span style="color:var(--green-text);font-size:0.72rem;">v${d.version||'7.0'} · ${Date.now()-t0}ms</span>`;
+  } catch(e) {
+    const cold = e.name === 'AbortError';
+    el.innerHTML = `<span style="background:var(--red);width:7px;height:7px;border-radius:50%;display:inline-block;"></span><span style="color:var(--red);font-size:0.72rem;margin-left:6px;">${cold ? '⏳ Waking…' : 'Offline'}</span>`;
+    if (cold) setTimeout(checkServerStatus, 12000);
+  }
+};
+
+function switchServer(key) {
+  window._activeServer = key;
+  localStorage.setItem('ascovita_server', key);
+  document.querySelectorAll('.server-btn').forEach(b => b.classList.toggle('active', b.dataset.srv === key));
+  const lbl = document.getElementById('serverLabel');
+  if (lbl) lbl.textContent = SERVERS[key].label;
+  const bk = document.getElementById('backendUrlDisplay');
+  if (bk) bk.value = SERVERS[key].url;
+  checkServerStatus();
+  // Reload all data
+  allOrders = []; allProducts = []; allCustomers = []; allDiscounts = []; allPayments = [];
+  loadDashboard();
+  loadOrders();
+  loadProducts();
+  loadCustomers();
+  loadDiscounts();
+  loadInventory();
+  toast('Switched to ' + SERVERS[key].label + ' — ' + SERVERS[key].url, 'success');
+}
+
+// ── Inject switcher UI into topbar ────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  const tbRight = document.querySelector('.topbar-right');
+  if (!tbRight) return;
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;align-items:center;gap:5px;';
+  wrap.innerHTML = `
+    <span id="serverLabel" style="font-size:0.7rem;color:var(--text3);font-weight:500;">${SERVERS[window._activeServer || 'primary'].label}</span>
+    <button class="server-btn${window._activeServer === 'primary' ? ' active' : ''}" data-srv="primary" onclick="switchServer('primary')" title="Primary: ascovita-backend.onrender.com">PRD</button>
+    <button class="server-btn${window._activeServer === 'secondary' ? ' active' : ''}" data-srv="secondary" onclick="switchServer('secondary')" title="Secondary: ascovitahealthcare-cell-github-io.onrender.com">NEW</button>
+  `;
+
+  // Insert before serverStatus
+  const serverStatus = document.getElementById('serverStatus');
+  if (serverStatus) tbRight.insertBefore(wrap, serverStatus);
+  else tbRight.prepend(wrap);
+
+  // Sync backend URL display in settings if visible
+  const bk = document.getElementById('backendUrlDisplay');
+  if (bk) bk.value = SERVERS[window._activeServer || 'primary'].url;
+});
+
+// Also patch the "Backend URL" readonly field in settings page
+// (it has value="https://ascovita-backend.onrender.com" — find it and add id)
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('input[readonly]').forEach(inp => {
+    if (inp.value && inp.value.includes('ascovita-backend.onrender.com') && !inp.id) {
+      inp.id = 'backendUrlDisplay';
+    }
+  });
+});
+</script>
 </html>
