@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ascovita – Project File Navigator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #4ade80;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .subtitle {
+      color: #64748b;
+      font-size: 0.9rem;
+      margin-bottom: 36px;
+    }
+    .subtitle a { color: #4ade80; text-decoration: none; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+    }
+
+    .card {
+      background: #1e2330;
+      border: 1px solid #2d3448;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 14px 18px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: #161a27;
+      border-bottom: 1px solid #2d3448;
+    }
+    .card-header.green  { color: #4ade80; border-left: 3px solid #4ade80; }
+    .card-header.blue   { color: #60a5fa; border-left: 3px solid #60a5fa; }
+    .card-header.purple { color: #a78bfa; border-left: 3px solid #a78bfa; }
+    .card-header.amber  { color: #fbbf24; border-left: 3px solid #fbbf24; }
+    .card-header.pink   { color: #f472b6; border-left: 3px solid #f472b6; }
+    .card-header.cyan   { color: #22d3ee; border-left: 3px solid #22d3ee; }
+
+    .file-list { padding: 10px 0; }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 18px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid #1a1f2e;
+      text-decoration: none;
+      color: inherit;
+    }
+    .file-item:hover { background: #252b3b; }
+    .file-item:last-child { border-bottom: none; }
+
+    .file-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .icon-js     { background: #2d2a1a; color: #fbbf24; }
+    .icon-html   { background: #1a2a1a; color: #4ade80; }
+    .icon-css    { background: #1a1a2d; color: #60a5fa; }
+    .icon-page   { background: #1a2320; color: #34d399; }
+    .icon-shared { background: #221a2d; color: #a78bfa; }
+
+    .file-info { flex: 1; min-width: 0; }
+    .file-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-desc {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .file-lines {
+      font-size: 0.7rem;
+      color: #475569;
+      background: #161a27;
+      border-radius: 4px;
+      padding: 2px 7px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .server-box {
+      max-width: 1200px;
+      margin-top: 28px;
+      background: #1e2330;
+      border: 1px solid #2d3448;
+      border-radius: 12px;
+      padding: 18px 22px;
+    }
+    .server-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #22d3ee;
+      margin-bottom: 8px;
+    }
+    .server-url {
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.9rem;
+      color: #4ade80;
+      word-break: break-all;
+    }
+    .load-order {
+      max-width: 1200px;
+      margin-top: 20px;
+      background: #1e2330;
+      border: 1px solid #2d3448;
+      border-radius: 12px;
+      padding: 18px 22px;
+    }
+    .load-order h3 {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #fbbf24;
+      margin-bottom: 12px;
+    }
+    .order-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 0;
+      border-bottom: 1px solid #1a1f2e;
+      font-size: 0.82rem;
+    }
+    .order-row:last-child { border-bottom: none; }
+    .order-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #252b3b;
+      color: #64748b;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .order-file { color: #fbbf24; font-family: monospace; font-size: 0.83rem; }
+    .order-note { color: #64748b; font-size: 0.75rem; margin-left: auto; }
+  </style>
+</head>
+<body>
+
+  <h1>🌿 Ascovita — Project File Navigator</h1>
+  <p class="subtitle">
+    Server: <a href="https://ascovitahealthcare-cell-github-io.onrender.com" target="_blank">https://ascovitahealthcare-cell-github-io.onrender.com</a>
+    &nbsp;·&nbsp; Open <a href="index.html">index.html</a> to run the site
+  </p>
+
+  <div class="grid">
+
+    <!-- ENTRY POINT -->
+    <div class="card">
+      <div class="card-header green">📄 Entry Point</div>
+      <div class="file-list">
+        <a class="file-item" href="index.html" target="_blank">
+          <div class="file-icon icon-html">HTM</div>
+          <div class="file-info">
+            <div class="file-name">index.html</div>
+            <div class="file-desc">Main entry — loads all pages + JS modules</div>
+          </div>
+          <div class="file-lines">~100 lines</div>
+        </a>
+        <a class="file-item" href="css/main.css" target="_blank">
+          <div class="file-icon icon-css">CSS</div>
+          <div class="file-info">
+            <div class="file-name">css/main.css</div>
+            <div class="file-desc">Full brand stylesheet — all components</div>
+          </div>
+          <div class="file-lines">2000 lines</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- PAGES: MAIN -->
+    <div class="card">
+      <div class="card-header green">🏠 Main Pages</div>
+      <div class="file-list">
+        <a class="file-item" href="pages/home.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/home.html</div><div class="file-desc">Homepage — hero, products, testimonials</div></div>
+          <div class="file-lines">912 lines</div>
+        </a>
+        <a class="file-item" href="pages/shop.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/shop.html</div><div class="file-desc">Product listing + filters</div></div>
+          <div class="file-lines">94 lines</div>
+        </a>
+        <a class="file-item" href="pages/product.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/product.html</div><div class="file-desc">Single product detail page</div></div>
+          <div class="file-lines">18 lines</div>
+        </a>
+        <a class="file-item" href="pages/about.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/about.html</div><div class="file-desc">About Ascovita, certifications</div></div>
+          <div class="file-lines">267 lines</div>
+        </a>
+        <a class="file-item" href="pages/blog.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/blog.html</div><div class="file-desc">Health articles blog</div></div>
+          <div class="file-lines">51 lines</div>
+        </a>
+        <a class="file-item" href="pages/advisor.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/advisor.html</div><div class="file-desc">Vita AI health advisor chat</div></div>
+          <div class="file-lines">59 lines</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- PAGES: COMMERCE -->
+    <div class="card">
+      <div class="card-header amber">🛒 Commerce Pages</div>
+      <div class="file-list">
+        <a class="file-item" href="pages/cart.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/cart.html</div><div class="file-desc">Shopping cart</div></div>
+          <div class="file-lines">12 lines</div>
+        </a>
+        <a class="file-item" href="pages/checkout.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/checkout.html</div><div class="file-desc">Checkout form — COD + Online</div></div>
+          <div class="file-lines">109 lines</div>
+        </a>
+        <a class="file-item" href="pages/thankyou.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/thankyou.html</div><div class="file-desc">Order success / thank you</div></div>
+          <div class="file-lines">36 lines</div>
+        </a>
+        <a class="file-item" href="pages/payment_failed.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/payment_failed.html</div><div class="file-desc">Payment failed + retry</div></div>
+          <div class="file-lines">27 lines</div>
+        </a>
+        <a class="file-item" href="pages/b2b.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/b2b.html</div><div class="file-desc">B2B / Wholesale enquiry</div></div>
+          <div class="file-lines">640 lines</div>
+        </a>
+        <a class="file-item" href="pages/subscriptions.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/subscriptions.html</div><div class="file-desc">Subscribe &amp; Save plans</div></div>
+          <div class="file-lines">694 lines</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- PAGES: ACCOUNT & SUPPORT -->
+    <div class="card">
+      <div class="card-header blue">👤 Account &amp; Support</div>
+      <div class="file-list">
+        <a class="file-item" href="pages/account.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/account.html</div><div class="file-desc">Account dashboard</div></div>
+          <div class="file-lines">72 lines</div>
+        </a>
+        <a class="file-item" href="pages/wishlist.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/wishlist.html</div><div class="file-desc">Saved products wishlist</div></div>
+          <div class="file-lines">24 lines</div>
+        </a>
+        <a class="file-item" href="pages/contact.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/contact.html</div><div class="file-desc">Contact form</div></div>
+          <div class="file-lines">50 lines</div>
+        </a>
+        <a class="file-item" href="pages/faq.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/faq.html</div><div class="file-desc">FAQ page</div></div>
+          <div class="file-lines">16 lines</div>
+        </a>
+        <a class="file-item" href="pages/policies.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/policies.html</div><div class="file-desc">Privacy, Refund, Shipping, Terms</div></div>
+          <div class="file-lines">60 lines</div>
+        </a>
+        <a class="file-item" href="pages/accessibility.html" target="_blank">
+          <div class="file-icon icon-page">HTM</div>
+          <div class="file-info"><div class="file-name">pages/accessibility.html</div><div class="file-desc">Accessibility statement</div></div>
+          <div class="file-lines">65 lines</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- SHARED COMPONENTS -->
+    <div class="card">
+      <div class="card-header purple">🔧 Shared Components</div>
+      <div class="file-list">
+        <a class="file-item" href="pages/_shared_header.html" target="_blank">
+          <div class="file-icon icon-shared">HTM</div>
+          <div class="file-info"><div class="file-name">pages/_shared_header.html</div><div class="file-desc">SVG icons + Ann bar + Navbar</div></div>
+          <div class="file-lines">495 lines</div>
+        </a>
+        <a class="file-item" href="pages/_shared_footer.html" target="_blank">
+          <div class="file-icon icon-shared">HTM</div>
+          <div class="file-info"><div class="file-name">pages/_shared_footer.html</div><div class="file-desc">Site footer</div></div>
+          <div class="file-lines">84 lines</div>
+        </a>
+        <a class="file-item" href="pages/_bundle_builder.html" target="_blank">
+          <div class="file-icon icon-shared">HTM</div>
+          <div class="file-info"><div class="file-name">pages/_bundle_builder.html</div><div class="file-desc">Bundle builder section</div></div>
+          <div class="file-lines">128 lines</div>
+        </a>
+        <a class="file-item" href="pages/_modals.html" target="_blank">
+          <div class="file-icon icon-shared">HTM</div>
+          <div class="file-info"><div class="file-name">pages/_modals.html</div><div class="file-desc">Side cart, overlays, modals</div></div>
+          <div class="file-lines">80 lines</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- JS MODULES -->
+    <div class="card">
+      <div class="card-header amber">⚡ JS Modules — js/</div>
+      <div class="file-list">
+        <a class="file-item" href="js/products.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/products.js</div><div class="file-desc">PRODUCTS array + TIER_PRICING data</div></div>
+          <div class="file-lines">460 lines</div>
+        </a>
+        <a class="file-item" href="js/app.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/app.js</div><div class="file-desc">Core: nav, STORE, cart, shop, init</div></div>
+          <div class="file-lines">1062 lines</div>
+        </a>
+        <a class="file-item" href="js/payment.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/payment.js</div><div class="file-desc">Cashfree payment gateway flow</div></div>
+          <div class="file-lines">803 lines</div>
+        </a>
+        <a class="file-item" href="js/account.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/account.js</div><div class="file-desc">Account dashboard, orders, wishlist</div></div>
+          <div class="file-lines">1569 lines</div>
+        </a>
+        <a class="file-item" href="js/auth.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/auth.js</div><div class="file-desc">Google Auth / One Tap login</div></div>
+          <div class="file-lines">336 lines</div>
+        </a>
+        <a class="file-item" href="js/email.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/email.js</div><div class="file-desc">EmailJS order confirmation</div></div>
+          <div class="file-lines">338 lines</div>
+        </a>
+        <a class="file-item" href="js/animations.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/animations.js</div><div class="file-desc">Scroll reveal, parallax, particles</div></div>
+          <div class="file-lines">271 lines</div>
+        </a>
+        <a class="file-item" href="js/instagram.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/instagram.js</div><div class="file-desc">Instagram feed slider</div></div>
+          <div class="file-lines">207 lines</div>
+        </a>
+        <a class="file-item" href="js/whatsapp.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/whatsapp.js</div><div class="file-desc">WhatsApp integration</div></div>
+          <div class="file-lines">41 lines</div>
+        </a>
+        <a class="file-item" href="js/ui.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/ui.js</div><div class="file-desc">UI helpers, bundles, reviews, sticky cart</div></div>
+          <div class="file-lines">283 lines</div>
+        </a>
+        <a class="file-item" href="js/vita.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/vita.js</div><div class="file-desc">Vita AI health advisor (Claude API)</div></div>
+          <div class="file-lines">119 lines</div>
+        </a>
+        <a class="file-item" href="js/analytics.js" target="_blank">
+          <div class="file-icon icon-js">JS</div>
+          <div class="file-info"><div class="file-name">js/analytics.js</div><div class="file-desc">Google Analytics 4 event tracking</div></div>
+          <div class="file-lines">110 lines</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Server info -->
+  <div class="server-box">
+    <div class="server-label">🌐 Render Server</div>
+    <div class="server-url">https://ascovitahealthcare-cell-github-io.onrender.com</div>
+    <div style="margin-top: 8px; font-size: 0.78rem; color: #475569;">
+      All pages and JS files are served from this URL. The page loader in index.html fetches each fragment dynamically.
+    </div>
+  </div>
+
+  <!-- JS Load Order -->
+  <div class="load-order">
+    <h3>⚙️ JS Load Order (in index.html)</h3>
+    <div class="order-row"><div class="order-num">1</div><div class="order-file">js/products.js</div><div class="order-note">Must load first — PRODUCTS & TIER_PRICING needed by all</div></div>
+    <div class="order-row"><div class="order-num">2</div><div class="order-file">js/animations.js</div><div class="order-note">Scroll & visual effects</div></div>
+    <div class="order-row"><div class="order-num">3</div><div class="order-file">js/instagram.js</div><div class="order-note">Feed slider</div></div>
+    <div class="order-row"><div class="order-num">4</div><div class="order-file">js/whatsapp.js</div><div class="order-note">WA chat helpers</div></div>
+    <div class="order-row"><div class="order-num">5</div><div class="order-file">js/email.js</div><div class="order-note">EmailJS integration</div></div>
+    <div class="order-row"><div class="order-num">6</div><div class="order-file">js/auth.js</div><div class="order-note">Google sign-in</div></div>
+    <div class="order-row"><div class="order-num">7</div><div class="order-file">js/payment.js</div><div class="order-note">Cashfree flow — needs auth</div></div>
+    <div class="order-row"><div class="order-num">8</div><div class="order-file">js/account.js</div><div class="order-note">Dashboard — needs auth + payment</div></div>
+    <div class="order-row"><div class="order-num">9</div><div class="order-file">js/ui.js</div><div class="order-note">UI helpers — needs STORE from app.js</div></div>
+    <div class="order-row"><div class="order-num">10</div><div class="order-file">js/vita.js</div><div class="order-note">AI advisor</div></div>
+    <div class="order-row"><div class="order-num">11</div><div class="order-file">js/app.js</div><div class="order-note">⚠️ Must load LAST — defines STORE & showPage</div></div>
+  </div>
+
+</body>
+</html>
