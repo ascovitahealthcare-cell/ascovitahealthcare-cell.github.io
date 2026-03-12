@@ -38,16 +38,16 @@ let carouselIdx = 0;
 let pQty = 1;
 let selectedRating = 0;
 let appliedDiscount = null;
+// FIX 1: Declare activePromoCode so renderCart/checkout never throw ReferenceError
+let activePromoCode = null;
 
 // ── PAGE NAV ──
 function showPage(pg) {
   document.getElementById('codOverlay')?.remove();
-  // Update URL to clean path (e.g. ascovita.com/about) — no hash
   try {
     const cleanPath = (pg && pg !== 'home') ? '/' + pg : '/';
     history.pushState({ page: pg }, '', cleanPath);
   } catch(e) { /* suppressed: sandboxed iframe preview */ }
-  // Track page view in GA
   window._trackPage && window._trackPage(pg);
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const el = document.getElementById('page-' + pg);
@@ -78,14 +78,12 @@ function showPage(pg) {
   if (pg === 'blog') renderFullBlog();
   if (pg === 'faq') renderFullFaq();
 
-  // Footer: hide on transactional/fullscreen pages
   const noFooterPages = ['checkout', 'thankyou', 'account', 'login'];
   const footer = document.getElementById('siteFooter');
   if (footer) {
     footer.style.display = noFooterPages.includes(pg) ? 'none' : '';
   }
 
-  // Sticky cart bar: ONLY show on product page, hide everywhere else
   const stickyCart = document.getElementById('stickyCart');
   if (stickyCart) {
     if (pg !== 'product') {
@@ -107,18 +105,16 @@ function slugify(str) {
 
 function openProduct(id) {
   currentProduct = PRODUCTS.find(p => p.id === id);
-  window._currentProductId = id; // track for backend sync re-render
+  window._currentProductId = id;
   if (currentProduct) window._trackViewItem && window._trackViewItem(currentProduct);
   if (!currentProduct) return;
   pQty = 1;
   buildProductPage(currentProduct);
   setTimeout(()=>document.dispatchEvent(new CustomEvent('productPageShown',{detail:currentProduct})),100);
-  // Push clean URL: /product/glutathione-effervescent
   try {
     const slug = slugify(currentProduct.name);
     history.pushState({ page: 'product', id: id }, '', '/product/' + slug);
   } catch(e) {}
-  // Update page title + meta for SEO
   const disc = currentProduct.salePrice ? Math.round((1 - currentProduct.salePrice/currentProduct.price)*100) : 0;
   const discText = disc > 0 ? ` – ${disc}% OFF` : '';
   document.title = currentProduct.name + discText + ' | Ascovita';
@@ -126,7 +122,6 @@ function openProduct(id) {
   if (metaDesc) metaDesc.setAttribute('content',
     'Buy ' + currentProduct.name + ' at ₹' + (currentProduct.salePrice||currentProduct.price) + discText + '. ' + (currentProduct.description||'').slice(0,120) + ' Free shipping above ₹599.'
   );
-  // Show the page
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const el = document.getElementById('page-product');
   if (el) { el.classList.add('active'); window.scrollTo({top:0,behavior:'smooth'}); }
@@ -141,19 +136,13 @@ function toggleMobile() {
 
 // ── HOME INIT ──
 function initHome() {
-  // ✅ FIX 2: Filter out _hidden (active:false) products from all grids
   const visibleProducts = PRODUCTS.filter(p => !p._hidden && p.active !== false);
-  // Featured
   const feat = visibleProducts.filter(p => p.tags.includes('featured')).slice(0,8);
   const fg=document.getElementById('featuredGrid'); if(fg) fg.innerHTML = feat.map(p => renderProductCard(p)).join('');
-  // New arrivals
   const newP = visibleProducts.filter(p => p.tags.includes('new')).slice(0,4);
   const nag=document.getElementById('newArrivalsGrid'); if(nag) nag.innerHTML = newP.map(p => renderProductCard(p)).join('');
-  // Blog
   const hbg=document.getElementById('homeBlogGrid'); if(hbg) hbg.innerHTML = BLOGS.slice(0,3).map(renderBlogCard).join('');
-  // FAQ
   const hfw=document.getElementById('homeFaqWrap'); if(hfw) hfw.innerHTML = FAQS.slice(0,5).map(renderFaqItem).join('');
-  // Testimonials
   const tg=document.getElementById('testiGrid'); if(tg) tg.innerHTML = renderTestimonials();
   STORE.updateCartUI();
 }
@@ -166,7 +155,7 @@ function initShop() {
     const empty = document.getElementById('shopEmpty');
     if (cnt)  cnt.textContent = 'Loading products…';
     if (empty) empty.style.display = 'none';
-    if (grid) grid.innerHTML = Array(6).fill(0).map(() => \`
+    if (grid) grid.innerHTML = Array(6).fill(0).map(() => `
       <div class="product-card" style="pointer-events:none">
         <div class="p-img-wrap" style="background:#eaf2e0;height:220px;border-radius:12px;animation:pulse 1.2s infinite alternate"></div>
         <div class="p-info">
@@ -174,7 +163,7 @@ function initShop() {
           <div style="height:16px;background:#eaf2e0;border-radius:6px;width:70%;animation:pulse 1.2s infinite alternate"></div>
           <div style="height:14px;background:#eaf2e0;border-radius:6px;width:40%;margin-top:8px;animation:pulse 1.2s infinite alternate"></div>
         </div>
-      </div>\`).join('');
+      </div>`).join('');
     return;
   }
   applyFilters();
@@ -197,7 +186,6 @@ function filterCat(cat, btn) {
 }
 
 function applyFilters() {
-  // ✅ FIX 2: Never show hidden/inactive products in shop
   let prods = PRODUCTS.filter(p => !p._hidden && p.active !== false);
   const goalTags = ['skin','immunity','energy','brain','weight'];
   if (currentCat === 'bestsellers') prods = prods.filter(p => p.tags.includes('bestseller'));
@@ -247,12 +235,11 @@ function clearFilters() {
 }
 
 // ── QUANTITY DISCOUNT WIDGET ──
-// Tracks which tier is selected per product (productId → tierIndex)
 const selectedTiers = {};
 
 function buildTierWidget(p) {
   const tiers = p._backendTiers || QTY_TIERS[p.id];
-  if (!tiers) return '';            // no tiers for this product
+  if (!tiers) return '';
   const sel = selectedTiers[p.id] !== undefined ? selectedTiers[p.id] : 0;
   const t = tiers[sel];
   const saving = t.mrp - t.rate;
@@ -290,21 +277,19 @@ function buildTierWidget(p) {
     </div>`;
 }
 
+// FIX 3: Safe DOM replacement for selectTier — avoids stale reference bug
 function selectTier(productId, tierIdx) {
   selectedTiers[productId] = tierIdx;
-  const p2 = PRODUCTS.find(p => p.id === productId);
-  const tiers = (p2 && p2._backendTiers) || QTY_TIERS[productId];
+  const p = PRODUCTS.find(p => p.id === productId);
+  const tiers = (p && p._backendTiers) || QTY_TIERS[productId];
   if (!tiers) return;
-  const t = tiers[tierIdx];
 
-  // Rebuild widget in place
   const widget = document.getElementById(`tierWidget_${productId}`);
-  if (widget) {
-    const p = PRODUCTS.find(p => p.id === productId);
-    widget.outerHTML = buildTierWidget(p);
+  if (widget && p) {
+    // Insert new widget BEFORE old one, then remove old — avoids stale reference
+    widget.insertAdjacentHTML('afterend', buildTierWidget(p));
+    widget.remove();
   }
-  // Re-register after DOM replace
-  // Also update the displayed price
   updatePriceDisplay(productId, tierIdx);
 }
 
@@ -323,14 +308,13 @@ function updatePriceDisplay(productId, tierIdx) {
   if (salePriceEl) {
     salePriceEl.textContent = `₹${t.rate.toLocaleString('en-IN')}`;
     salePriceEl.classList.remove('price-updated');
-    void salePriceEl.offsetWidth; // reflow
+    void salePriceEl.offsetWidth;
     salePriceEl.classList.add('price-updated');
   }
   if (origPriceEl) origPriceEl.textContent = `₹${t.mrp.toLocaleString('en-IN')}`;
   if (discTagEl)   discTagEl.textContent = `Save ${disc}%`;
   if (savingEl)    savingEl.textContent  = `You save ₹${(t.mrp - t.rate).toLocaleString('en-IN')} on this pack!`;
 
-  // Update Add to Cart button label
   const addBtn = document.getElementById('addCartBtn');
   if (addBtn) addBtn.dataset.tier = tierIdx;
 }
@@ -342,7 +326,6 @@ function buildProductPage(p) {
   const related = PRODUCTS.filter(r=>r.category===p.category&&r.id!==p.id).slice(0,4);
   const rg=document.getElementById('relatedGrid'); if(rg) rg.innerHTML = related.map(r=>renderProductCard(r)).join('');
 
-  // Determine tier for display
   const tiers = p._backendTiers || QTY_TIERS[p.id];
   const tierIdx = selectedTiers[p.id] !== undefined ? selectedTiers[p.id] : 0;
   const activeTier = tiers ? tiers[tierIdx] : null;
@@ -434,12 +417,10 @@ function buildProductPage(p) {
   `;
 }
 
-// Adds a tiered product to cart, recording which tier (pack size) was chosen
 function addToCartWithTier(productId) {
   const p0 = PRODUCTS.find(p => p.id === productId);
   const tiers = (p0 && p0._backendTiers) || QTY_TIERS[productId];
   if (!tiers) {
-    // No tier system — standard add to cart
     STORE.addToCart(productId, pQty);
     return;
   }
@@ -447,37 +428,32 @@ function addToCartWithTier(productId) {
   const tier = tiers[tierIdx];
   const p = PRODUCTS.find(p => p.id === productId);
 
-  // Physical packs: 15 tabs = 1 pack, 30 = 2, 45 = 3, 60 = 4
   const physicalPacks = tier.tabs / 15;
-  // qty = number of BUNDLES (1 bundle = physicalPacks physical packs)
   const ex = STORE.cart.find(i => i.id === productId && i.tierIdx === tierIdx);
   if (ex) {
-    ex.qty += 1; // add 1 more bundle
+    ex.qty += 1;
   } else {
     STORE.cart.push({
       id: productId,
-      qty: 1, // 1 bundle
+      qty: 1,
       tierIdx,
       tierTabs: tier.tabs,
-      tierRate: tier.rate,         // total price for this pack bundle
+      tierRate: tier.rate,
       tierMRP:  tier.mrp,
       tierDisc: tier.discountPct,
-      isBundle: physicalPacks > 1, // flag for cart display
+      isBundle: physicalPacks > 1,
     });
   }
   STORE.save();
   const packLabel = physicalPacks === 1 ? '1 Pack (15 tabs)' : `${physicalPacks} Packs (${tier.tabs} tabs)`;
   showToast(`${p.name} — ${packLabel} added to cart!`);
-
 }
 
-
-// ── 10-Media Gallery ──────────────────────────────────────────
-var _galleryMedia = [];  // [{url, type, thumb}]
+// ── 10-Media Gallery ──
+var _galleryMedia = [];
 var _galleryIdx   = 0;
 
 function buildMediaGallery(p) {
-  // Build media array from p.media or fallback to flat fields
   var media = [];
   if (p.media && p.media.length) {
     media = p.media.slice(0, 10);
@@ -486,7 +462,6 @@ function buildMediaGallery(p) {
     media = urls.map(function(u) { return {url: u, type: 'image', thumb: u}; });
   }
   if (!media.length) media = [{url:'', type:'image', thumb:''}];
-  // Normalize
   media = media.map(function(m) {
     if (typeof m === 'string') return {url:m, type:'image', thumb:m};
     return {url: m.url||m.src||'', type: m.type||'image', thumb: m.thumb||m.url||m.src||''};
@@ -530,7 +505,6 @@ function galleryGoto(i) {
   _galleryIdx = i;
   var gm = document.getElementById('galleryMain');
   if (!gm) return;
-  var navs = gm.querySelectorAll('.gallery-nav');
   gm.innerHTML = renderGalleryMain(_galleryMedia[i], i, _galleryMedia.length);
   if (_galleryMedia.length > 1) {
     gm.innerHTML += '<button class="gallery-nav prev" onclick="event.stopPropagation();galleryStep(-1)">&#8249;</button><button class="gallery-nav next" onclick="event.stopPropagation();galleryStep(1)">&#8250;</button>';
@@ -543,7 +517,6 @@ function galleryStep(dir) {
   galleryGoto(_galleryIdx + dir);
 }
 
-// Lightbox
 function openLightbox(idx) {
   var lb = document.getElementById('galleryLightbox');
   if (!lb) return;
@@ -570,11 +543,9 @@ function lbShow(i) {
 function lbStep(dir) {
   lbShow(_galleryIdx + dir);
 }
-// Close lightbox on background click
 document.addEventListener('DOMContentLoaded', function(){
   var lb = document.getElementById('galleryLightbox');
   if(lb) lb.addEventListener('click', function(e){ if(e.target===lb) closeLightbox(); });
-  // Keyboard navigation
   document.addEventListener('keydown', function(e){
     var lb = document.getElementById('galleryLightbox');
     if(!lb || !lb.classList.contains('open')) return;
@@ -624,21 +595,19 @@ function renderCart() {
     return s + unitPrice * item.qty;
   }, 0);
 
-  // Unified discount — check both activePromoCode and appliedDiscount
   let disc = 0, discLabel = '';
-  if (typeof activePromoCode !== 'undefined' && activePromoCode) {
+  if (activePromoCode) {
     if (activePromoCode.type === 'pct') disc = Math.round(sub * activePromoCode.value / 100);
     else if (activePromoCode.type === 'flat') disc = Math.min(activePromoCode.value, sub);
     discLabel = activePromoCode.label || '';
-  } else if (typeof appliedDiscount !== 'undefined' && appliedDiscount) {
+  } else if (appliedDiscount) {
     disc = appliedDiscount.type === 'percent' ? Math.round(sub * appliedDiscount.value / 100) : appliedDiscount.value;
     discLabel = appliedDiscount.label || '';
   }
 
-  const ship = 0; // Free shipping online
+  const ship = 0;
   const total = sub - disc + ship;
 
-  // Count total physical packs for display
   const totalPacks = STORE.cart.reduce((s, item) => {
     if (item.tierTabs) return s + (item.tierTabs / 15) * item.qty;
     return s + item.qty;
@@ -655,7 +624,6 @@ function renderCart() {
             const unitMRP   = item.tierMRP  !== undefined ? item.tierMRP  : p.price;
             const discPct   = item.tierDisc !== undefined ? item.tierDisc : (p.salePrice ? Math.round((1-p.salePrice/p.price)*100) : 0);
 
-            // Build a clear pack label: e.g. "4 Pack · 60 tabs · 35% OFF"
             let packLabel = '';
             if (item.tierTabs !== undefined) {
               const numPacks = item.tierTabs / 15;
@@ -764,8 +732,6 @@ function addUpsellToCart(productId) {
   setTimeout(function(){ renderCart(); }, 300);
 }
 
-
-// Cart item helpers that handle both tiered and non-tiered items
 function updateCartQty(productId, tierIdx, newQty) {
   if (newQty < 1) { removeCartItem(productId, tierIdx); return; }
   const item = STORE.cart.find(i => i.id === productId && (tierIdx === -1 ? i.tierIdx === undefined : i.tierIdx === tierIdx));
@@ -783,7 +749,6 @@ async function applyCode() {
   const code = input?.value?.trim().toUpperCase();
   if (!code) return;
 
-  // Local test codes only
   if (typeof PROMO_CODES !== 'undefined' && PROMO_CODES[code]) {
     const promo = PROMO_CODES[code];
     activePromoCode = { code, ...promo };
@@ -793,7 +758,6 @@ async function applyCode() {
     return;
   }
 
-  // All real codes come from backend
   const subtotal = STORE.cart.reduce((s,i) => {
     const p = PRODUCTS.find(x => x.id === i.id);
     return s + ((p?.salePrice || p?.price || 0) * i.qty);
@@ -833,16 +797,15 @@ function renderCheckoutSummary() {
     return s + unitPrice * item.qty;
   }, 0);
 
-  // Use activePromoCode (the working variable) — fix for promo not affecting price
   let disc = 0;
-  if (typeof activePromoCode !== 'undefined' && activePromoCode) {
+  if (activePromoCode) {
     if (activePromoCode.type === 'pct') disc = Math.round(sub * activePromoCode.value / 100);
     else if (activePromoCode.type === 'flat') disc = Math.min(activePromoCode.value, sub);
-  } else if (typeof appliedDiscount !== 'undefined' && appliedDiscount) {
+  } else if (appliedDiscount) {
     disc = appliedDiscount.type==='percent' ? Math.round(sub*appliedDiscount.value/100) : appliedDiscount.value;
   }
 
-  const ship = 0; // Free shipping online
+  const ship = 0;
   const total = sub - disc + ship;
 
   el.innerHTML = `
@@ -851,7 +814,6 @@ function renderCheckoutSummary() {
       if (!p) return '';
       const unitPrice = item.tierRate !== undefined ? item.tierRate : (p.salePrice || p.price);
       const packLabel = item.tierTabs ? ` (${item.tierTabs} tabs)` : '';
-      // Show the tier label (e.g. "3 Pack") if available
       const tierLabel = item.tierLabel ? ` — ${item.tierLabel}` : '';
       return `<div style="display:flex;gap:10px;margin-bottom:12px;align-items:center">
         <img src="${p.image}" style="width:46px;height:46px;border-radius:8px;object-fit:contain;background:var(--off-white);padding:4px" onerror="this.src='https://via.placeholder.com/46/EAF2E0/2D5016?text=A'">
@@ -873,7 +835,6 @@ function renderCheckoutSummary() {
 function selPayMethod(el) { /* handled by new payment modal */ }
 
 function placeOrder() {
-  // Route to the real payment gateway
   initiatePayment();
 }
 
@@ -939,15 +900,18 @@ function subscribeNL() {
 }
 
 // ── INIT ──
+// FIX 2: Guard flag prevents bootApp from running more than once
+let _bootAppRan = false;
 function bootApp() {
+  if (_bootAppRan) return;
+  _bootAppRan = true;
+
   try { STORE.init(); } catch(e) { console.error('STORE init:', e); }
   try { initCashfree(); } catch(e) {}
   try { renderFullFaq(); } catch(e) {}
   try { const hfw2=document.getElementById('homeFaqWrap'); if(hfw2) hfw2.innerHTML = FAQS.slice(0,5).map(renderFaqItem).join(''); } catch(e) {}
-  // 🔗 Sync live product data from Supabase backend (non-blocking)
   syncProductsFromBackend();
 
-  // 📡 Ping backend to register this visitor session (for Live Visitors in admin)
   (function pingVisitor() {
     try {
       const page = document.title || window.location.pathname;
@@ -963,8 +927,7 @@ function bootApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
         keepalive: true
-      }).catch(() => {}); // silently ignore if backend offline
-      // Re-ping every 4 minutes to keep session alive
+      }).catch(() => {});
       setInterval(() => {
         payload.ts = Date.now();
         payload.page = document.title || window.location.pathname;
@@ -976,25 +939,20 @@ function bootApp() {
     } catch(e) {}
   })();
 
-  // ── GitHub Pages SPA routing fix ──
-  // When 404.html catches /about etc., it redirects to /?p=%2Fabout
-  // We decode that here and show the right page, then clean the URL
   const _spParam = new URLSearchParams(window.location.search).get('p');
   if (_spParam) {
     try { history.replaceState(null, '', _spParam); } catch(e) {}
   }
 
-  // Handle direct URL with clean path (e.g. ascovita.com/about) OR legacy hash (ascovita.com/#shop)
   const _fullPath = (_spParam || window.location.pathname).replace(/^\//, '').trim();
   const _pathParts = _fullPath.split('/');
   const _pathPage = _pathParts[0];
-  const _pathSlug = _pathParts[1] || null; // e.g. 'glutathione-effervescent' from /product/glutathione-effervescent
+  const _pathSlug = _pathParts[1] || null;
   const _hashPage = window.location.hash.replace('#', '').trim();
   const _initPage = _pathPage || _hashPage;
   const _validPages = ['home','shop','blog','about','b2b','contact','faq','advisor','product'];
   if (_initPage && _validPages.includes(_initPage)) {
     if (_initPage === 'product' && _pathSlug) {
-      // Find product by slug and open it
       setTimeout(function() {
         if (typeof slugify === 'function' && typeof PRODUCTS !== 'undefined') {
           const prod = PRODUCTS.find(p => slugify(p.name) === _pathSlug);
@@ -1007,7 +965,6 @@ function bootApp() {
     }
   }
 
-  // Handle browser back/forward buttons
   window.addEventListener('popstate', function(e) {
     const state = e.state || {};
     const pathParts = window.location.pathname.replace(/^\//, '').split('/');
@@ -1025,18 +982,16 @@ function bootApp() {
     }
   });
 
-  // ── Handle Cashfree redirect return ──
   var sp = new URLSearchParams(window.location.search);
   var cfoid = sp.get('cf_order');
   if (cfoid) {
-    try { history.replaceState({}, '', window.location.pathname); } catch(e) { /* suppressed: sandboxed iframe preview */ }
+    try { history.replaceState({}, '', window.location.pathname); } catch(e) {}
     var sv = localStorage.getItem('asc_pend_' + cfoid);
     if (sv) {
       try {
         var pd = JSON.parse(sv);
         localStorage.removeItem('asc_pend_' + cfoid);
         var apiEp = API_BASE;
-        // Show processing screen while verifying
         document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
         showProcessingScreen(cfoid, pd.total, 'redirect');
         updateProcessingStatus(70, 'Verifying payment...');
@@ -1044,14 +999,12 @@ function bootApp() {
           .then(function(r){ return r.json(); })
           .then(function(d){
             var st = (d.order_status || d.payment_status || '').toUpperCase();
-            // ACTIVE = order created but not paid. PAID/SUCCESS = confirmed payment only.
             var isPaid = (st === 'PAID' || st === 'SUCCESS');
             var isCancelled = (st === 'ACTIVE' || st === 'PENDING' || st === 'CANCELLED' || st === 'EXPIRED' || st === '');
             if (isPaid) {
               updateProcessingStatus(100, 'Payment confirmed!');
               setTimeout(function(){ hideProcessingScreen(); finalizeOrder(cfoid, pd.formData, pd.total, 'redirect'); }, 800);
             } else {
-              // Not paid — show clear message, do NOT finalize
               hideProcessingScreen();
               initHome();
               var msg = isCancelled
@@ -1062,27 +1015,22 @@ function bootApp() {
               }, 400);
             }
           }).catch(function(err){
-            // Network error during verification — do NOT finalize, show safe error
             hideProcessingScreen();
             initHome();
             setTimeout(function(){
               showPaymentError('Could not verify payment due to network error. If money was deducted, contact +91 98985 82650 with Order ID: ' + cfoid, cfoid, pd.formData, pd.total, 'redirect');
             }, 400);
           });
-        return; // Don't call initHome below
+        return;
       } catch(e) {}
     }
   }
 
   try { initHome(); } catch(e) { console.error('initHome:', e); }
-  // Ensure home page is shown
   document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
   var home = document.getElementById('page-home');
   if (home) home.classList.add('active');
 }
 
+// FIX 2: Single entry point — DOMContentLoaded only
 document.addEventListener('DOMContentLoaded', function(){ bootApp(); });
-// Fallback for Hostinger CDN edge case where DOMContentLoaded may already have fired
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  setTimeout(function(){ bootApp(); }, 50);
-}
