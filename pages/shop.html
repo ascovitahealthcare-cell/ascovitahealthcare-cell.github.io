@@ -1,0 +1,94 @@
+<!-- ══════════ SHOP PAGE ══════════ -->
+<div class="page" id="page-shop" style="padding-top:90px">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="/" onclick="showPage('home');return false;">Home</a><span class="bsep">›</span>
+      <span id="shopBCLabel">Shop</span>
+    </div>
+    <div style="margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px">
+      <div>
+        <h1 style="font-size:clamp(1.6rem,3vw,2.2rem);margin-bottom:5px" id="shopTitle">All Products</h1>
+        <p style="color:var(--gray);font-size:.86rem">Premium organic vitamins &amp; supplements from Ascovita</p>
+      </div>
+    </div>
+    <div class="cat-pills" id="shopPills">
+      <button class="cpill active" data-cat="all" onclick="filterCat('all',this)">All</button>
+      <button class="cpill" data-cat="bestsellers" onclick="filterCat('bestsellers',this)">🔥 Best Sellers</button>
+      <button class="cpill" data-cat="sale" onclick="filterCat('sale',this)">💰 On Sale</button>
+      <button class="cpill" data-cat="new" onclick="filterCat('new',this)">🆕 New</button>
+      <button class="cpill" data-cat="premium" onclick="filterCat('premium',this)">🏆 Premium</button>
+      <button class="cpill" data-cat="spirulina" onclick="filterCat('spirulina',this)">🌊 Spirulina</button>
+      <button class="cpill" data-cat="effervescent" onclick="filterCat('effervescent',this)">🫧 Effervescent</button>
+      <button class="cpill" data-cat="ayurvedic" onclick="filterCat('ayurvedic',this)">🌿 Ayurvedic</button>
+      <button class="cpill" data-cat="energy" onclick="filterCat('energy',this)">⚡ Energy</button>
+      <button class="cpill" data-cat="skin" onclick="filterCat('skin',this)">⭐ Skin &amp; Glow</button>
+      <button class="cpill" data-cat="immunity" onclick="filterCat('immunity',this)">💪 Immunity</button>
+      <button class="cpill" data-cat="weight" onclick="filterCat('weight',this)">🏋 Weight</button>
+      <button class="cpill" data-cat="combos" onclick="filterCat('combos',this)">🎁 Combos</button>
+    </div>
+    <div class="shop-layout">
+      <!-- SIDEBAR -->
+      <div class="filter-sidebar">
+        <div class="filter-box">
+          <div class="filter-hdr"><h3>Filters</h3><button class="filter-clear" onclick="clearFilters()">Clear All</button></div>
+          <div class="filter-sec">
+            <h4>Price Range</h4>
+            <div class="price-slider">
+              <input type="range" min="0" max="2000" value="2000" step="50" id="priceRange" oninput="updatePrice(this.value)">
+              <div class="price-disp"><span>₹0</span><span id="priceDisp">Any price</span></div>
+            </div>
+          </div>
+          <div class="filter-sec">
+            <h4>Rating</h4>
+            <div class="f-opt"><input type="checkbox" id="fr5" value="5" onchange="applyFilters()"><label for="fr5">★★★★★ 5 stars</label></div>
+            <div class="f-opt"><input type="checkbox" id="fr4" value="4" onchange="applyFilters()"><label for="fr4">★★★★☆ 4+ stars</label></div>
+          </div>
+          <div class="filter-sec">
+            <h4>Sort</h4>
+            <select class="sort-sel" id="sortSel" onchange="applyFilters()" style="width:100%;margin-top:4px">
+              <option value="def">Default</option>
+              <option value="plo">Price: Low → High</option>
+              <option value="phi">Price: High → Low</option>
+              <option value="rat">Highest Rated</option>
+            </select>
+          </div>
+          <div class="filter-sec">
+            <h4>Special</h4>
+            <div class="f-opt"><input type="checkbox" id="fSale" onchange="applyFilters()"><label for="fSale">On Sale</label></div>
+            <div class="f-opt"><input type="checkbox" id="fNew" onchange="applyFilters()"><label for="fNew">New Arrivals</label></div>
+            <div class="f-opt"><input type="checkbox" id="fBest" onchange="applyFilters()"><label for="fBest">Bestsellers</label></div>
+          </div>
+        </div>
+        <div style="background:linear-gradient(135deg,var(--green),var(--green-light));border-radius:var(--radius);padding:22px;margin-top:18px;color:white;text-align:center">
+          <div style="font-size:1.8rem;margin-bottom:8px">🌿</div>
+          <div style="font-weight:700;font-size:.88rem;margin-bottom:5px">Buy 4 Get 50% OFF</div>
+          <div style="font-size:.75rem;opacity:.85;margin-bottom:14px">Add 4 units to your cart and the discount applies automatically!</div>
+          <button class="btn-gold" style="width:100%;justify-content:center;font-size:.82rem" onclick="showPage('shop')">Shop Now</button>
+        </div>
+      </div>
+      <!-- PRODUCTS -->
+      <div>
+        <div class="sort-bar">
+          <span class="res-count" id="shopCount">Showing all 12 products</span>
+          <select class="sort-sel" onchange="document.getElementById('sortSel').value=this.value;applyFilters()">
+            <option value="def">Sort: Default</option>
+            <option value="plo">Price: Low → High</option>
+            <option value="phi">Price: High → Low</option>
+            <option value="rat">Highest Rated</option>
+          </select>
+        </div>
+        <div class="products-grid" id="shopGrid"></div>
+        <div id="shopEmpty" style="display:none;text-align:center;padding:60px 20px">
+          <div style="font-size:3rem;margin-bottom:14px">🔍</div>
+          <h3>No products found</h3>
+          <p style="color:var(--gray);margin:8px 0 20px">Try adjusting your filters</p>
+          <button class="btn-primary" onclick="clearFilters()">Clear Filters</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══════════ END SHOP ══════════ -->
+
+
+<!-- ══════════ PRODUCT PAGE ══════════ -->
