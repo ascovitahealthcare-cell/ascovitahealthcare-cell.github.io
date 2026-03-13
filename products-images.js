@@ -76,8 +76,8 @@ const PRODUCT_IMAGES = {
 };
 
 // ── Auto-inject images into PRODUCTS array ──
-// Runs after DOM is ready. Supports full gallery (up to 6 images per product).
-document.addEventListener('DOMContentLoaded', function () {
+// Runs immediately (script loads after PRODUCTS is defined in index.html).
+(function injectProductImages() {
   if (typeof PRODUCTS === 'undefined') return;
   PRODUCTS.forEach(function (p) {
     var entry = PRODUCT_IMAGES[p.id];
@@ -99,4 +99,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     p.allImages = urls;
   });
-});
+})();
