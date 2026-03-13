@@ -265,6 +265,42 @@ textarea.form-control{resize:vertical;min-height:80px;}
 .revenue-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-bright));border-radius:4px;transition:width 0.8s ease;}
 input[type=file]{display:none;}
 
+/* ═══ EXPORT PANEL ═══ */
+.export-panel{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;display:none;animation:slideDown 0.2s ease;}
+.export-panel.open{display:block;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.export-panel-inner{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+.ep-group{display:flex;flex-direction:column;gap:5px;}
+.ep-label{font-size:0.68rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
+.ep-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.ep-chip{padding:5px 13px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface2);color:var(--text2);font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+.ep-chip:hover,.ep-chip.active{border-color:var(--green);background:rgba(74,138,40,0.12);color:var(--green-text);}
+.ep-date-row{display:flex;gap:8px;align-items:center;}
+.ep-date-row input[type=date]{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:var(--font);font-size:0.78rem;outline:none;}
+.ep-date-row input[type=date]:focus{border-color:var(--green);}
+.ep-fmt{display:flex;gap:6px;}
+.ep-fmt-btn{padding:5px 14px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface2);color:var(--text2);font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.ep-fmt-btn.active{border-color:var(--green);background:rgba(74,138,40,0.12);color:var(--green-text);}
+.ep-preview{font-size:0.75rem;color:var(--text3);background:var(--bg2);border-radius:8px;padding:8px 12px;min-width:180px;flex:1;}
+.ep-preview strong{color:var(--green-text);}
+.ep-dl-btn{background:linear-gradient(135deg,var(--green),var(--green-bright));color:white;border:none;border-radius:8px;padding:8px 20px;font-family:var(--font);font-size:0.82rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.2s;}
+.ep-dl-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(74,138,40,0.5);}
+.btn-export{background:var(--surface2);border:1px solid var(--border2);color:var(--green-text);border-radius:var(--radius-sm);padding:7px 14px;font-family:var(--font);font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.2s;display:inline-flex;align-items:center;gap:6px;}
+.btn-export:hover,.btn-export.active{background:rgba(74,138,40,0.12);border-color:var(--green);}
+
+/* ═══ 3D KPI CARDS ═══ */
+.kpi{transform-style:preserve-3d;transition:transform 0.3s,box-shadow 0.3s;}
+.kpi:hover{transform:translateY(-4px) rotateX(2deg);box-shadow:0 16px 40px rgba(0,0,0,0.5),0 0 0 1px var(--border2),0 0 32px rgba(74,138,40,0.15);}
+.kpi-trend{font-size:0.7rem;margin-top:2px;display:flex;align-items:center;gap:3px;}
+
+/* ═══ 3D CARDS ═══ */
+.card{transition:box-shadow 0.2s;}
+.card:hover{box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 0 1px var(--border2);}
+
+/* ═══ CHART CANVAS ═══ */
+.chart-canvas-wrap{position:relative;width:100%;}
+canvas.dash-chart{width:100%!important;}
+
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:900px){
   .app-layout{grid-template-columns:1fr;grid-template-rows:56px calc(100vh - 56px);}
@@ -411,7 +447,23 @@ input[type=file]{display:none;}
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadDashboard()">↺ Refresh</button>
       <button class="btn btn-gold" onclick="showPage('analytics')">📈 Analytics</button>
-      <button class="btn btn-secondary" onclick="openExportModal('dashboard')">📤 Export</button>
+      <button class="btn-export" onclick="toggleExportPanel('dashboard')">📤 Export ▾</button>
+    </div>
+  </div>
+  <div class="export-panel" id="ep-dashboard">
+    <div class="export-panel-inner">
+      <div class="ep-group"><div class="ep-label">Period</div><div class="ep-chips" id="epchips-dashboard">
+        <span class="ep-chip active" onclick="setEpChip('dashboard','today',this)">Today</span>
+        <span class="ep-chip" onclick="setEpChip('dashboard','week',this)">Week</span>
+        <span class="ep-chip" onclick="setEpChip('dashboard','month',this)">Month</span>
+        <span class="ep-chip" onclick="setEpChip('dashboard','year',this)">Year</span>
+        <span class="ep-chip" onclick="setEpChip('dashboard','all',this)">All</span>
+        <span class="ep-chip" onclick="setEpChip('dashboard','custom',this)">Custom</span>
+      </div></div>
+      <div class="ep-group" id="epdate-dashboard" style="display:none"><div class="ep-label">Date Range</div><div class="ep-date-row"><input type="date" id="epfrom-dashboard"><span style="color:var(--text3)">→</span><input type="date" id="epto-dashboard"></div></div>
+      <div class="ep-group"><div class="ep-label">Format</div><div class="ep-fmt" id="epfmt-dashboard"><button class="ep-fmt-btn active" onclick="setEpFmt('dashboard','csv',this)">CSV</button><button class="ep-fmt-btn" onclick="setEpFmt('dashboard','json',this)">JSON</button></div></div>
+      <div class="ep-preview" id="epprev-dashboard">Select period to preview…</div>
+      <button class="ep-dl-btn" onclick="doPageExport('dashboard')">⬇ Download</button>
     </div>
   </div>
   <div class="grid-4" id="kpiCards" style="margin-bottom:20px">
@@ -422,12 +474,22 @@ input[type=file]{display:none;}
   </div>
   <div class="grid-2" style="margin-bottom:20px">
     <div class="card">
-      <div class="card-hdr"><span class="card-title">Revenue Trend (7 days)</span></div>
-      <div id="revenueChart" style="height:120px;display:flex;align-items:flex-end;gap:6px;padding:0 4px;"></div>
+      <div class="card-hdr"><span class="card-title">Revenue Trend (7 days)</span><span class="badge badge-green" id="dashRevTotal">₹0</span></div>
+      <div class="chart-canvas-wrap" style="height:130px;"><canvas id="revenueCanvas" style="display:block;width:100%;height:130px;"></canvas></div>
     </div>
     <div class="card">
       <div class="card-hdr"><span class="card-title">⚠️ Low Stock Alert</span><span class="badge badge-red" id="lowStockBadge">0</span></div>
       <div id="lowStockList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Order Status Breakdown</span></div>
+      <div class="chart-canvas-wrap" style="height:130px;"><canvas id="statusCanvas" style="display:block;width:100%;height:130px;"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">Payment Methods</span></div>
+      <div class="chart-canvas-wrap" style="height:130px;"><canvas id="payCanvas" style="display:block;width:100%;height:130px;"></canvas></div>
     </div>
   </div>
   <div class="card">
@@ -450,7 +512,23 @@ input[type=file]{display:none;}
         <option value="90">Last 90 Days</option>
         <option value="365">All Time</option>
       </select>
-      <button class="btn btn-secondary" onclick="openExportModal('analytics')">📤 Export</button>
+      <button class="btn-export" onclick="toggleExportPanel('analytics')">📤 Export ▾</button>
+    </div>
+  </div>
+  <div class="export-panel" id="ep-analytics">
+    <div class="export-panel-inner">
+      <div class="ep-group"><div class="ep-label">Period</div><div class="ep-chips">
+        <span class="ep-chip active" onclick="setEpChip('analytics','today',this)">Today</span>
+        <span class="ep-chip" onclick="setEpChip('analytics','week',this)">Week</span>
+        <span class="ep-chip" onclick="setEpChip('analytics','month',this)">Month</span>
+        <span class="ep-chip" onclick="setEpChip('analytics','year',this)">Year</span>
+        <span class="ep-chip" onclick="setEpChip('analytics','all',this)">All</span>
+        <span class="ep-chip" onclick="setEpChip('analytics','custom',this)">Custom</span>
+      </div></div>
+      <div class="ep-group" id="epdate-analytics" style="display:none"><div class="ep-label">Date Range</div><div class="ep-date-row"><input type="date" id="epfrom-analytics"><span style="color:var(--text3)">→</span><input type="date" id="epto-analytics"></div></div>
+      <div class="ep-group"><div class="ep-label">Format</div><div class="ep-fmt" id="epfmt-analytics"><button class="ep-fmt-btn active" onclick="setEpFmt('analytics','csv',this)">CSV</button><button class="ep-fmt-btn" onclick="setEpFmt('analytics','json',this)">JSON</button></div></div>
+      <div class="ep-preview" id="epprev-analytics">Select period to preview…</div>
+      <button class="ep-dl-btn" onclick="doPageExport('analytics')">⬇ Download</button>
     </div>
   </div>
   <div class="grid-4" style="margin-bottom:20px" id="analyticsKpis">
@@ -503,7 +581,23 @@ input[type=file]{display:none;}
     <div><div class="page-title">Orders</div><div class="page-sub">Manage and fulfil customer orders</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadOrders()">↺ Refresh</button>
-      <button class="btn btn-secondary" onclick="openExportModal('orders')">📤 Export</button>
+      <button class="btn-export" onclick="toggleExportPanel('orders')">📤 Export ▾</button>
+    </div>
+  </div>
+  <div class="export-panel" id="ep-orders">
+    <div class="export-panel-inner">
+      <div class="ep-group"><div class="ep-label">Period</div><div class="ep-chips">
+        <span class="ep-chip active" onclick="setEpChip('orders','today',this)">Today</span>
+        <span class="ep-chip" onclick="setEpChip('orders','week',this)">Week</span>
+        <span class="ep-chip" onclick="setEpChip('orders','month',this)">Month</span>
+        <span class="ep-chip" onclick="setEpChip('orders','year',this)">Year</span>
+        <span class="ep-chip" onclick="setEpChip('orders','all',this)">All</span>
+        <span class="ep-chip" onclick="setEpChip('orders','custom',this)">Custom</span>
+      </div></div>
+      <div class="ep-group" id="epdate-orders" style="display:none"><div class="ep-label">Date Range</div><div class="ep-date-row"><input type="date" id="epfrom-orders"><span style="color:var(--text3)">→</span><input type="date" id="epto-orders"></div></div>
+      <div class="ep-group"><div class="ep-label">Format</div><div class="ep-fmt" id="epfmt-orders"><button class="ep-fmt-btn active" onclick="setEpFmt('orders','csv',this)">CSV</button><button class="ep-fmt-btn" onclick="setEpFmt('orders','json',this)">JSON</button></div></div>
+      <div class="ep-preview" id="epprev-orders">Select period to preview…</div>
+      <button class="ep-dl-btn" onclick="doPageExport('orders')">⬇ Download</button>
     </div>
   </div>
   <div class="filter-bar">
@@ -538,8 +632,23 @@ input[type=file]{display:none;}
     <div class="page-actions">
       <button class="btn btn-secondary btn-sm" onclick="loadProducts()">↺ Refresh</button>
       <button class="btn btn-secondary btn-sm" onclick="toggleShowDeleted()">🗑️ Deleted</button>
-      <button class="btn btn-secondary btn-sm" onclick="openExportModal('products')">📤 Export</button>
+      <button class="btn-export" onclick="toggleExportPanel('products')">📤 Export ▾</button>
       <button class="btn btn-primary" onclick="openProductModal(null)">＋ New Product</button>
+    </div>
+  </div>
+  <div class="export-panel" id="ep-products">
+    <div class="export-panel-inner">
+      <div class="ep-group"><div class="ep-label">Period</div><div class="ep-chips">
+        <span class="ep-chip active" onclick="setEpChip('products','all',this)">All</span>
+        <span class="ep-chip" onclick="setEpChip('products','week',this)">This Week</span>
+        <span class="ep-chip" onclick="setEpChip('products','month',this)">This Month</span>
+        <span class="ep-chip" onclick="setEpChip('products','year',this)">This Year</span>
+        <span class="ep-chip" onclick="setEpChip('products','custom',this)">Custom</span>
+      </div></div>
+      <div class="ep-group" id="epdate-products" style="display:none"><div class="ep-label">Date Range</div><div class="ep-date-row"><input type="date" id="epfrom-products"><span style="color:var(--text3)">→</span><input type="date" id="epto-products"></div></div>
+      <div class="ep-group"><div class="ep-label">Format</div><div class="ep-fmt" id="epfmt-products"><button class="ep-fmt-btn active" onclick="setEpFmt('products','csv',this)">CSV</button><button class="ep-fmt-btn" onclick="setEpFmt('products','json',this)">JSON</button></div></div>
+      <div class="ep-preview" id="epprev-products">Select period to preview…</div>
+      <button class="ep-dl-btn" onclick="doPageExport('products')">⬇ Download</button>
     </div>
   </div>
   <div class="filter-bar">
@@ -574,7 +683,21 @@ input[type=file]{display:none;}
     <div><div class="page-title">Inventory</div><div class="page-sub">Stock levels & restock management</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadInventory()">↺ Refresh</button>
-      <button class="btn btn-secondary" onclick="openExportModal('inventory')">📤 Export</button>
+      <button class="btn-export" onclick="toggleExportPanel('inventory')">📤 Export ▾</button>
+    </div>
+  </div>
+  <div class="export-panel" id="ep-inventory">
+    <div class="export-panel-inner">
+      <div class="ep-group"><div class="ep-label">Period</div><div class="ep-chips">
+        <span class="ep-chip active" onclick="setEpChip('inventory','all',this)">All</span>
+        <span class="ep-chip" onclick="setEpChip('inventory','month',this)">Month</span>
+        <span class="ep-chip" onclick="setEpChip('inventory','year',this)">Year</span>
+        <span class="ep-chip" onclick="setEpChip('inventory','custom',this)">Custom</span>
+      </div></div>
+      <div class="ep-group" id="epdate-inventory" style="display:none"><div class="ep-label">Date Range</div><div class="ep-date-row"><input type="date" id="epfrom-inventory"><span style="color:var(--text3)">→</span><input type="date" id="epto-inventory"></div></div>
+      <div class="ep-group"><div class="ep-label">Format</div><div class="ep-fmt" id="epfmt-inventory"><button class="ep-fmt-btn active" onclick="setEpFmt('inventory','csv',this)">CSV</button><button class="ep-fmt-btn" onclick="setEpFmt('inventory','json',this)">JSON</button></div></div>
+      <div class="ep-preview" id="epprev-inventory">Select period to preview…</div>
+      <button class="ep-dl-btn" onclick="doPageExport('inventory')">⬇ Download</button>
     </div>
   </div>
   <div class="filter-bar">
@@ -598,8 +721,22 @@ input[type=file]{display:none;}
     <div><div class="page-title">Discounts & Coupons</div><div class="page-sub">Manage coupon codes and promotions</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadDiscounts()">↺ Refresh</button>
-      <button class="btn btn-secondary" onclick="openExportModal('discounts')">📤 Export</button>
+      <button class="btn-export" onclick="toggleExportPanel('discounts')">📤 Export ▾</button>
       <button class="btn btn-primary" onclick="openCouponModal(null)">＋ New Coupon</button>
+    </div>
+  </div>
+  <div class="export-panel" id="ep-discounts">
+    <div class="export-panel-inner">
+      <div class="ep-group"><div class="ep-label">Period</div><div class="ep-chips">
+        <span class="ep-chip active" onclick="setEpChip('discounts','all',this)">All</span>
+        <span class="ep-chip" onclick="setEpChip('discounts','month',this)">Month</span>
+        <span class="ep-chip" onclick="setEpChip('discounts','year',this)">Year</span>
+        <span class="ep-chip" onclick="setEpChip('discounts','custom',this)">Custom</span>
+      </div></div>
+      <div class="ep-group" id="epdate-discounts" style="display:none"><div class="ep-label">Date Range</div><div class="ep-date-row"><input type="date" id="epfrom-discounts"><span style="color:var(--text3)">→</span><input type="date" id="epto-discounts"></div></div>
+      <div class="ep-group"><div class="ep-label">Format</div><div class="ep-fmt" id="epfmt-discounts"><button class="ep-fmt-btn active" onclick="setEpFmt('discounts','csv',this)">CSV</button><button class="ep-fmt-btn" onclick="setEpFmt('discounts','json',this)">JSON</button></div></div>
+      <div class="ep-preview" id="epprev-discounts">Select period to preview…</div>
+      <button class="ep-dl-btn" onclick="doPageExport('discounts')">⬇ Download</button>
     </div>
   </div>
   <div class="table-wrap">
@@ -616,7 +753,22 @@ input[type=file]{display:none;}
     <div><div class="page-title">Customers</div><div class="page-sub">Customer database & order history</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadCustomers()">↺ Refresh</button>
-      <button class="btn btn-secondary" onclick="openExportModal('customers')">📤 Export</button>
+      <button class="btn-export" onclick="toggleExportPanel('customers')">📤 Export ▾</button>
+    </div>
+  </div>
+  <div class="export-panel" id="ep-customers">
+    <div class="export-panel-inner">
+      <div class="ep-group"><div class="ep-label">Period</div><div class="ep-chips">
+        <span class="ep-chip active" onclick="setEpChip('customers','all',this)">All</span>
+        <span class="ep-chip" onclick="setEpChip('customers','week',this)">Week</span>
+        <span class="ep-chip" onclick="setEpChip('customers','month',this)">Month</span>
+        <span class="ep-chip" onclick="setEpChip('customers','year',this)">Year</span>
+        <span class="ep-chip" onclick="setEpChip('customers','custom',this)">Custom</span>
+      </div></div>
+      <div class="ep-group" id="epdate-customers" style="display:none"><div class="ep-label">Date Range</div><div class="ep-date-row"><input type="date" id="epfrom-customers"><span style="color:var(--text3)">→</span><input type="date" id="epto-customers"></div></div>
+      <div class="ep-group"><div class="ep-label">Format</div><div class="ep-fmt" id="epfmt-customers"><button class="ep-fmt-btn active" onclick="setEpFmt('customers','csv',this)">CSV</button><button class="ep-fmt-btn" onclick="setEpFmt('customers','json',this)">JSON</button></div></div>
+      <div class="ep-preview" id="epprev-customers">Select period to preview…</div>
+      <button class="ep-dl-btn" onclick="doPageExport('customers')">⬇ Download</button>
     </div>
   </div>
   <div class="filter-bar">
@@ -668,7 +820,23 @@ input[type=file]{display:none;}
       <select class="filter-select" id="payFilterStatus" onchange="filterPayments()">
         <option value="">All</option><option value="Paid">Paid</option><option value="COD - Pending">COD</option><option value="Failed">Failed</option>
       </select>
-      <button class="btn btn-secondary" onclick="openExportModal('payments')">📤 Export</button>
+      <button class="btn-export" onclick="toggleExportPanel('payments')">📤 Export ▾</button>
+    </div>
+  </div>
+  <div class="export-panel" id="ep-payments">
+    <div class="export-panel-inner">
+      <div class="ep-group"><div class="ep-label">Period</div><div class="ep-chips">
+        <span class="ep-chip active" onclick="setEpChip('payments','today',this)">Today</span>
+        <span class="ep-chip" onclick="setEpChip('payments','week',this)">Week</span>
+        <span class="ep-chip" onclick="setEpChip('payments','month',this)">Month</span>
+        <span class="ep-chip" onclick="setEpChip('payments','year',this)">Year</span>
+        <span class="ep-chip" onclick="setEpChip('payments','all',this)">All</span>
+        <span class="ep-chip" onclick="setEpChip('payments','custom',this)">Custom</span>
+      </div></div>
+      <div class="ep-group" id="epdate-payments" style="display:none"><div class="ep-label">Date Range</div><div class="ep-date-row"><input type="date" id="epfrom-payments"><span style="color:var(--text3)">→</span><input type="date" id="epto-payments"></div></div>
+      <div class="ep-group"><div class="ep-label">Format</div><div class="ep-fmt" id="epfmt-payments"><button class="ep-fmt-btn active" onclick="setEpFmt('payments','csv',this)">CSV</button><button class="ep-fmt-btn" onclick="setEpFmt('payments','json',this)">JSON</button></div></div>
+      <div class="ep-preview" id="epprev-payments">Select period to preview…</div>
+      <button class="ep-dl-btn" onclick="doPageExport('payments')">⬇ Download</button>
     </div>
   </div>
   <div class="grid-3" style="margin-bottom:20px" id="payKpis"></div>
@@ -686,7 +854,23 @@ input[type=file]{display:none;}
     <div><div class="page-title">Invoices</div><div class="page-sub">GST tax invoices (CGST + SGST)</div></div>
     <div class="page-actions">
       <input class="filter-input" placeholder="🔍 Search order ID..." id="invoiceSearch" oninput="filterInvoices()" style="width:200px">
-      <button class="btn btn-secondary" onclick="openExportModal('invoices')">📤 Export</button>
+      <button class="btn-export" onclick="toggleExportPanel('invoices')">📤 Export ▾</button>
+    </div>
+  </div>
+  <div class="export-panel" id="ep-invoices">
+    <div class="export-panel-inner">
+      <div class="ep-group"><div class="ep-label">Period</div><div class="ep-chips">
+        <span class="ep-chip active" onclick="setEpChip('invoices','today',this)">Today</span>
+        <span class="ep-chip" onclick="setEpChip('invoices','week',this)">Week</span>
+        <span class="ep-chip" onclick="setEpChip('invoices','month',this)">Month</span>
+        <span class="ep-chip" onclick="setEpChip('invoices','year',this)">Year</span>
+        <span class="ep-chip" onclick="setEpChip('invoices','all',this)">All</span>
+        <span class="ep-chip" onclick="setEpChip('invoices','custom',this)">Custom</span>
+      </div></div>
+      <div class="ep-group" id="epdate-invoices" style="display:none"><div class="ep-label">Date Range</div><div class="ep-date-row"><input type="date" id="epfrom-invoices"><span style="color:var(--text3)">→</span><input type="date" id="epto-invoices"></div></div>
+      <div class="ep-group"><div class="ep-label">Format</div><div class="ep-fmt" id="epfmt-invoices"><button class="ep-fmt-btn active" onclick="setEpFmt('invoices','csv',this)">CSV</button><button class="ep-fmt-btn" onclick="setEpFmt('invoices','json',this)">JSON</button></div></div>
+      <div class="ep-preview" id="epprev-invoices">Select period to preview…</div>
+      <button class="ep-dl-btn" onclick="doPageExport('invoices')">⬇ Download</button>
     </div>
   </div>
   <div class="table-wrap">
@@ -1191,6 +1375,11 @@ if(authToken) {
   initApp();
 }
 
+// Redraw canvas charts on window resize
+window.addEventListener('resize', () => {
+  if(allOrders.length) { renderRevenueChart(allOrders); renderStatusChart(allOrders); renderPayChart(allOrders); }
+});
+
 // ═══════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════
@@ -1256,9 +1445,119 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
 
 // ═══════════════════════════════════════════════
-// DASHBOARD
+// CHART.JS MINI RENDERER (no CDN needed)
+// ═══════════════════════════════════════════════
+// Polyfill for older browsers
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    r = Array.isArray(r)?r[0]:r||0;
+    this.beginPath();
+    this.moveTo(x+r,y);
+    this.arcTo(x+w,y,x+w,y+h,r);
+    this.arcTo(x+w,y+h,x,y+h,r);
+    this.arcTo(x,y+h,x,y,r);
+    this.arcTo(x,y,x+w,y,r);
+    this.closePath();
+    return this;
+  };
+}
+function drawBarChart(canvasId, labels, data, color='#5EAB30') {
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  canvas.width = canvas.offsetWidth || 400;
+  canvas.height = canvas.offsetHeight || 130;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const W = canvas.width, H = canvas.height;
+  const pad = {t:10,r:10,b:28,l:50};
+  const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+  const max = Math.max(...data, 1);
+  const barW = Math.max(4, (cW / data.length) - 4);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(78,138,40,0.1)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<=4;i++) {
+    const y = pad.t + cH - (i/4)*cH;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle = 'rgba(106,120,96,0.7)';
+    ctx.font = '9px DM Sans,sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(fmtNum(max*i/4), pad.l-4, y+3);
+  }
+
+  // Bars
+  data.forEach((v, i) => {
+    const x = pad.l + i*(cW/data.length) + (cW/data.length - barW)/2;
+    const barH = (v/max)*cH;
+    const y = pad.t + cH - barH;
+    // 3D shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath(); ctx.roundRect(x+3, y+3, barW, barH, [3,3,0,0]); ctx.fill();
+    // Gradient bar
+    const grd = ctx.createLinearGradient(0, y, 0, y+barH);
+    grd.addColorStop(0, color);
+    grd.addColorStop(1, color+'80');
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.roundRect(x, y, barW, barH, [3,3,0,0]); ctx.fill();
+    // Label
+    ctx.fillStyle = 'rgba(158,170,144,0.8)';
+    ctx.font = '8px DM Sans,sans-serif';
+    ctx.textAlign = 'center';
+    if(labels[i]) ctx.fillText(labels[i].slice(0,4), x + barW/2, H - pad.b + 10);
+  });
+}
+
+function drawDonutChart(canvasId, labels, data, colors) {
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  canvas.width = canvas.offsetWidth || 200;
+  canvas.height = canvas.offsetHeight || 130;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const W = canvas.width, H = canvas.height;
+  const total = data.reduce((s,v)=>s+v,0);
+  if(!total) return;
+  const cx = H/2 + 8, cy = H/2, r = (H/2) - 12, ir = r*0.55;
+  let startAngle = -Math.PI/2;
+  data.forEach((v, i) => {
+    const angle = (v/total)*Math.PI*2;
+    // Shadow
+    ctx.shadowColor = colors[i]+'60';
+    ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,startAngle,startAngle+angle); ctx.closePath();
+    ctx.fillStyle = colors[i]; ctx.fill();
+    ctx.shadowBlur = 0;
+    startAngle += angle;
+  });
+  // Donut hole
+  ctx.beginPath(); ctx.arc(cx,cy,ir,0,Math.PI*2);
+  ctx.fillStyle = '#0A0D0A'; ctx.fill();
+  // Center text
+  ctx.fillStyle = '#E8EDE0';
+  ctx.font = 'bold 14px Syne,sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(total, cx, cy+5);
+  // Legend
+  const lx = cx + r + 16;
+  labels.forEach((lbl,i) => {
+    const ly = 16 + i*20;
+    ctx.fillStyle = colors[i];
+    ctx.beginPath(); ctx.roundRect(lx, ly, 10, 10, 2); ctx.fill();
+    ctx.fillStyle = 'rgba(158,170,144,0.9)';
+    ctx.font = '9px DM Sans,sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${lbl} (${data[i]})`, lx+14, ly+9);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// DASHBOARD — Real data fetching
 // ═══════════════════════════════════════════════
 async function loadDashboard() {
+  // Show skeletons
+  document.getElementById('kpiCards').innerHTML = Array(4).fill('<div class="kpi skel" style="height:100px"></div>').join('');
   try {
     const [statsR, ordersR, prodsR] = await Promise.all([
       apiFetch('/api/admin/stats'),
@@ -1266,44 +1565,70 @@ async function loadDashboard() {
       apiFetch('/api/admin/products')
     ]);
     const stats   = (await statsR.json()).stats || {};
-    const orders  = (await ordersR.json()).data || [];
-    const prods   = (await prodsR.json()).data || [];
-    allOrders = orders;
+    const ordData = await ordersR.json();
+    const prdData = await prodsR.json();
+    const orders  = ordData.data || ordData.orders || (Array.isArray(ordData)?ordData:[]);
+    const prods   = prdData.data || prdData.products || (Array.isArray(prdData)?prdData:[]);
+    allOrders  = orders;
+    allProducts = prods;
 
-    // KPI Cards
+    // Compute live stats from orders if backend stats missing
+    const todayStr = new Date().toISOString().split('T')[0];
+    const paidOrders = orders.filter(o => (o.payment_status||'').toLowerCase().includes('paid') || o.payment_status === 'SUCCESS');
+    const todayPaid  = paidOrders.filter(o => (o.created_at||'').startsWith(todayStr));
+    const totalRev   = stats.totalRevenue  || paidOrders.reduce((s,o)=>s+parseFloat(o.total||0),0);
+    const todayRev   = stats.todayRevenue  || todayPaid.reduce((s,o)=>s+parseFloat(o.total||0),0);
+    const pending    = stats.pendingOrders || orders.filter(o=>(o.fulfillment||o.status||'')===('Pending')).length;
+    const totalCust  = stats.totalCustomers|| allCustomers.length || 0;
+
+    // KPI Cards with trend
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const yStr = yesterday.toISOString().split('T')[0];
+    const yestRev = paidOrders.filter(o=>(o.created_at||'').startsWith(yStr)).reduce((s,o)=>s+parseFloat(o.total||0),0);
+    const revTrend = yestRev>0 ? ((todayRev-yestRev)/yestRev*100).toFixed(1) : null;
+
     document.getElementById('kpiCards').innerHTML = `
-      <div class="kpi"><div class="kpi-label">Today's Revenue</div><div class="kpi-val">₹${fmtNum(stats.todayRevenue||0)}</div><div class="kpi-change up">↑ Online paid</div><span class="kpi-ico">💰</span></div>
-      <div class="kpi"><div class="kpi-label">Total Revenue</div><div class="kpi-val">₹${fmtNum(stats.totalRevenue||0)}</div><div class="kpi-change" style="color:var(--text3)">All time</div><span class="kpi-ico">📈</span></div>
-      <div class="kpi"><div class="kpi-label">Pending Orders</div><div class="kpi-val" style="color:var(--gold-text)">${stats.pendingOrders||0}</div><div class="kpi-change" style="color:var(--gold-text)">⏳ Awaiting</div><span class="kpi-ico">📦</span></div>
-      <div class="kpi"><div class="kpi-label">Total Customers</div><div class="kpi-val">${stats.totalCustomers||0}</div><div class="kpi-change" style="color:var(--text3)">Registered</div><span class="kpi-ico">👥</span></div>
+      <div class="kpi"><div class="kpi-label">Today's Revenue</div><div class="kpi-val">₹${fmtNum(todayRev)}</div>
+        <div class="kpi-trend ${revTrend>=0?'up':'down'}">${revTrend!==null?(revTrend>=0?'↑':'↓')+Math.abs(revTrend)+'% vs yesterday':'First sale today 🎉'}</div><span class="kpi-ico">💰</span></div>
+      <div class="kpi"><div class="kpi-label">Total Revenue</div><div class="kpi-val">₹${fmtNum(totalRev)}</div>
+        <div class="kpi-trend" style="color:var(--text3)">${paidOrders.length} paid orders</div><span class="kpi-ico">📈</span></div>
+      <div class="kpi"><div class="kpi-label">Pending Orders</div><div class="kpi-val" style="color:var(--gold-text)">${pending}</div>
+        <div class="kpi-trend" style="color:var(--gold-text)">⏳ Awaiting fulfilment</div><span class="kpi-ico">📦</span></div>
+      <div class="kpi"><div class="kpi-label">Total Orders</div><div class="kpi-val">${orders.length}</div>
+        <div class="kpi-trend" style="color:var(--text3)">${todayPaid.length} paid today</div><span class="kpi-ico">🛒</span></div>
     `;
 
-    // Update nav badge
-    document.getElementById('pendingBadge').textContent = stats.pendingOrders || 0;
+    document.getElementById('pendingBadge').textContent = pending;
 
-    // Revenue chart (last 7 days simulation from order data)
+    // Revenue chart
     renderRevenueChart(orders);
+    renderStatusChart(orders);
+    renderPayChart(orders);
 
     // Low stock
-    const lowStock = prods.filter(p => !p.deleted_at && p.stock < 20).sort((a,b) => a.stock - b.stock).slice(0, 6);
+    const lowStock = prods.filter(p => !p.deleted_at && (p.stock||0) < 20).sort((a,b) => (a.stock||0)-(b.stock||0)).slice(0, 6);
     document.getElementById('lowStockBadge').textContent = lowStock.length;
     document.getElementById('lowStockList').innerHTML = lowStock.map(p => `
       <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
         <span style="font-size:0.8rem;color:var(--text)">${p.name}</span>
-        <span class="badge ${p.stock===0?'badge-red':'badge-gold'}">${p.stock===0?'Out':''+p.stock+' left'}</span>
+        <span class="badge ${(p.stock||0)===0?'badge-red':'badge-gold'}">${(p.stock||0)===0?'Out':''+p.stock+' left'}</span>
       </div>
     `).join('') || '<div style="color:var(--text3);font-size:0.82rem;padding:12px 0;">✅ All products well stocked</div>';
 
-    // Recent orders table
+    // Recent orders
     document.getElementById('dashOrdersTbody').innerHTML = orders.slice(0, 8).map(o => `
       <tr>
-        <td class="td-id">${o.id}</td>
+        <td class="td-id" style="color:var(--green-text);cursor:pointer" onclick="showPage('orders')">${o.id}</td>
         <td>${o.customer_name||'-'}</td>
         <td style="color:var(--green-text);font-weight:600;">₹${fmtNum(o.total||0)}</td>
-        <td>${statusBadge(o.fulfillment)}</td>
+        <td>${statusBadge(o.fulfillment||o.status)}</td>
         <td style="color:var(--text3);font-size:0.75rem;">${fmtTime(o.created_at)}</td>
       </tr>
     `).join('') || '<tr><td colspan="5" class="empty-state">No orders yet</td></tr>';
+
+    // Update rev total badge
+    const el = document.getElementById('dashRevTotal');
+    if(el) el.textContent = '₹'+fmtNum(totalRev);
 
   } catch(e) { toast('Dashboard load error: '+e.message, 'error'); }
 }
@@ -1314,20 +1639,36 @@ function renderRevenueChart(orders) {
     const d = new Date(); d.setDate(d.getDate() - (days-1-i));
     return { label: d.toLocaleDateString('en-IN',{weekday:'short'}), date: d.toISOString().split('T')[0], rev: 0 };
   });
-  orders.filter(o => o.payment_status === 'Paid').forEach(o => {
+  orders.filter(o => (o.payment_status||'').toLowerCase().includes('paid') || o.payment_status==='SUCCESS').forEach(o => {
     const d = (o.created_at||'').split('T')[0];
     const b = buckets.find(b => b.date === d);
     if(b) b.rev += parseFloat(o.total||0);
   });
-  const max = Math.max(...buckets.map(b=>b.rev), 1);
-  document.getElementById('revenueChart').innerHTML = buckets.map(b => `
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <div style="flex:1;width:100%;display:flex;align-items:flex-end;">
-        <div style="width:100%;height:${Math.max(8, (b.rev/max)*100)}%;background:linear-gradient(180deg,var(--green-bright),var(--green));border-radius:3px 3px 0 0;opacity:${b.rev>0?1:0.3};min-height:8px;" title="₹${fmtNum(b.rev)}"></div>
-      </div>
-      <div style="font-size:0.65rem;color:var(--text3);">${b.label}</div>
-    </div>
-  `).join('');
+  setTimeout(()=>drawBarChart('revenueCanvas', buckets.map(b=>b.label), buckets.map(b=>b.rev), '#5EAB30'), 50);
+}
+
+function renderStatusChart(orders) {
+  const counts = {};
+  orders.forEach(o => { const s = o.fulfillment||o.status||'Pending'; counts[s]=(counts[s]||0)+1; });
+  const statusColors = {Pending:'#E8AD2C',Processing:'#2080E8',Shipped:'#7C3AED',Delivered:'#5EAB30',Cancelled:'#E53535'};
+  const labels = Object.keys(counts), data = Object.values(counts);
+  const colors = labels.map(l => statusColors[l]||'#6A7860');
+  setTimeout(()=>drawDonutChart('statusCanvas', labels, data, colors), 60);
+}
+
+function renderPayChart(orders) {
+  const m = {'Paid':0,'COD - Pending':0,'Failed':0,'Other':0};
+  orders.forEach(o => {
+    const s = o.payment_status||'Other';
+    if(s.includes('Paid')||s==='SUCCESS') m['Paid']++;
+    else if(s.includes('COD')) m['COD - Pending']++;
+    else if(s.includes('Fail')||s==='FAILED') m['Failed']++;
+    else m['Other']++;
+  });
+  const labels = Object.keys(m).filter(k=>m[k]>0);
+  const data   = labels.map(k=>m[k]);
+  const colors = ['#5EAB30','#E8AD2C','#E53535','#6A7860'];
+  setTimeout(()=>drawDonutChart('payCanvas', labels, data, colors.slice(0,labels.length)), 70);
 }
 
 // ═══════════════════════════════════════════════
@@ -1337,7 +1678,7 @@ async function loadAnalytics() {
   const days = parseInt(document.getElementById('analyticsFilter').value)||30;
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
   const orders = allOrders.filter(o => new Date(o.created_at) >= cutoff);
-  const paid   = orders.filter(o => o.payment_status === 'Paid');
+  const paid   = orders.filter(o => (o.payment_status||'').toLowerCase().includes('paid') || o.payment_status==='SUCCESS');
   const revenue = paid.reduce((s,o) => s + parseFloat(o.total||0), 0);
   const avgOrder = paid.length ? revenue / paid.length : 0;
 
@@ -1409,342 +1750,169 @@ async function loadAnalytics() {
 }
 
 // ═══════════════════════════════════════════════
-// EXPORT ENGINE
+// EXPORT ENGINE — per-page with date filter
 // ═══════════════════════════════════════════════
-let _exportPage = 'orders';
-let _exportRange = 'today';
-let _exportFormat = 'csv';
+const _epState = {}; // {page: {range, fmt}}
 
-function openExportModal(page) {
-  _exportPage = page;
-  _exportRange = 'all';
-  _exportFormat = 'csv';
-  const titles = {
-    dashboard:'Dashboard Summary', orders:'Orders', analytics:'Analytics Report',
-    products:'Products Catalogue', inventory:'Inventory', customers:'Customers',
-    discounts:'Coupons & Discounts', payments:'Payments', invoices:'Invoices'
-  };
-  document.getElementById('exportModalTitle').textContent = '📤 Export — ' + (titles[page]||page);
-  // Reset UI
-  document.querySelectorAll('.export-range-btn').forEach((b,i) => b.classList.toggle('active', i===0));
-  // i===0 is now 'All Time' button
-  document.querySelectorAll('.export-fmt-btn').forEach((b,i) => b.classList.toggle('active', i===0));
-  document.getElementById('exportCustomRange').classList.remove('show');
-  // Default dates
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('exportDateFrom').value = today;
-  document.getElementById('exportDateTo').value = today;
-  updateExportPreview();
-  document.getElementById('exportModalOverlay').style.display = 'block';
-  document.getElementById('exportModal').classList.add('active');
+function getEpState(page) {
+  if(!_epState[page]) _epState[page] = {range:'all', fmt:'csv'};
+  return _epState[page];
 }
 
-function closeExportModal() {
-  document.getElementById('exportModalOverlay').style.display = 'none';
-  document.getElementById('exportModal').classList.remove('active');
-}
-
-function setExportRange(range, el) {
-  _exportRange = range;
-  document.querySelectorAll('.export-range-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  const cr = document.getElementById('exportCustomRange');
-  if(range === 'custom') {
-    cr.classList.add('show');
-  } else {
-    cr.classList.remove('show');
-  }
-  updateExportPreview();
-}
-
-function setExportFormat(fmt, el) {
-  _exportFormat = fmt;
-  document.querySelectorAll('.export-fmt-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-}
-
-function getExportDateRange() {
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  if(_exportRange === 'all') {
-    return { from: null, to: null };
-  }
-  if(_exportRange === 'today') {
-    const t = ymd(now);
-    return { from: t, to: t };
-  }
-  if(_exportRange === 'week') {
-    const mon = new Date(now); mon.setDate(now.getDate() - now.getDay() + 1);
-    return { from: ymd(mon), to: ymd(now) };
-  }
-  if(_exportRange === 'month') {
-    const first = new Date(now.getFullYear(), now.getMonth(), 1);
-    return { from: ymd(first), to: ymd(now) };
-  }
-  if(_exportRange === 'custom') {
-    return {
-      from: document.getElementById('exportDateFrom').value,
-      to: document.getElementById('exportDateTo').value
-    };
-  }
-  return { from: null, to: null };
-}
-
-function filterByDateRange(rows, dateField) {
-  const { from, to } = getExportDateRange();
-  if(!from || !to) return rows;
-  return rows.filter(r => {
-    const d = (r[dateField]||'').split('T')[0];
-    return d >= from && d <= to;
+function toggleExportPanel(page) {
+  // Close all others
+  document.querySelectorAll('.export-panel').forEach(el => {
+    if(el.id !== 'ep-'+page) el.classList.remove('open');
+    else { el.classList.toggle('open'); if(el.classList.contains('open')) updateEpPreview(page); }
   });
+  document.querySelectorAll('.btn-export').forEach(b => b.classList.remove('active'));
+  const ep = document.getElementById('ep-'+page);
+  if(ep && ep.classList.contains('open')) {
+    ep.previousElementSibling?.querySelector('.btn-export')?.classList.add('active');
+  }
 }
 
-function updateExportPreview() {
-  const info = document.getElementById('exportPreviewInfo');
-  if(!info) return;
-  const data = getExportData(_exportPage);
-  const range = getExportDateRange();
-  const rangeLabel = _exportRange === 'all'   ? 'All Time' :
-    _exportRange === 'today' ? 'Today' :
-    _exportRange === 'week'  ? 'This Week' :
-    _exportRange === 'month' ? 'This Month' :
-    `${range.from} → ${range.to}`;
-  const rowCount = data.rows.length;
-  info.innerHTML = rowCount === 0
-    ? `<span style="color:var(--gold-text);">⚠️ 0 rows found for <strong>${rangeLabel}</strong>. Try "All Time".</span>`
-    : `<strong>${rowCount} rows</strong> · ${rangeLabel} · ${data.columns.length} columns<br>
-    <span style="color:var(--text3);font-size:0.72rem;">Fields: ${data.columns.slice(0,5).join(', ')}${data.columns.length>5?' + '+(data.columns.length-5)+' more':''}</span>`;
+function setEpChip(page, range, el) {
+  getEpState(page).range = range;
+  el.closest('.ep-chips').querySelectorAll('.ep-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  const dateRow = document.getElementById('epdate-'+page);
+  if(dateRow) dateRow.style.display = range==='custom'?'flex':'none';
+  updateEpPreview(page);
 }
 
-function getExportData(page) {
-  const { from, to } = getExportDateRange();
-  const inRange = (dateStr) => {
-    if(!from || !to) return true;
-    const d = (dateStr||'').split('T')[0];
-    return d >= from && d <= to;
-  };
+function setEpFmt(page, fmt, el) {
+  getEpState(page).fmt = fmt;
+  el.closest('.ep-fmt').querySelectorAll('.ep-fmt-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  updateEpPreview(page);
+}
 
-  if(page === 'orders' || page === 'dashboard') {
-    const cols = ['Order ID','Customer','Email','Phone','City','Items','Subtotal','Discount','Shipping','Total','Payment Method','Status','Coupon','Tracking ID','Date'];
-    const rows = allOrders.filter(o => inRange(o.created_at)).map(o => [
-      o.id, o.customer_name||'', o.customer_email||'', o.customer_phone||o.phone||'',
-      o.city||'',
-      (o.items||[]).map(i=>`${i.name}x${i.qty}`).join('; '),
-      o.subtotal||'', o.discount||0, o.shipping||0, o.total||0,
-      o.payment_method||o.payment_status||'',
-      o.status||o.fulfillment||'',
-      o.coupon_code||'', o.tracking_id||'',
-      fmtDate(o.created_at)
-    ]);
-    return { columns: cols, rows };
+function getEpDateRange(page) {
+  const {range} = getEpState(page);
+  const now = new Date();
+  const pad = n=>String(n).padStart(2,'0');
+  const ymd = d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if(range==='all') return {from:null,to:null};
+  if(range==='today') { const t=ymd(now); return {from:t,to:t}; }
+  if(range==='week') { const m=new Date(now); m.setDate(now.getDate()-now.getDay()+1); return {from:ymd(m),to:ymd(now)}; }
+  if(range==='month') { const f=new Date(now.getFullYear(),now.getMonth(),1); return {from:ymd(f),to:ymd(now)}; }
+  if(range==='year') { const f=new Date(now.getFullYear(),0,1); return {from:ymd(f),to:ymd(now)}; }
+  if(range==='custom') {
+    const f=document.getElementById('epfrom-'+page)?.value;
+    const t=document.getElementById('epto-'+page)?.value;
+    return {from:f||null,to:t||null};
   }
+  return {from:null,to:null};
+}
 
-  if(page === 'analytics') {
-    const paid = allOrders.filter(o => inRange(o.created_at) && (o.payment_status==='Paid'||o.payment_status==='paid'));
-    const cols = ['Date','Order ID','Customer','Total','Status'];
-    const rows = paid.map(o => [
-      fmtDate(o.created_at), o.id, o.customer_name||'', o.total||0, o.status||o.fulfillment||''
-    ]);
-    return { columns: cols, rows };
-  }
+function epInRange(dateStr, from, to) {
+  if(!from||!to) return true;
+  const d=(dateStr||'').split('T')[0];
+  return d>=from && d<=to;
+}
 
-  if(page === 'products') {
-    const cols = ['ID','Name','Brand','Category','MRP','Sale Price','Stock','Rating','Reviews','Active','Badge','HSN','Created'];
-    const rows = allProducts.map(p => [
-      p.id, p.name, p.brand||'Ascovita', p.category||'',
-      p.mrp||p.price||0, p.sale_price||p.price||0,
-      p.stock||0, p.rating||'', p.reviews||0,
-      p.active ? 'Yes':'No', p.badge||'', p.hsn||'30049099',
-      fmtDate(p.created_at)
-    ]);
-    return { columns: cols, rows };
-  }
-
-  if(page === 'inventory') {
-    const cols = ['ID','Product Name','Category','Stock','Status'];
-    const rows = allProducts.map(p => [
-      p.id, p.name, p.category||'',
-      p.stock||0,
-      (p.stock||0) === 0 ? 'Out of Stock' : (p.stock||0) <= 10 ? 'Low Stock' : 'In Stock'
-    ]);
-    return { columns: cols, rows };
-  }
-
-  if(page === 'customers') {
-    const cols = ['Name','Email','Phone','City','Total Orders','Total Spent','Joined'];
-    const rows = allCustomers.map(cu => [
-      cu.name||'', cu.email||'', cu.phone||'', cu.city||cu.address?.city||'',
-      cu.order_count||cu.orders||0, cu.total_spent||cu.total||0,
-      fmtDate(cu.created_at)
-    ]);
-    return { columns: cols, rows };
-  }
-
-  if(page === 'discounts') {
-    const cols = ['Code','Type','Value','Min Order','Max Uses','Used','Expires','Active'];
-    const rows = allDiscounts.map(d => [
-      d.code||'', d.type||'', d.value||0, d.min_order||0,
-      d.max_uses||'∞', d.used_count||0,
-      d.expires_at ? fmtDate(d.expires_at) : 'Never',
-      d.active ? 'Yes':'No'
-    ]);
-    return { columns: cols, rows };
-  }
-
-  if(page === 'payments') {
-    const cols = ['Order ID','Customer','Amount','Payment Method','Status','Date'];
-    const rows = allOrders.filter(o => inRange(o.created_at)).map(o => [
-      o.id, o.customer_name||'', o.total||0,
-      o.payment_method||'', o.payment_status||'',
-      fmtDate(o.created_at)
-    ]);
-    return { columns: cols, rows };
-  }
-
-  if(page === 'invoices') {
-    const cgst = 9, sgst = 9;
-    const cols = ['Invoice #','Customer','Order ID','Subtotal','CGST (9%)','SGST (9%)','Total','Date'];
-    const rows = allOrders.filter(o => inRange(o.created_at) && (o.payment_status==='Paid')).map((o,i) => {
-      const sub = o.subtotal || o.total || 0;
-      const cgstAmt = +(sub * cgst / 100).toFixed(2);
-      const sgstAmt = +(sub * sgst / 100).toFixed(2);
-      return [`INV-${String(i+1).padStart(4,'0')}`, o.customer_name||'', o.id, sub, cgstAmt, sgstAmt, o.total||0, fmtDate(o.created_at)];
+function getEpData(page) {
+  const {from,to} = getEpDateRange(page);
+  const inR = ds => epInRange(ds,from,to);
+  if(page==='dashboard'||page==='orders') {
+    const cols=['Order ID','Customer','Email','Phone','City','Items','Subtotal','Discount','Shipping','Total','Payment','Status','Coupon','Tracking','Date'];
+    const rows=allOrders.filter(o=>inR(o.created_at)).map(o=>{
+      let items=[];try{items=typeof o.items==='string'?JSON.parse(o.items||'[]'):(o.items||[]);}catch{}
+      return [o.id,o.customer_name||'',o.customer_email||'',o.customer_phone||'',o.city||'',
+        items.map(i=>`${i.name}x${i.qty||1}`).join('; '),
+        o.subtotal||0,o.discount||0,o.shipping||0,o.total||0,
+        o.payment_method||o.payment_status||'',o.status||o.fulfillment||'',
+        o.coupon_code||'',o.tracking_id||'',fmtDate(o.created_at)];
     });
-    return { columns: cols, rows };
+    return {cols,rows};
   }
-
-  return { columns: [], rows: [] };
-}
-
-function rowsToCSV(columns, rows) {
-  const escape = v => `"${String(v||'').replace(/"/g,'""')}"`;
-  const header = columns.map(escape).join(',');
-  const body = rows.map(r => r.map(escape).join(',')).join('\n');
-  return header + '\n' + body;
-}
-
-function rowsToJSON(columns, rows) {
-  const data = rows.map(row => {
-    const obj = {};
-    columns.forEach((col, i) => { obj[col] = row[i] ?? ''; });
-    return obj;
-  });
-  return JSON.stringify({ exported_at: new Date().toISOString(), count: data.length, data }, null, 2);
-}
-
-function doExport() {
-  const data = getExportData(_exportPage);
-  if(!data.rows.length) {
-    toast('No data for the selected range — try "All Time" or a wider range', 'warning');
-    return;
+  if(page==='analytics') {
+    const paid=allOrders.filter(o=>inR(o.created_at)&&((o.payment_status||'').toLowerCase().includes('paid')||o.payment_status==='SUCCESS'));
+    const cols=['Date','Order ID','Customer','Total','Status'];
+    const rows=paid.map(o=>[fmtDate(o.created_at),o.id,o.customer_name||'',o.total||0,o.status||o.fulfillment||'']);
+    return {cols,rows};
   }
-  const range = getExportDateRange();
-  const rangeStr = _exportRange === 'all'   ? 'all' :
-    _exportRange === 'today' ? 'today' :
-    _exportRange === 'week'  ? 'week' :
-    _exportRange === 'month' ? 'month' :
-    `${range.from}-to-${range.to}`;
-  const filename = `ascovita-${_exportPage}-${rangeStr}.${_exportFormat}`;
-  let content, mime;
-  if(_exportFormat === 'csv') {
-    content = rowsToCSV(data.columns, data.rows);
-    mime = 'text/csv;charset=utf-8,';
-  } else {
-    content = rowsToJSON(data.columns, data.rows);
-    mime = 'application/json;charset=utf-8,';
+  if(page==='products') {
+    const cols=['ID','Name','Brand','Category','MRP','Sale Price','Stock','Rating','Reviews','Active','Badge','HSN','Created'];
+    const rows=allProducts.filter(p=>inR(p.created_at)).map(p=>[
+      p.id,p.name,p.brand||'Ascovita',p.category||'',p.mrp||p.price||0,p.sale_price||p.price||0,
+      p.stock||0,p.rating||'',p.reviews||0,p.active?'Yes':'No',p.badge||'',p.hsn||'30049099',fmtDate(p.created_at)
+    ]);
+    return {cols,rows};
   }
-  const a = document.createElement('a');
-  a.href = 'data:' + mime + encodeURIComponent(content);
-  a.download = filename;
-  a.click();
-  toast(`✅ Exported ${data.rows.length} rows → ${filename}`);
-  closeExportModal();
+  if(page==='inventory') {
+    const cols=['ID','Product','Category','Stock','Status'];
+    const rows=allProducts.map(p=>[p.id,p.name,p.category||'',p.stock||0,
+      (p.stock||0)===0?'Out of Stock':(p.stock||0)<=10?'Low Stock':'In Stock']);
+    return {cols,rows};
+  }
+  if(page==='customers') {
+    const cols=['Name','Email','Phone','City','Orders','Total Spent','Joined'];
+    const rows=allCustomers.filter(c=>inR(c.created_at)).map(c=>[
+      c.name||'',c.email||'',c.phone||'',c.city||'',c.order_count||0,c.total_spent||0,fmtDate(c.created_at)
+    ]);
+    return {cols,rows};
+  }
+  if(page==='discounts') {
+    const cols=['Code','Type','Value','Min Order','Max Uses','Used','Expires','Active'];
+    const rows=allDiscounts.map(d=>[d.code||'',d.type||'',d.value||0,d.min_order||0,
+      d.max_uses||'∞',d.used_count||0,d.expires_at?fmtDate(d.expires_at):'Never',d.active?'Yes':'No']);
+    return {cols,rows};
+  }
+  if(page==='payments') {
+    const cols=['Order ID','Customer','Amount','Method','Status','Date'];
+    const rows=allOrders.filter(o=>inR(o.created_at)).map(o=>[
+      o.id,o.customer_name||'',o.total||0,o.payment_method||'',o.payment_status||'',fmtDate(o.created_at)
+    ]);
+    return {cols,rows};
+  }
+  if(page==='invoices') {
+    const cols=['Invoice #','Customer','Order ID','Subtotal','CGST 9%','SGST 9%','Total','Date'];
+    const rows=allOrders.filter(o=>inR(o.created_at)&&((o.payment_status||'').toLowerCase().includes('paid'))).map((o,i)=>{
+      const sub=o.subtotal||o.total||0;
+      return [`INV-${String(i+1).padStart(4,'0')}`,o.customer_name||'',o.id,sub,+(sub*.09).toFixed(2),+(sub*.09).toFixed(2),o.total||0,fmtDate(o.created_at)];
+    });
+    return {cols,rows};
+  }
+  return {cols:[],rows:[]};
 }
 
-// Legacy shim - kept for compatibility
-function exportAnalytics() { openExportModal('analytics'); }
-
-// ═══════════════════════════════════════════════
-// INLINE EXPORT CENTER (Settings page)
-// ═══════════════════════════════════════════════
-let _inlineRange = 'all';
-let _inlineFormat = 'csv';
-
-function inlineSetRange(range, el) {
-  _inlineRange = range;
-  document.querySelectorAll('#page-settings .export-range-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('inlineCustomRange').style.display = range === 'custom' ? 'block' : 'none';
-  inlineUpdatePreview();
-}
-
-function inlineSetFormat(fmt, el) {
-  _inlineFormat = fmt;
-  document.querySelectorAll('#page-settings .export-fmt-btn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-}
-
-function inlineGetDateRange() {
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  if(_inlineRange === 'all') return { from: null, to: null };
-  if(_inlineRange === 'today') { const t = ymd(now); return { from:t, to:t }; }
-  if(_inlineRange === 'week') { const mon = new Date(now); mon.setDate(now.getDate()-now.getDay()+1); return { from:ymd(mon), to:ymd(now) }; }
-  if(_inlineRange === 'month') { const first = new Date(now.getFullYear(),now.getMonth(),1); return { from:ymd(first), to:ymd(now) }; }
-  if(_inlineRange === 'custom') return { from: document.getElementById('inlineDateFrom').value, to: document.getElementById('inlineDateTo').value };
-  return { from:null, to:null };
-}
-
-function inlineGetExportData() {
-  const pageEl = document.getElementById('inlineExportPage');
-  if(!pageEl) return { columns: [], rows: [] };
-  const page = pageEl.value;
-  // Temporarily swap global range vars to reuse getExportData
-  const savedRange = _exportRange;
-  const savedFrom  = document.getElementById('exportDateFrom').value;
-  const savedTo    = document.getElementById('exportDateTo').value;
-  _exportRange = _inlineRange;
-  const { from, to } = inlineGetDateRange();
-  if(from) document.getElementById('exportDateFrom').value = from;
-  if(to)   document.getElementById('exportDateTo').value   = to;
-  const data = getExportData(page);
-  // Restore
-  _exportRange = savedRange;
-  document.getElementById('exportDateFrom').value = savedFrom;
-  document.getElementById('exportDateTo').value   = savedTo;
-  return data;
-}
-
-function inlineUpdatePreview() {
-  const el = document.getElementById('inlineExportPreview');
+function updateEpPreview(page) {
+  const el = document.getElementById('epprev-'+page);
   if(!el) return;
-  const data = inlineGetExportData();
-  const rangeLabel = {all:'All Time',today:'Today',week:'This Week',month:'This Month',custom:'Custom'}[_inlineRange]||'';
-  el.innerHTML = data.rows.length === 0
-    ? `<span style="color:var(--gold-text);">⚠️ 0 rows for <strong>${rangeLabel}</strong>. Try "All Time".</span>`
-    : `<strong style="color:var(--text);">${data.rows.length} rows</strong> &nbsp;·&nbsp; ${rangeLabel} &nbsp;·&nbsp; ${data.columns.length} columns<br>
-       <span style="color:var(--text3);font-size:0.72rem;">Fields: ${data.columns.slice(0,5).join(', ')}${data.columns.length>5?' + '+(data.columns.length-5)+' more':''}</span>`;
+  const {cols,rows} = getEpData(page);
+  const {range} = getEpState(page);
+  const rangeLabels = {today:'Today',week:'This Week',month:'This Month',year:'This Year',all:'All Time',custom:'Custom Range'};
+  if(!rows.length) {
+    el.innerHTML = `<span style="color:var(--gold-text)">⚠️ 0 rows for <strong>${rangeLabels[range]||range}</strong>. Try "All".</span>`;
+  } else {
+    el.innerHTML = `<strong>${rows.length} rows</strong> · ${rangeLabels[range]||range} · ${cols.length} cols<br>
+      <span style="font-size:0.7rem;opacity:0.7">${cols.slice(0,4).join(', ')}${cols.length>4?'…':''}</span>`;
+  }
 }
 
-function inlineDoExport() {
-  const pageEl = document.getElementById('inlineExportPage');
-  if(!pageEl) return;
-  const page = pageEl.value;
-  const data = inlineGetExportData();
-  if(!data.rows.length) { toast('No data for the selected range — try "All Time"','warning'); return; }
-  const { from, to } = inlineGetDateRange();
-  const rangeStr = {all:'all',today:'today',week:'week',month:'month'}[_inlineRange] || `${from}-to-${to}`;
-  const filename = `ascovita-${page}-${rangeStr}.${_inlineFormat}`;
-  let content, mime;
-  if(_inlineFormat === 'csv') { content = rowsToCSV(data.columns, data.rows); mime = 'text/csv;charset=utf-8,'; }
-  else { content = rowsToJSON(data.columns, data.rows); mime = 'application/json;charset=utf-8,'; }
+function toCSV(cols, rows) {
+  const e=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  return [cols.map(e).join(','), ...rows.map(r=>r.map(e).join(','))].join('\n');
+}
+function toJSON(cols, rows) {
+  return JSON.stringify({exported_at:new Date().toISOString(),count:rows.length,
+    data:rows.map(r=>Object.fromEntries(cols.map((c,i)=>[c,r[i]??''])))},null,2);
+}
+
+function doPageExport(page) {
+  const {cols,rows} = getEpData(page);
+  if(!rows.length) { toast('No data for selected range','warning'); return; }
+  const {fmt,range} = getEpState(page);
+  const rangeStr = {today:'today',week:'week',month:'month',year:'year',all:'all'}[range]||range;
+  const filename = `ascovita-${page}-${rangeStr}.${fmt}`;
+  const content  = fmt==='csv' ? toCSV(cols,rows) : toJSON(cols,rows);
+  const mime     = fmt==='csv' ? 'text/csv;charset=utf-8,' : 'application/json;charset=utf-8,';
   const a = document.createElement('a');
-  a.href = 'data:' + mime + encodeURIComponent(content);
-  a.download = filename;
-  a.click();
-  toast(`✅ Exported ${data.rows.length} rows → ${filename}`);
+  a.href = 'data:'+mime+encodeURIComponent(content);
+  a.download = filename; a.click();
+  toast(`✅ Exported ${rows.length} rows → ${filename}`);
 }
 
 
@@ -1815,7 +1983,8 @@ function startLiveVisitors() {
 async function loadOrders() {
   try {
     const r = await apiFetch('/api/admin/orders');
-    allOrders = (await r.json()).data || [];
+    const d = await r.json();
+    allOrders = d.data || d.orders || (Array.isArray(d)?d:[]);
     filterOrders();
   } catch(e) { toast('Orders error: '+e.message,'error'); }
 }
@@ -3339,46 +3508,7 @@ loadSettings();
 </script>
 
 <!-- ═════════════ EXPORT MODAL ═════════════ -->
-<div class="modal-overlay" id="exportModalOverlay" onclick="closeExportModal()"></div>
-<div class="modal" id="exportModal" style="max-width:460px;">
-  <div class="modal-hdr">
-    <div class="modal-title" id="exportModalTitle">📤 Export</div>
-    <button class="modal-close" onclick="closeExportModal()">✕</button>
-  </div>
-  <div style="padding:20px;">
-    <div style="margin-bottom:16px;">
-      <div style="font-size:0.75rem;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px;">Date Range</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-        <button class="export-range-btn" onclick="setExportRange('all',this)">All Time</button>
-        <button class="export-range-btn active" onclick="setExportRange('today',this)">Today</button>
-        <button class="export-range-btn" onclick="setExportRange('week',this)">This Week</button>
-        <button class="export-range-btn" onclick="setExportRange('month',this)">This Month</button>
-        <button class="export-range-btn" onclick="setExportRange('custom',this)">Custom Range</button>
-      </div>
-      <div id="exportCustomRange" style="gap:8px;grid-template-columns:1fr 1fr;margin-top:8px;">
-        <div>
-          <div style="font-size:0.72rem;color:var(--text3);margin-bottom:4px;">From</div>
-          <input type="date" id="exportDateFrom" class="form-control" style="font-size:0.82rem;" onchange="updateExportPreview()">
-        </div>
-        <div>
-          <div style="font-size:0.72rem;color:var(--text3);margin-bottom:4px;">To</div>
-          <input type="date" id="exportDateTo" class="form-control" style="font-size:0.82rem;" onchange="updateExportPreview()">
-        </div>
-      </div>
-    </div>
-    <div style="margin-bottom:20px;">
-      <div style="font-size:0.75rem;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.8px;">Format</div>
-      <div style="display:flex;gap:8px;">
-        <button class="export-fmt-btn active" onclick="setExportFormat('csv',this)" data-fmt="csv">📄 CSV</button>
-        <button class="export-fmt-btn" onclick="setExportFormat('json',this)" data-fmt="json">📋 JSON</button>
-      </div>
-    </div>
-    <div id="exportPreviewInfo" style="font-size:0.78rem;color:var(--text3);background:var(--bg2);border-radius:8px;padding:10px 12px;margin-bottom:16px;">
-      Loading data…
-    </div>
-    <button class="btn btn-primary" style="width:100%" onclick="doExport()">⬇️ Download Export</button>
-  </div>
-</div>
+
 
 </body>
 </html>
