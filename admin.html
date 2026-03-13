@@ -3091,13 +3091,7 @@ function drawForecastChart(canvasId, actualData, forecastData) {
 }
 
 // Extend loadDashboard to render new charts  
-const _origLoadDashboard = loadDashboard;
-async function loadDashboard() {
-  await _origLoadDashboard();
-  // These run after main data is loaded — wrap in timeout to ensure DOM updated
-  setTimeout(()=>renderAdvancedWidgets(allOrders, allProducts), 300);
-}
-
+// removed: const _origLoadDashboard = loadDashboard;
 function renderAdvancedWidgets(orders, prods) {
   // Area chart (30-day revenue)
   const n30=Array.from({length:30},(_,i)=>{
@@ -3303,64 +3297,6 @@ function doPageExport(page){ _emPage=page; emDoExport(); }
 // ═══════════════════════════════════════════════
 // LIVE VISITORS — Real data from backend
 // ═══════════════════════════════════════════════
-async function updateLiveVisitors() {
-  try {
-    const r = await fetch(`${API}/api/visitors/active`, { signal: AbortSignal.timeout(8000) });
-    if (!r.ok) throw new Error('not ok');
-    const d = await r.json();
-
-    const sessions = Array.isArray(d.sessions) ? d.sessions : [];
-    const cnt = d.active_count || sessions.length || 0;
-    const views = d.page_views_today || 0;
-
-    document.getElementById('liveCount').textContent = cnt;
-    document.getElementById('lvActive').textContent = cnt;
-    document.getElementById('lvViews').textContent = views.toLocaleString();
-
-    if (sessions.length > 0) {
-      const avgSec = Math.round(sessions.reduce((s, v) => s + (v.duration || 0), 0) / sessions.length);
-      document.getElementById('lvSession').textContent = Math.floor(avgSec/60) + 'm ' + String(avgSec%60).padStart(2,'0') + 's';
-    } else {
-      document.getElementById('lvSession').textContent = '–';
-    }
-
-    document.getElementById('lvRefreshTime').textContent = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-
-    if (sessions.length === 0) {
-      document.getElementById('liveSessionsTbody').innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;font-size:0.82rem;">No active visitors right now</td></tr>`;
-    } else {
-      document.getElementById('liveSessionsTbody').innerHTML = sessions.map(s => `
-        <tr>
-          <td style="font-size:0.8rem;">${s.page || '–'}</td>
-          <td><span style="font-size:0.78rem;">🇮🇳 ${s.city || 'Unknown'}</span></td>
-          <td>${s.device || '–'}</td>
-          <td style="font-family:var(--mono);font-size:0.75rem;">${Math.floor((s.duration||0)/60)}:${String((s.duration||0)%60).padStart(2,'0')}</td>
-          <td><span class="badge badge-gray">${s.source || 'Direct'}</span></td>
-        </tr>
-      `).join('');
-    }
-  } catch(e) {
-    document.getElementById('liveCount').textContent = '–';
-    document.getElementById('lvActive').textContent = '–';
-    document.getElementById('lvViews').textContent = '–';
-    document.getElementById('lvSession').textContent = '–';
-    document.getElementById('lvRefreshTime').textContent = 'Offline';
-    document.getElementById('liveSessionsTbody').innerHTML = `
-      <tr><td colspan="5" style="text-align:center;padding:24px;">
-        <div style="color:var(--text3);font-size:0.82rem;line-height:1.8">
-          ⚠️ Live visitor API not responding.<br>
-          Add <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;">GET /api/visitors/active</code> to your Render backend.<br>
-          <span style="font-size:0.75rem;opacity:0.7">See backend setup instructions below</span>
-        </div>
-      </td></tr>`;
-  }
-}
-
-function startLiveVisitors() {
-  updateLiveVisitors();
-  setInterval(updateLiveVisitors, 15000);
-}
-
 // ═══════════════════════════════════════════════
 // ORDERS
 // ═══════════════════════════════════════════════
@@ -3992,34 +3928,6 @@ async function saveStockAdj(id) {
 // ═══════════════════════════════════════════════
 // DISCOUNTS
 // ═══════════════════════════════════════════════
-async function loadDiscounts() {
-  try {
-    const r = await apiFetch('/api/admin/coupons');
-    allDiscounts = (await r.json()).data || [];
-    renderDiscounts();
-  } catch(e) { toast('Discounts error: '+e.message,'error'); }
-}
-
-function renderDiscounts() {
-  document.getElementById('discountsTbody').innerHTML = allDiscounts.length ? allDiscounts.map(c => `
-    <tr style="${c.deleted_at?'opacity:0.4;':''}">
-      <td><span style="font-family:var(--mono);font-weight:700;color:var(--gold-text);">${c.code}</span></td>
-      <td><span class="badge badge-gray">${c.type}</span></td>
-      <td style="font-weight:600;">${c.type==='percent'?c.value+'%':'₹'+c.value}</td>
-      <td>₹${c.min_order||0}</td>
-      <td><span style="font-family:var(--mono);">${c.used_count||0}/${c.max_uses||'∞'}</span></td>
-      <td style="font-size:0.75rem;color:var(--text3);">${c.expires_at?fmtDate(c.expires_at):'No expiry'}</td>
-      <td>${c.deleted_at?`<span class="badge badge-red">Deleted</span>`:c.active?`<span class="badge badge-green">Active</span>`:`<span class="badge badge-gray">Inactive</span>`}</td>
-      <td>
-        <div style="display:flex;gap:4px;">
-          <button class="btn btn-secondary btn-sm btn-icon" onclick="openCouponModal(${c.id})">✏️</button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteCoupon(${c.id})">🗑️</button>
-        </div>
-      </td>
-    </tr>
-  `).join('') : '<tr><td colspan="8"><div class="empty-state">No coupons found</div></td></tr>';
-}
-
 function openCouponModal(id) {
   editingCouponId = id;
   document.getElementById('couponModalTitle').textContent = id ? 'Edit Coupon' : 'New Coupon';
@@ -5147,60 +5055,6 @@ function renderDiscountAnalysis() {
 // ═══════════════════════════════════════════════
 // DONUT CHART HELPER
 // ═══════════════════════════════════════════════
-function drawDonutChart(canvasId, labels, values) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const W = canvas.clientWidth || 240;
-  const H = canvas.clientHeight || 200;
-  canvas.width = W * dpr; canvas.height = H * dpr;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  const cx = W * 0.42, cy = H / 2, r = Math.min(cx, cy) * 0.7;
-  const total = values.reduce((s,v) => s+v, 0);
-  if (!total) return;
-  const colors = ['#5EAB30','#2080E8','#E8AD2C','#E87020','#7C3AED','#E53535'];
-  let angle = -Math.PI / 2;
-  values.forEach((v, i) => {
-    const slice = (v / total) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, angle, angle + slice);
-    ctx.closePath();
-    ctx.fillStyle = colors[i % colors.length];
-    ctx.shadowColor = colors[i % colors.length];
-    ctx.shadowBlur = 8;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    angle += slice;
-  });
-  // Inner hole
-  ctx.beginPath();
-  ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
-  ctx.fillStyle = 'var(--surface)';
-  ctx.fill();
-  // Center text
-  ctx.fillStyle = '#E8EDE0';
-  ctx.font = `bold 13px Syne,sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.fillText(total, cx, cy + 4);
-  ctx.fillStyle = 'rgba(106,120,96,0.7)';
-  ctx.font = '8px DM Sans,sans-serif';
-  ctx.fillText('total', cx, cy + 14);
-  // Legend
-  const lx = W * 0.78;
-  labels.forEach((lbl, i) => {
-    const ly = cy - (labels.length * 12) / 2 + i * 16;
-    ctx.fillStyle = colors[i % colors.length];
-    ctx.fillRect(lx, ly - 5, 8, 8);
-    ctx.fillStyle = 'rgba(158,170,144,0.8)';
-    ctx.font = '8px DM Sans,sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(lbl + ' ('+values[i]+')', lx + 12, ly + 2);
-  });
-}
-
 // ═══════════════════════════════════════════════
 // LIVE VISITORS — Enhanced with simulation fallback
 // ═══════════════════════════════════════════════
@@ -5745,27 +5599,10 @@ function drawStackedChart(canvasId, labels, revVals, orderVals) {
 // ═══════════════════════════════════════════════
 // HOOK INTO EXISTING loadAnalytics
 // ═══════════════════════════════════════════════
-const _origLoadAnalytics = typeof loadAnalytics !== 'undefined' ? loadAnalytics : null;
-async function loadAnalytics() {
-  if (_origLoadAnalytics) await _origLoadAnalytics();
-  loadAnalyticsExtended(allOrders, allProducts);
-}
-
+// removed: const _origLoadAnalytics = typeof loadAnalytics !== 'undefined' ? loadAnalytics : null;
 // Also hook showPage for new pages
-const _origShowPage2 = showPage;
-function showPage(page) {
-  _origShowPage2(page);
-  if (page === 'heatmap') setTimeout(loadGeoAnalytics, 100);
-  if (page === 'performance') setTimeout(loadPerformance, 100);
-  if (page === 'discounts') { setTimeout(renderDiscountKpis, 100); }
-  if (page === 'livevisitors') { setTimeout(() => { startGlobeAnimation(); }, 200); }
-}
-
-
+// removed: const _origShowPage2 = showPage;
 // ═══ BACKWARD COMPAT ALIASES ═══
-function openCouponModal(id) { openDiscountModal(id); }
-function saveCoupon() { saveDiscount(); }
-function deleteCoupon(id) { deleteDiscount(id); }
 function setEpChip(page, v, el) {
   document.querySelectorAll(`#ep-${page} .ep-chip`).forEach(c => c.classList.remove('active'));
   if(el) el.classList.add('active');
@@ -5789,26 +5626,33 @@ setInterval(updateTopbarLive, 16000);
 
 // Wrapper for 2nd India map
 const _origRenderIndiaMap = renderIndiaMap;
-function renderIndiaMap(cityData, svgId, tooltipId) {
-  if (!svgId || svgId === 'indiaMap') {
-    _origRenderIndiaMap(cityData);
-  } else {
-    // Temporarily swap SVG IDs
-    const el = document.getElementById('indiaMap');
-    const el2 = document.getElementById(svgId);
-    const tip = document.getElementById('mapTooltip');
-    const tip2 = tooltipId ? document.getElementById(tooltipId) : null;
-    if (el && el2) {
-      el.id = '_indiaMapTmp';
-      el2.id = 'indiaMap';
-      if (tip && tip2) { tip.id = '_mapTooltipTmp'; tip2.id = 'mapTooltip'; }
-      _origRenderIndiaMap(cityData);
-      el2.id = svgId;
-      el.id = 'indiaMap';
-      if (tip && tip2) { tip2.id = tooltipId; tip.id = 'mapTooltip'; }
-    }
-  }
-}
+
+// ═══ HOOKS: Extend existing functions for new pages ═══
+(function() {
+  // Hook showPage to load new pages
+  const _origShowPage = showPage;
+  window.showPage = function(page) {
+    _origShowPage(page);
+    if (page === 'heatmap') setTimeout(loadGeoAnalytics, 150);
+    if (page === 'performance') setTimeout(loadPerformance, 150);
+    if (page === 'livevisitors') setTimeout(startGlobeAnimation, 300);
+    if (page === 'discounts') setTimeout(function(){ renderDiscountKpis(); }, 150);
+  };
+
+  // Hook loadDashboard to also run extended analytics
+  const _origLoadDash = loadDashboard;
+  window.loadDashboard = async function() {
+    await _origLoadDash();
+    setTimeout(function(){ loadAnalyticsExtended(allOrders, allProducts); }, 400);
+  };
+
+  // Hook loadAnalytics to run extended charts
+  const _origLoadAna = loadAnalytics;
+  window.loadAnalytics = async function() {
+    await _origLoadAna();
+    setTimeout(function(){ loadAnalyticsExtended(allOrders, allProducts); }, 400);
+  };
+})();
 
 // Load settings on init
 loadSettings();
