@@ -38,9 +38,271 @@
   --shadow-lg: 0 12px 48px rgba(0,0,0,0.6);
   --glow: 0 0 24px rgba(74,138,40,0.2);
 }
+/* ═══ LIQUID GLASS EFFECT ═══ */
+:root {
+  --glass-bg: rgba(255,255,255,0.03);
+  --glass-border: rgba(255,255,255,0.08);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+  --glass-blur: blur(20px);
+}
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ═══ ANIMATED BACKGROUND ═══ */
+body::before{
+  content:'';position:fixed;inset:0;z-index:-1;
+  background: 
+    radial-gradient(ellipse 80% 50% at 20% 20%, rgba(74,138,40,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(32,128,232,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(196,146,14,0.02) 0%, transparent 70%),
+    var(--bg);
+  animation: bgPulse 12s ease-in-out infinite alternate;
+}
+@keyframes bgPulse{
+  0%{background-position:0% 0%}
+  100%{background-position:100% 100%}
+}
+
+/* ═══ GLASS CARDS ═══ */
+.glass{
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+.glass::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 50%, rgba(255,255,255,0.01) 100%);
+  border-radius: inherit;
+}
+
+/* ═══ KPI SHIMMER ═══ */
+.kpi:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(74,138,40,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+  transition: all 0.3s ease;
+}
+.kpi{transition: all 0.3s ease;}
+
+/* ═══ 3D CHART CONTAINER ═══ */
+.chart-3d-wrap{
+  position: relative;
+  perspective: 1000px;
+}
+.chart-3d-inner{
+  transform-style: preserve-3d;
+  animation: float3d 8s ease-in-out infinite;
+}
+@keyframes float3d{
+  0%,100%{transform:rotateX(0deg) rotateY(0deg)}
+  25%{transform:rotateX(2deg) rotateY(-1deg)}
+  75%{transform:rotateX(-1deg) rotateY(2deg)}
+}
+
+/* ═══ PULSING LIVE DOTS ═══ */
+.live-ring{
+  position:relative;display:inline-block;
+}
+.live-ring::before,.live-ring::after{
+  content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--green-text);
+  animation: liveRing 2s ease-out infinite;
+}
+.live-ring::after{animation-delay:0.5s;}
+@keyframes liveRing{
+  0%{transform:scale(0.8);opacity:1}
+  100%{transform:scale(2);opacity:0}
+}
+
+/* ═══ VISITOR MAP DOT ═══ */
+.visitor-dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--green-text);
+  box-shadow:0 0 0 0 rgba(94,171,48,0.7);
+  animation:visitorPulse 2s infinite;
+}
+@keyframes visitorPulse{
+  0%{box-shadow:0 0 0 0 rgba(94,171,48,0.7)}
+  70%{box-shadow:0 0 0 10px rgba(94,171,48,0)}
+  100%{box-shadow:0 0 0 0 rgba(94,171,48,0)}
+}
+
+/* ═══ SHIMMER ANIMATION ═══ */
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* ═══ METRIC TICKER ANIMATION ═══ */
+.metric-tick{
+  animation: fadeInUp 0.4s ease forwards;
+}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ═══ ENHANCED NAV ═══ */
+.nav-item{
+  position:relative;
+  overflow:hidden;
+}
+.nav-item::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg, rgba(74,138,40,0.08) 0%, transparent 100%);
+  transform:scaleX(0);transform-origin:left;
+  transition:transform 0.2s ease;
+}
+.nav-item:hover::before,.nav-item.active::before{transform:scaleX(1);}
+
+/* ═══ TOPBAR GLASS ═══ */
+.topbar{
+  background: rgba(22,29,18,0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(78,138,40,0.1) !important;
+}
+.sidebar{
+  background: rgba(22,29,18,0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* ═══ ENHANCED CARD ═══ */
+.card{
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover{
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(74,138,40,0.1);
+}
+
+/* ═══ SPARKLINE CARD ═══ */
+.spark-card{
+  position:relative;overflow:hidden;
+}
+.spark-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg, var(--green), var(--green-bright), transparent);
+  opacity:0.6;
+}
+.spark-val{font-family:var(--display);font-size:1.5rem;font-weight:800;color:var(--white);}
+.spark-label{font-size:0.68rem;color:var(--text3);margin-top:4px;}
+
+/* ═══ RANK ROW ═══ */
+.rank-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+.rank-row:last-child{border-bottom:none;}
+.rank-num{width:20px;height:20px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:var(--text3);flex-shrink:0;}
+.rank-label{font-size:0.78rem;color:var(--text);font-weight:500;}
+.rank-val{font-size:0.72rem;color:var(--text3);}
+.rank-bar{height:4px;background:var(--border);border-radius:2px;margin-top:3px;}
+.rank-fill{height:100%;border-radius:2px;transition:width 1s ease;}
+
+/* ═══ ACTIVITY FEED ═══ */
+.act-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);animation:fadeInUp 0.3s ease;}
+.act-item:last-child{border-bottom:none;}
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.act-text{flex:1;font-size:0.78rem;color:var(--text2);line-height:1.4;}
+.act-time{font-size:0.65rem;color:var(--text3);white-space:nowrap;}
+
+/* ═══ GOAL WIDGET ═══ */
+.goal-ring{display:flex;justify-content:center;margin-bottom:12px;}
+.goal-info{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text3);}
+
+/* ═══ EXPORT PANEL ═══ */
+.btn-export{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 14px;font-family:var(--font);font-size:0.8rem;font-weight:600;color:var(--text2);cursor:pointer;transition:all 0.2s;}
+.btn-export:hover{border-color:var(--green);color:var(--green-text);}
+.export-panel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;display:none;}
+.export-panel.open{display:block;}
+.export-panel-inner{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;}
+.ep-group{display:flex;flex-direction:column;gap:6px;}
+.ep-label{font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);}
+.ep-chips{display:flex;gap:4px;flex-wrap:wrap;}
+.ep-chip{background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:4px 10px;font-size:0.72rem;font-weight:500;color:var(--text2);cursor:pointer;transition:all 0.15s;}
+.ep-chip.active{background:var(--green-glow);border-color:var(--green);color:var(--green-text);}
+.ep-fmt{display:flex;gap:4px;}
+.ep-fmt-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:0.72rem;font-weight:600;color:var(--text2);cursor:pointer;transition:all 0.15s;}
+.ep-fmt-btn.active{background:var(--green-glow);border-color:var(--green);color:var(--green-text);}
+.ep-preview{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:0.78rem;min-width:200px;flex:1;}
+.ep-date-row{display:flex;align-items:center;gap:8px;}
+.ep-date-row input{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-family:var(--font);font-size:0.78rem;outline:none;}
+.ep-dl-btn{background:linear-gradient(135deg,var(--green),var(--green-bright));color:white;border:none;border-radius:8px;padding:8px 20px;font-family:var(--font);font-size:0.8rem;font-weight:700;cursor:pointer;align-self:flex-end;transition:all 0.2s;}
+.ep-dl-btn:hover{box-shadow:0 4px 16px rgba(74,138,40,0.5);}
+
+/* ═══ AI CHAT ═══ */
+.ai-msg{display:flex;gap:10px;animation:fadeInUp 0.3s ease;}
+.ai-msg.user{flex-direction:row-reverse;}
+.ai-bubble{background:var(--surface2);border:1px solid var(--border);border-radius:12px 12px 12px 4px;padding:10px 14px;font-size:0.82rem;max-width:80%;line-height:1.6;}
+.ai-msg.user .ai-bubble{background:rgba(74,138,40,0.15);border-color:rgba(74,138,40,0.3);border-radius:12px 12px 4px 12px;}
+
+/* ═══ MEDIA SLOTS ═══ */
+.media-slots{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.media-slot{aspect-ratio:1;border:2px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;background:var(--bg2);transition:border-color 0.2s;}
+.media-slot.filled{border-style:solid;border-color:var(--border2);}
+.media-slot:hover{border-color:var(--green);}
+.media-slot img,.media-slot video{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+.media-slot .slot-del{position:absolute;top:4px;right:4px;background:rgba(229,53,53,0.9);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;display:none;align-items:center;justify-content:center;}
+.media-slot.filled:hover .slot-del{display:flex;}
+.media-upload-zone{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color 0.2s;}
+.media-upload-zone:hover{border-color:var(--green);}
+.media-upload-zone input{display:none;}
+
+/* ═══ SCHEMA CARD ═══ */
+.schema-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.schema-col{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:0.78rem;}
+.schema-col:last-child{border-bottom:none;}
+.schema-col-name{color:var(--text);font-weight:500;}
+.schema-col-type{color:var(--green-text);font-family:var(--mono);font-size:0.7rem;}
+
+/* ═══ INTEGRATION CARD ═══ */
+.intg-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.intg-hdr{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.intg-logo{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.intg-name{font-family:var(--display);font-size:0.95rem;font-weight:700;}
+.intg-desc{font-size:0.78rem;color:var(--text2);line-height:1.5;margin-bottom:12px;}
+.intg-steps{font-size:0.75rem;color:var(--text3);line-height:1.8;}
+.intg-actions{display:flex;gap:8px;margin-top:12px;}
+
+/* ═══ ENHANCED 3D LIVE VISITOR GLOBE ═══ */
+#visitorGlobe{border-radius:50%;overflow:hidden;position:relative;}
+
+/* ═══ DISCOUNT % BADGE ═══ */
+.disc-pct-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:50px;height:50px;border-radius:50%;
+  background:conic-gradient(var(--green) var(--pct), rgba(78,138,40,0.1) 0);
+  font-family:var(--display);font-size:0.75rem;font-weight:800;color:var(--green-text);
+  position:relative;
+}
+.disc-pct-badge::before{
+  content:'';position:absolute;inset:5px;border-radius:50%;background:var(--surface);
+}
+.disc-pct-inner{position:relative;z-index:1;font-size:0.7rem;}
+
+/* ═══ TIER DISCOUNT VISUAL ═══ */
+.tier-visual-bar{
+  height:8px;border-radius:4px;
+  background:linear-gradient(90deg, var(--green-glow), var(--green-bright));
+  transition:width 0.5s ease;
+  position:relative;overflow:hidden;
+}
+.tier-visual-bar::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
+  animation:shimmer 2s infinite;
+  background-size:200% 100%;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:768px){
+  .app-layout{grid-template-columns:0 1fr;}
+  .sidebar{position:fixed;left:-220px;top:56px;bottom:0;z-index:200;width:220px;transition:left 0.3s;box-shadow:var(--shadow-lg);}
+  .sidebar.open{left:0;}
+  .hamburger-btn{display:block;}
+  .grid-4{grid-template-columns:1fr 1fr;}
+  .grid-3{grid-template-columns:1fr 1fr;}
+  .grid-2{grid-template-columns:1fr;}
+  .media-slots{grid-template-columns:repeat(4,1fr);}
+}
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:var(--bg2);}
 ::-webkit-scrollbar-thumb{background:var(--green);border-radius:4px;}
@@ -460,9 +722,13 @@ input[type=file]{display:none;}
     <input type="text" placeholder="Search orders, products, customers..." id="globalSearch" oninput="handleGlobalSearch(this.value)">
   </div>
   <div class="topbar-right">
-    <div class="tb-stat" id="serverStatus">
+    <div class="tb-stat" id="serverStatus" style="cursor:pointer;" onclick="showPage('livevisitors')" title="Live Visitors">
+      <span class="tb-dot" style="animation:pulse 1s infinite;"></span>
+      <span id="topbarLive" style="color:var(--green-text);font-size:0.72rem;font-weight:700;">0 live</span>
+    </div>
+    <div class="tb-stat" id="serverStatus2">
       <span class="tb-dot"></span>
-      <span style="color:var(--text3);font-size:0.72rem;">Checking…</span>
+      <span id="serverStatusText" style="color:var(--text3);font-size:0.72rem;">Checking…</span>
     </div>
     <button class="tb-btn" onclick="refreshCurrent()">↺ Refresh</button>
     <button class="tb-btn" onclick="doLogout()" style="color:var(--red)">Sign Out</button>
@@ -483,6 +749,7 @@ input[type=file]{display:none;}
     <div class="nav-item" onclick="showPage('products')"><span class="nav-ico">🛍️</span> Products</div>
     <div class="nav-item" onclick="showPage('inventory')"><span class="nav-ico">📋</span> Inventory</div>
     <div class="nav-item" onclick="showPage('discounts')"><span class="nav-ico">🏷️</span> Discounts</div>
+    <div class="nav-item" onclick="showPage('heatmap')"><span class="nav-ico">🗺️</span> Geo Analytics</div>
     <div class="nav-item" onclick="showPage('customers')"><span class="nav-ico">👥</span> Customers</div>
   </div>
   <div class="nav-section">
@@ -501,6 +768,7 @@ input[type=file]{display:none;}
     <div class="nav-item" onclick="showPage('aiassistant')"><span class="nav-ico">🤖</span> AI Assistant</div>
     <div class="nav-item" onclick="showPage('database')"><span class="nav-ico">🗄️</span> Database</div>
     <div class="nav-item" onclick="showPage('integrations')"><span class="nav-ico">🔗</span> Integrations</div>
+    <div class="nav-item" onclick="showPage('performance')"><span class="nav-ico">⚡</span> Performance</div>
     <div class="nav-item" onclick="showPage('settings')"><span class="nav-ico">⚙️</span> Settings</div>
   </div>
 </nav>
@@ -720,41 +988,155 @@ input[type=file]{display:none;}
     <div class="kpi skel" style="height:90px"></div>
     <div class="kpi skel" style="height:90px"></div>
   </div>
-  <div class="grid-2" style="margin-bottom:20px">
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">Revenue by Category</span></div>
+  <!-- Enhanced Analytics Rows -->
+  <div class="grid-3" style="margin-bottom:16px;">
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">📊 3D Revenue Chart</span></div>
+      <canvas id="ana3dRevenueCanvas" style="width:100%;height:200px;display:block;"></canvas>
+    </div>
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">🥧 Category Split</span></div>
+      <canvas id="anaCatPieCanvas" style="width:100%;height:200px;display:block;"></canvas>
+    </div>
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">⚡ Customer Segments</span></div>
+      <canvas id="anaCustSegCanvas" style="width:100%;height:200px;display:block;"></canvas>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">📈 Revenue by Category</span></div>
       <div id="categoryRevChart"></div>
     </div>
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">Top Products</span></div>
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">🏆 Top Products</span></div>
       <div id="topProductsChart"></div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-hdr"><span class="card-title">Order Volume by Day</span></div>
-    <div id="orderVolumeChart" style="height:100px;display:flex;align-items:flex-end;gap:4px;padding:0 4px;overflow-x:auto;"></div>
+
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">📅 Order Volume by Day</span></div>
+      <canvas id="anaOrderVolCanvas" style="width:100%;height:120px;display:block;"></canvas>
+    </div>
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">💳 Payment Methods</span></div>
+      <canvas id="anaPayMethodCanvas" style="width:100%;height:120px;display:block;"></canvas>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">🔁 Repeat Rate</span></div>
+      <canvas id="anaRepeatCanvas" style="width:100%;height:120px;display:block;"></canvas>
+    </div>
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">📦 Order Size Distribution</span></div>
+      <canvas id="anaOrderSizeCanvas" style="width:100%;height:120px;display:block;"></canvas>
+    </div>
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">🌙 Orders by Hour</span></div>
+      <canvas id="anaHourCanvas" style="width:100%;height:120px;display:block;"></canvas>
+    </div>
+  </div>
+
+  <div class="card glass">
+    <div class="card-hdr"><span class="card-title">📊 Revenue vs Orders — 3D Stacked View</span></div>
+    <canvas id="anaStackedCanvas" style="width:100%;height:200px;display:block;"></canvas>
   </div>
 </div>
 
 <!-- ═════════════ LIVE VISITORS ═════════════ -->
 <div class="page" id="page-livevisitors">
   <div class="page-hdr">
-    <div><div class="page-title">Live Visitors</div><div class="page-sub">Real-time sessions from backend · updates every 15s</div></div>
+    <div>
+      <div class="page-title" style="display:flex;align-items:center;gap:10px;">
+        <span class="live-ring" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--green-text);"></span>
+        Live Visitors
+      </div>
+      <div class="page-sub">Real-time visitor analytics · auto-refreshes every 15s</div>
+    </div>
     <div class="page-actions">
-      <div class="tb-stat"><span class="tb-dot"></span><span id="liveCount" style="font-weight:700;color:var(--green-text)">0</span><span style="color:var(--text3);font-size:0.75rem;"> online</span></div>
+      <div class="tb-stat" style="background:rgba(74,138,40,0.1);border-color:var(--green);"><span class="tb-dot"></span><span id="liveCount" style="font-weight:800;color:var(--green-text);font-size:1rem;">0</span><span style="color:var(--text3);font-size:0.75rem;"> online now</span></div>
+      <span class="badge badge-gray" id="lvRefreshTime" style="padding:6px 12px;">Connecting…</span>
     </div>
   </div>
-  <div class="grid-3" style="margin-bottom:20px">
-    <div class="kpi"><div class="kpi-label">Active Now</div><div class="kpi-val" id="lvActive">–</div><span class="kpi-ico">👥</span></div>
-    <div class="kpi"><div class="kpi-label">Page Views Today</div><div class="kpi-val" id="lvViews">–</div><span class="kpi-ico">👁️</span></div>
-    <div class="kpi"><div class="kpi-label">Avg Session</div><div class="kpi-val" id="lvSession">–</div><span class="kpi-ico">⏱️</span></div>
+
+  <!-- KPI Row -->
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;">
+    <div class="kpi glass"><div class="kpi-label">Active Now</div><div class="kpi-val" id="lvActive" style="color:var(--green-text);">–</div><span class="kpi-ico">👥</span></div>
+    <div class="kpi glass"><div class="kpi-label">Page Views Today</div><div class="kpi-val" id="lvViews">–</div><span class="kpi-ico">👁️</span></div>
+    <div class="kpi glass"><div class="kpi-label">Avg Session</div><div class="kpi-val" id="lvSession">–</div><span class="kpi-ico">⏱️</span></div>
+    <div class="kpi glass"><div class="kpi-label">Bounce Rate</div><div class="kpi-val" id="lvBounce">–</div><span class="kpi-ico">↩️</span></div>
+    <div class="kpi glass"><div class="kpi-label">Conversions</div><div class="kpi-val" id="lvConv">–</div><span class="kpi-ico">🛒</span></div>
   </div>
-  <div class="card">
-    <div class="card-hdr"><span class="card-title">Active Sessions</span><span class="badge badge-green" id="lvRefreshTime">Live</span></div>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Page</th><th>Location</th><th>Device</th><th>Duration</th><th>Source</th></tr></thead>
-      <tbody id="liveSessionsTbody"></tbody>
-    </table></div>
+
+  <!-- Main Grid: Globe 3D + Activity Stream -->
+  <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:16px;margin-bottom:16px;">
+    <!-- 3D Globe -->
+    <div class="card glass" style="padding:20px;min-height:320px;">
+      <div class="card-hdr"><span class="card-title">🌏 Live Visitor Globe</span><span class="badge badge-green">3D</span></div>
+      <canvas id="visitorGlobeCanvas" style="width:100%;height:260px;display:block;border-radius:12px;"></canvas>
+    </div>
+    <!-- Real-time activity stream -->
+    <div class="card glass">
+      <div class="card-hdr">
+        <span class="card-title">⚡ Real-time Activity Stream</span>
+        <button class="btn btn-secondary btn-sm" onclick="clearActivityStream()">Clear</button>
+      </div>
+      <div id="activityStream" style="height:260px;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;gap:6px;">
+        <div style="color:var(--text3);font-size:0.8rem;padding:20px;text-align:center;">Connecting to activity stream…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sessions table + traffic chart -->
+  <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">📍 Active Sessions</span><span class="badge badge-green" id="sessionCount">0</span></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Page</th><th>City</th><th>Device</th><th>Duration</th><th>Source</th><th>Status</th></tr></thead>
+        <tbody id="liveSessionsTbody">
+          <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text3);font-size:0.82rem;">
+            Waiting for visitor data…<br>
+            <span style="font-size:0.72rem;opacity:0.6;">Backend endpoint: GET /api/visitors/active</span>
+          </td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <!-- Traffic trend last 60 min -->
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">📈 Traffic (Last 60 min)</span></div>
+      <canvas id="trafficCanvas" style="width:100%;height:180px;display:block;"></canvas>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+        <div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Peak Hour</div>
+          <div id="lvPeakHour" style="font-family:var(--display);font-size:1rem;font-weight:700;color:var(--green-text);">–</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-size:0.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Top Page</div>
+          <div id="lvTopPage" style="font-family:var(--mono);font-size:0.75rem;font-weight:700;color:var(--text);">/home</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pages Breakdown -->
+  <div class="card glass">
+    <div class="card-hdr"><span class="card-title">📄 Page Distribution</span></div>
+    <div id="pageDistribution" style="display:flex;gap:8px;flex-wrap:wrap;padding:8px 0;"></div>
+  </div>
+
+  <!-- Backend setup notice if no real data -->
+  <div id="lvSetupNotice" style="display:none;margin-top:16px;" class="card" style="border-color:var(--gold);background:rgba(196,146,14,0.05);">
+    <div style="padding:16px;font-size:0.82rem;color:var(--text2);line-height:1.8;">
+      <div style="font-weight:700;color:var(--gold-text);margin-bottom:8px;">⚙️ Backend Setup Required for Live Data</div>
+      Add this endpoint to your Render backend:<br>
+      <code style="background:var(--surface2);padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:0.75rem;">GET /api/visitors/active</code><br>
+      Returns: <code style="background:var(--surface2);padding:2px 8px;border-radius:4px;font-family:var(--mono);font-size:0.75rem;">{"active_count":N,"page_views_today":N,"sessions":[...]}</code><br>
+      <span style="font-size:0.72rem;color:var(--text3);">Currently showing simulated data for demo purposes.</span>
+    </div>
   </div>
 </div>
 
@@ -901,12 +1283,24 @@ input[type=file]{display:none;}
 <!-- ═════════════ DISCOUNTS ═════════════ -->
 <div class="page" id="page-discounts">
   <div class="page-hdr">
-    <div><div class="page-title">Discounts & Coupons</div><div class="page-sub">Manage coupon codes and promotions</div></div>
+    <div><div class="page-title">Discounts & Tier Pricing</div><div class="page-sub">Percentage discounts, tier pricing & pack deals — fetched from backend</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadDiscounts()">↺ Refresh</button>
-      <button class="btn-export" onclick="openExportModal('discounts')">📤 Export ▾</button>
-      <button class="btn btn-primary" onclick="openCouponModal(null)">＋ New Coupon</button>
+      <button class="btn btn-primary" onclick="openDiscountModal(null)">＋ New % Discount</button>
     </div>
+  </div>
+  <!-- Summary KPIs -->
+  <div class="grid-4" style="margin-bottom:20px">
+    <div class="kpi"><div class="kpi-label">Active Discounts</div><div class="kpi-val" id="discActiveCount">–</div><span class="kpi-ico">🏷️</span></div>
+    <div class="kpi"><div class="kpi-label">Avg Discount %</div><div class="kpi-val" id="discAvgPct">–</div><span class="kpi-ico">📉</span></div>
+    <div class="kpi"><div class="kpi-label">Products with Tiers</div><div class="kpi-val" id="discTierCount">–</div><span class="kpi-ico">📦</span></div>
+    <div class="kpi"><div class="kpi-label">Total Uses</div><div class="kpi-val" id="discTotalUses">–</div><span class="kpi-ico">🔢</span></div>
+  </div>
+  <!-- Tabs -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchDiscTab('pct',this)">🏷️ % Discounts</button>
+    <button class="tab-btn" onclick="switchDiscTab('tier',this)">📦 Pack Tier Deals</button>
+    <button class="tab-btn" onclick="switchDiscTab('analysis',this)">📊 Analysis</button>
   </div>
   <div class="export-panel" id="ep-discounts">
     <div class="export-panel-inner">
@@ -922,11 +1316,32 @@ input[type=file]{display:none;}
       <button class="ep-dl-btn" onclick="doPageExport('discounts')">⬇ Download</button>
     </div>
   </div>
-  <div class="table-wrap">
-    <table>
-      <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Min Order</th><th>Uses</th><th>Expires</th><th>Status</th><th>Actions</th></tr></thead>
-      <tbody id="discountsTbody"><tr><td colspan="8"><div class="empty-state loading-dots">Loading</div></td></tr></tbody>
-    </table>
+  <!-- PCT Tab -->
+  <div id="disc-pct" class="tab-pane active" style="padding-top:16px;">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Name / Code</th><th>Discount %</th><th>Visual</th><th>Min Order</th><th>Uses</th><th>Expires</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="discountsTbody"><tr><td colspan="8"><div class="empty-state loading-dots">Loading</div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- TIER Tab -->
+  <div id="disc-tier" class="tab-pane" style="padding-top:16px;">
+    <div style="margin-bottom:12px;font-size:0.8rem;color:var(--text2);">Pack size tier discounts fetched directly from product pricing data. Edit tiers via Products → Pricing tab.</div>
+    <div id="tierDiscountGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;"></div>
+  </div>
+  <!-- ANALYSIS Tab -->
+  <div id="disc-analysis" class="tab-pane" style="padding-top:16px;">
+    <div class="grid-2" style="margin-bottom:16px;">
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">📊 Discount Usage</span></div>
+        <canvas id="discUsageCanvas" style="width:100%;height:200px;display:block;"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><span class="card-title">📦 Tier Savings Distribution</span></div>
+        <canvas id="discPieCanvas" style="width:100%;height:200px;display:block;"></canvas>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1239,6 +1654,78 @@ input[type=file]{display:none;}
   </div>
 </div>
 
+
+<!-- ═════════════ GEO ANALYTICS ═════════════ -->
+<div class="page" id="page-heatmap">
+  <div class="page-hdr">
+    <div><div class="page-title">Geo Analytics</div><div class="page-sub">Geographic order distribution & regional insights</div></div>
+    <div class="page-actions"><button class="btn btn-secondary" onclick="loadGeoAnalytics()">↺ Refresh</button></div>
+  </div>
+  <div class="grid-4" style="margin-bottom:20px" id="geoKpis">
+    <div class="kpi glass"><div class="kpi-label">Top State</div><div class="kpi-val" id="geoTopState">–</div><span class="kpi-ico">📍</span></div>
+    <div class="kpi glass"><div class="kpi-label">Top City</div><div class="kpi-val" id="geoTopCity">–</div><span class="kpi-ico">🏙️</span></div>
+    <div class="kpi glass"><div class="kpi-label">States Covered</div><div class="kpi-val" id="geoStateCount">–</div><span class="kpi-ico">🗺️</span></div>
+    <div class="kpi glass"><div class="kpi-label">Cities Covered</div><div class="kpi-val" id="geoCityCount">–</div><span class="kpi-ico">🌆</span></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">🗺️ India Orders Map</span><span class="badge badge-green" id="mapOrderCount2">0 cities</span></div>
+      <div id="indiaMapWrap2" style="position:relative;width:100%;height:340px;overflow:hidden;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;">
+        <svg id="indiaMap2" viewBox="0 0 400 460" style="width:100%;height:100%;"></svg>
+        <div id="mapTooltip2" style="position:absolute;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:0.75rem;pointer-events:none;display:none;z-index:10;"></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div class="card glass">
+        <div class="card-hdr"><span class="card-title">🏙️ Top 10 Cities</span></div>
+        <div id="topCitiesChart2" style="padding:4px 0;"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card glass">
+    <div class="card-hdr"><span class="card-title">📊 Revenue by State</span></div>
+    <canvas id="geoStateCanvas" style="width:100%;height:180px;display:block;"></canvas>
+  </div>
+</div>
+
+<!-- ═════════════ PERFORMANCE ═════════════ -->
+<div class="page" id="page-performance">
+  <div class="page-hdr">
+    <div><div class="page-title">Performance Dashboard</div><div class="page-sub">Store health, speed & conversion analytics</div></div>
+    <div class="page-actions"><button class="btn btn-secondary" onclick="loadPerformance()">↺ Refresh</button></div>
+  </div>
+  <div class="grid-4" style="margin-bottom:20px">
+    <div class="kpi glass"><div class="kpi-label">Conversion Rate</div><div class="kpi-val" id="perfConv">–</div><div class="kpi-change" id="perfConvChg"></div></div>
+    <div class="kpi glass"><div class="kpi-label">Avg Order Value</div><div class="kpi-val" id="perfAov">–</div></div>
+    <div class="kpi glass"><div class="kpi-label">Revenue/Visitor</div><div class="kpi-val" id="perfRpv">–</div></div>
+    <div class="kpi glass"><div class="kpi-label">Delivery Success</div><div class="kpi-val" id="perfDel">–</div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">🎯 Funnel Analysis</span></div>
+      <div id="funnelChart" style="padding:16px 0;"></div>
+    </div>
+    <div class="card glass">
+      <div class="card-hdr"><span class="card-title">📈 30-Day Trend</span></div>
+      <canvas id="perfTrendCanvas" style="width:100%;height:180px;display:block;"></canvas>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card glass" style="text-align:center;padding:20px 12px;">
+      <canvas id="perfRing1Canvas" style="width:100px;height:100px;display:inline-block;"></canvas>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:8px;">Cart Abandonment</div>
+    </div>
+    <div class="card glass" style="text-align:center;padding:20px 12px;">
+      <canvas id="perfRing2Canvas" style="width:100px;height:100px;display:inline-block;"></canvas>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:8px;">Payment Success</div>
+    </div>
+    <div class="card glass" style="text-align:center;padding:20px 12px;">
+      <canvas id="perfRing3Canvas" style="width:100px;height:100px;display:inline-block;"></canvas>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:8px;">Return Rate</div>
+    </div>
+  </div>
+</div>
+
 </main><!-- /main -->
 </div><!-- /app-layout -->
 </div><!-- /app -->
@@ -1384,40 +1871,70 @@ input[type=file]{display:none;}
   </div>
 </div>
 
-<!-- Coupon Modal -->
-<div class="modal-overlay" id="couponModal">
+<!-- Discount Modal (% only, no promo codes) -->
+<div class="modal-overlay" id="discountModal">
   <div class="modal">
     <div class="modal-hdr">
-      <span class="modal-title" id="couponModalTitle">New Coupon</span>
-      <button class="modal-close" onclick="closeModal('couponModal')">✕</button>
+      <span class="modal-title" id="discountModalTitle">New % Discount</span>
+      <button class="modal-close" onclick="closeModal('discountModal')">✕</button>
     </div>
     <div class="modal-body">
       <div class="form-row col2">
-        <div class="form-group"><label class="form-label">Coupon Code *</label><input class="form-control" id="cCode" placeholder="GLOW20" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
-        <div class="form-group"><label class="form-label">Type *</label>
-          <select class="form-control" id="cType"><option value="percent">Percent (%)</option><option value="flat">Flat (₹)</option></select>
+        <div class="form-group">
+          <label class="form-label">Discount Name</label>
+          <input class="form-control" id="dName" placeholder="e.g. Summer Sale 20%">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Discount % *</label>
+          <input type="number" class="form-control" id="dValue" placeholder="e.g. 20" min="1" max="90" oninput="updateDiscPreview()">
+        </div>
+      </div>
+      <!-- Live visual preview -->
+      <div id="discPreview" style="background:var(--bg2);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center;">
+        <div style="font-size:0.7rem;color:var(--text3);margin-bottom:8px;">DISCOUNT VISUAL PREVIEW</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:16px;">
+          <div style="text-align:center;">
+            <div style="font-size:0.7rem;color:var(--text3);">MRP</div>
+            <div style="font-size:1.2rem;text-decoration:line-through;color:var(--text3);">₹1000</div>
+          </div>
+          <div id="discArrow" style="font-size:1.5rem;color:var(--green-text);">→</div>
+          <div style="text-align:center;">
+            <div style="font-size:0.7rem;color:var(--text3);">SALE</div>
+            <div id="discPreviewSale" style="font-family:var(--display);font-size:1.5rem;font-weight:800;color:var(--green-text);">₹1000</div>
+          </div>
+          <div id="discBadge" style="background:var(--green);color:white;border-radius:50%;width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:0.75rem;font-weight:800;">0% OFF</div>
         </div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label class="form-label">Value *</label><input type="number" class="form-control" id="cValue"></div>
-        <div class="form-group"><label class="form-label">Min Order Value (₹)</label><input type="number" class="form-control" id="cMinOrder" value="0"></div>
+        <div class="form-group">
+          <label class="form-label">Min Order (₹)</label>
+          <input type="number" class="form-control" id="dMinOrder" value="0" placeholder="0 = no minimum">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Max Uses</label>
+          <input type="number" class="form-control" id="dMaxUses" placeholder="Leave blank = unlimited">
+        </div>
       </div>
       <div class="form-row col2">
-        <div class="form-group"><label class="form-label">Max Uses</label><input type="number" class="form-control" id="cMaxUses" placeholder="Unlimited"></div>
-        <div class="form-group"><label class="form-label">Expires On</label><input type="date" class="form-control" id="cExpires"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Active</label>
-        <label class="toggle-wrap"><label class="toggle"><input type="checkbox" id="cActive" checked><span class="toggle-slider"></span></label></label>
+        <div class="form-group">
+          <label class="form-label">Expires</label>
+          <input type="date" class="form-control" id="dExpires">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <label class="toggle-wrap" style="margin-top:6px;">
+            <label class="toggle"><input type="checkbox" id="dActive" checked><span class="toggle-slider"></span></label>
+            <span style="font-size:0.82rem;color:var(--text2)">Active</span>
+          </label>
+        </div>
       </div>
     </div>
     <div class="modal-ftr">
-      <button class="btn btn-secondary" onclick="closeModal('couponModal')">Cancel</button>
-      <button class="btn btn-primary" onclick="saveCoupon()">💾 Save Coupon</button>
+      <button class="btn btn-secondary" onclick="closeModal('discountModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDiscount()">💾 Save Discount</button>
     </div>
   </div>
 </div>
-
 <!-- Invoice Print Modal -->
 <div class="modal-overlay" id="invoiceModal">
   <div class="modal modal-lg">
@@ -4377,6 +4894,920 @@ function payBadge(s) {
   if((s||'').includes('COD')) return `<span class="badge badge-gold">💵 COD</span>`;
   if(s==='Failed'||s==='FAILED') return `<span class="badge badge-red">❌ Failed</span>`;
   return `<span class="badge badge-gray">${s||'Pending'}</span>`;
+}
+
+
+// ═══════════════════════════════════════════════
+// DISCOUNT TAB SWITCHING
+// ═══════════════════════════════════════════════
+function switchDiscTab(tab, el) {
+  document.querySelectorAll('#page-discounts .tab-btn').forEach(b => b.classList.remove('active'));
+  if(el) el.classList.add('active');
+  ['disc-pct','disc-tier','disc-analysis'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.classList.toggle('active', id === 'disc-'+tab);
+    if(el) el.style.display = id === 'disc-'+tab ? 'block' : 'none';
+  });
+  if(tab === 'tier') renderTierDiscounts();
+  if(tab === 'analysis') renderDiscountAnalysis();
+}
+
+// Initialize disc tabs display
+document.addEventListener('DOMContentLoaded', () => {
+  ['disc-pct','disc-tier','disc-analysis'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = i===0 ? 'block' : 'none';
+  });
+});
+
+// ═══════════════════════════════════════════════
+// ENHANCED DISCOUNTS — % only, no promo codes
+// ═══════════════════════════════════════════════
+async function loadDiscounts() {
+  try {
+    const r = await apiFetch('/api/admin/coupons');
+    const data = await r.json();
+    allDiscounts = (data.data || data.coupons || (Array.isArray(data) ? data : []));
+    // Filter to only % type discounts
+    allDiscounts = allDiscounts.filter(d => d.type === 'percent' || d.type === 'percentage' || !d.type || parseFloat(d.value) <= 100);
+    renderDiscounts();
+    renderDiscountKpis();
+  } catch(e) {
+    console.warn('Discounts fetch failed:', e.message);
+    allDiscounts = [];
+    renderDiscounts();
+    renderDiscountKpis();
+    toast('Discounts: ' + e.message, 'error');
+  }
+}
+
+function renderDiscountKpis() {
+  const active = allDiscounts.filter(d => d.active !== false && !d.deleted_at);
+  const avgPct = active.length ? (active.reduce((s,d) => s + parseFloat(d.value||0), 0) / active.length) : 0;
+  const totalUses = allDiscounts.reduce((s,d) => s + (d.used_count||0), 0);
+  const tierProds = allProducts.filter(p => p.tiers && (typeof p.tiers === 'string' ? JSON.parse(p.tiers||'[]') : p.tiers).length > 0).length;
+
+  document.getElementById('discActiveCount').textContent = active.length;
+  document.getElementById('discAvgPct').textContent = avgPct.toFixed(1) + '%';
+  document.getElementById('discTierCount').textContent = tierProds;
+  document.getElementById('discTotalUses').textContent = totalUses.toLocaleString();
+}
+
+function renderDiscounts() {
+  const tbody = document.getElementById('discountsTbody');
+  if (!tbody) return;
+  if (!allDiscounts.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-ico">🏷️</div><div class="empty-msg">No % discounts found. Create one above.</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = allDiscounts.map(c => {
+    const pct = parseFloat(c.value || 0);
+    const circumference = 2 * Math.PI * 18;
+    const dashArr = (pct / 100) * circumference;
+    return `
+    <tr style="${c.deleted_at ? 'opacity:0.4;' : ''}">
+      <td>
+        <div style="font-weight:600;font-size:0.85rem;">${c.code || c.name || 'Discount'}</div>
+        <div style="font-size:0.7rem;color:var(--text3);">${c.description || ''}</div>
+      </td>
+      <td>
+        <span style="font-family:var(--display);font-size:1.3rem;font-weight:800;color:var(--green-text);">${pct}%</span>
+        <span style="font-size:0.7rem;color:var(--text3);">OFF</span>
+      </td>
+      <td>
+        <svg width="44" height="44" viewBox="0 0 44 44" style="transform:rotate(-90deg);">
+          <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(78,138,40,0.1)" stroke-width="5"/>
+          <circle cx="22" cy="22" r="18" fill="none" stroke="var(--green-bright)" stroke-width="5"
+            stroke-dasharray="${dashArr} ${circumference}" stroke-linecap="round"/>
+        </svg>
+      </td>
+      <td>₹${fmtNum(c.min_order || 0)}</td>
+      <td><span style="font-family:var(--mono);">${c.used_count || 0}/${c.max_uses || '∞'}</span></td>
+      <td style="font-size:0.75rem;color:var(--text3);">${c.expires_at ? fmtDate(c.expires_at) : 'No expiry'}</td>
+      <td>${c.deleted_at ? '<span class="badge badge-red">Deleted</span>' : c.active !== false ? '<span class="badge badge-green">Active</span>' : '<span class="badge badge-gray">Inactive</span>'}</td>
+      <td>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-secondary btn-sm btn-icon" onclick="openDiscountModal(${c.id})" title="Edit">✏️</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteDiscount(${c.id})" title="Delete">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openDiscountModal(id) {
+  const modal = document.getElementById('discountModal');
+  if (!modal) return;
+  editingCouponId = id;
+  document.getElementById('discountModalTitle').textContent = id ? 'Edit % Discount' : 'New % Discount';
+  if (id) {
+    const c = allDiscounts.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('dName').value = c.code || c.name || '';
+    document.getElementById('dValue').value = c.value || '';
+    document.getElementById('dMinOrder').value = c.min_order || 0;
+    document.getElementById('dMaxUses').value = c.max_uses || '';
+    document.getElementById('dExpires').value = c.expires_at ? c.expires_at.split('T')[0] : '';
+    document.getElementById('dActive').checked = c.active !== false;
+  } else {
+    ['dName','dValue','dMaxUses','dExpires'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('dMinOrder').value = '0';
+    document.getElementById('dActive').checked = true;
+  }
+  updateDiscPreview();
+  openModal('discountModal');
+}
+
+function updateDiscPreview() {
+  const pct = parseFloat(document.getElementById('dValue').value) || 0;
+  const sale = Math.round(1000 * (1 - pct/100));
+  const el = document.getElementById('discPreviewSale');
+  const badge = document.getElementById('discBadge');
+  if (el) el.textContent = '₹' + sale.toLocaleString('en-IN');
+  if (badge) {
+    badge.textContent = pct + '% OFF';
+    badge.style.background = pct >= 50 ? 'var(--red)' : pct >= 30 ? 'var(--gold)' : 'var(--green)';
+  }
+}
+
+async function saveDiscount() {
+  const name = document.getElementById('dName').value.trim();
+  const val = parseFloat(document.getElementById('dValue').value);
+  if (!name) { toast('Name required', 'error'); return; }
+  if (!val || val <= 0 || val > 90) { toast('Enter valid discount % (1–90)', 'error'); return; }
+
+  const body = {
+    code: name.toUpperCase().replace(/\s+/g,'_'),
+    type: 'percent',
+    value: val,
+    min_order: parseFloat(document.getElementById('dMinOrder').value) || 0,
+    max_uses: parseInt(document.getElementById('dMaxUses').value) || null,
+    expires_at: document.getElementById('dExpires').value || null,
+    active: document.getElementById('dActive').checked,
+  };
+  try {
+    const url = editingCouponId ? `/api/admin/coupons/${editingCouponId}` : '/api/admin/coupons';
+    const meth = editingCouponId ? 'PUT' : 'POST';
+    const r = await apiFetch(url, { method: meth, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error((await r.json()).error || 'Failed');
+    toast(editingCouponId ? 'Discount updated ✅' : 'Discount created ✅');
+    closeModal('discountModal');
+    loadDiscounts();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteDiscount(id) {
+  if (!confirm('Delete this discount?')) return;
+  try {
+    await apiFetch(`/api/admin/coupons/${id}`, { method: 'DELETE' });
+    toast('Discount deleted');
+    loadDiscounts();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function renderTierDiscounts() {
+  const container = document.getElementById('tierDiscountGrid');
+  if (!container) return;
+
+  const prodsWithTiers = allProducts.filter(p => {
+    if (!p.tiers) return false;
+    try {
+      const t = typeof p.tiers === 'string' ? JSON.parse(p.tiers) : p.tiers;
+      return Array.isArray(t) && t.length > 0;
+    } catch { return false; }
+  });
+
+  if (!prodsWithTiers.length) {
+    container.innerHTML = '<div class="empty-state" style="padding:40px;"><div class="empty-ico">📦</div><div class="empty-msg">No tier pricing found. Add tiers in Products → Pricing.</div></div>';
+    return;
+  }
+
+  container.innerHTML = prodsWithTiers.map(p => {
+    let tiers = [];
+    try { tiers = typeof p.tiers === 'string' ? JSON.parse(p.tiers) : p.tiers; } catch {}
+    const maxDisc = Math.max(...tiers.map(t => parseFloat(t.discount || t.discount_pct || 0)));
+
+    return `
+    <div class="card glass" style="position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;right:0;background:linear-gradient(135deg,var(--green-glow),transparent);width:80px;height:80px;border-radius:0 12px 0 80px;"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <img src="${p.image || 'https://via.placeholder.com/40'}" style="width:40px;height:40px;border-radius:8px;object-fit:contain;background:var(--bg2);" onerror="this.src='https://via.placeholder.com/40'">
+        <div>
+          <div style="font-weight:700;font-size:0.88rem;">${p.name}</div>
+          <div style="font-size:0.7rem;color:var(--text3);">Up to <span style="color:var(--green-text);font-weight:700;">${maxDisc}% OFF</span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${tiers.map((t, i) => {
+          const disc = parseFloat(t.discount || t.discount_pct || 0);
+          const barW = Math.min(disc * 1.1, 100);
+          return `
+          <div style="background:var(--bg2);border-radius:8px;padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:0.78rem;font-weight:600;">${t.qty || t.units || t.tablets || '?'} pack</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="text-decoration:line-through;font-size:0.72rem;color:var(--text3);">₹${t.mrp || t.price || '?'}</span>
+                <span style="color:var(--green-text);font-weight:700;font-size:0.85rem;">₹${t.rate || t.sale_price || '?'}</span>
+                <span style="background:var(--green-glow);color:var(--green-text);border-radius:4px;padding:1px 6px;font-size:0.65rem;font-weight:700;">${disc}%</span>
+              </div>
+            </div>
+            <div class="tier-visual-bar" style="--pct:${barW}%;width:${barW}%;"></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderDiscountAnalysis() {
+  // Usage chart
+  const usageCtx = document.getElementById('discUsageCanvas');
+  if (usageCtx) {
+    const labels = allDiscounts.map(d => d.code || 'D');
+    const uses = allDiscounts.map(d => d.used_count || 0);
+    drawHBarChart('discUsageCanvas', labels, uses, ['#5EAB30','#2080E8','#E8AD2C','#E87020','#7C3AED']);
+  }
+  // Pie chart of discount amounts
+  const pieCtx = document.getElementById('discPieCanvas');
+  if (pieCtx) {
+    const ranges = {'0-10%':0,'11-20%':0,'21-30%':0,'31-50%':0,'50%+':0};
+    allDiscounts.forEach(d => {
+      const v = parseFloat(d.value||0);
+      if(v<=10) ranges['0-10%']++;
+      else if(v<=20) ranges['11-20%']++;
+      else if(v<=30) ranges['21-30%']++;
+      else if(v<=50) ranges['31-50%']++;
+      else ranges['50%+']++;
+    });
+    const entries = Object.entries(ranges).filter(e=>e[1]>0);
+    drawDonutChart('discPieCanvas', entries.map(e=>e[0]), entries.map(e=>e[1]));
+  }
+}
+
+// ═══════════════════════════════════════════════
+// DONUT CHART HELPER
+// ═══════════════════════════════════════════════
+function drawDonutChart(canvasId, labels, values) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth || 240;
+  const H = canvas.clientHeight || 200;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const cx = W * 0.42, cy = H / 2, r = Math.min(cx, cy) * 0.7;
+  const total = values.reduce((s,v) => s+v, 0);
+  if (!total) return;
+  const colors = ['#5EAB30','#2080E8','#E8AD2C','#E87020','#7C3AED','#E53535'];
+  let angle = -Math.PI / 2;
+  values.forEach((v, i) => {
+    const slice = (v / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, angle, angle + slice);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.shadowColor = colors[i % colors.length];
+    ctx.shadowBlur = 8;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    angle += slice;
+  });
+  // Inner hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2);
+  ctx.fillStyle = 'var(--surface)';
+  ctx.fill();
+  // Center text
+  ctx.fillStyle = '#E8EDE0';
+  ctx.font = `bold 13px Syne,sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(total, cx, cy + 4);
+  ctx.fillStyle = 'rgba(106,120,96,0.7)';
+  ctx.font = '8px DM Sans,sans-serif';
+  ctx.fillText('total', cx, cy + 14);
+  // Legend
+  const lx = W * 0.78;
+  labels.forEach((lbl, i) => {
+    const ly = cy - (labels.length * 12) / 2 + i * 16;
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fillRect(lx, ly - 5, 8, 8);
+    ctx.fillStyle = 'rgba(158,170,144,0.8)';
+    ctx.font = '8px DM Sans,sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(lbl + ' ('+values[i]+')', lx + 12, ly + 2);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// LIVE VISITORS — Enhanced with simulation fallback
+// ═══════════════════════════════════════════════
+const DEMO_PAGES = ['/home','/products','/product/glutathione','/product/spirulina','/cart','/checkout','/about','/blog'];
+const DEMO_CITIES = ['Mumbai','Delhi','Bangalore','Chennai','Hyderabad','Pune','Kolkata','Ahmedabad','Jaipur','Surat'];
+const DEMO_DEVICES = ['Mobile 📱','Desktop 💻','Tablet 📟'];
+const DEMO_SOURCES = ['Google','Direct','Instagram','Facebook','WhatsApp'];
+
+let _lvSimData = [];
+let _lvTrafficData = Array(60).fill(0);
+let _lvStreamItems = [];
+
+function _generateSimVisitors(count) {
+  return Array.from({length: count}, (_, i) => ({
+    page: DEMO_PAGES[Math.floor(Math.random() * DEMO_PAGES.length)],
+    city: DEMO_CITIES[Math.floor(Math.random() * DEMO_CITIES.length)],
+    device: DEMO_DEVICES[Math.floor(Math.random() * DEMO_DEVICES.length)],
+    duration: Math.floor(Math.random() * 600),
+    source: DEMO_SOURCES[Math.floor(Math.random() * DEMO_SOURCES.length)],
+    status: Math.random() > 0.3 ? 'browsing' : 'checkout',
+  }));
+}
+
+async function updateLiveVisitors() {
+  let sessions = [], cnt = 0, views = 0, isSimulated = false;
+
+  try {
+    const r = await fetch(`${API}/api/visitors/active`, { signal: AbortSignal.timeout(6000) });
+    if (!r.ok) throw new Error('not ok');
+    const d = await r.json();
+    sessions = Array.isArray(d.sessions) ? d.sessions : [];
+    cnt = d.active_count || sessions.length || 0;
+    views = d.page_views_today || 0;
+    document.getElementById('lvSetupNotice') && (document.getElementById('lvSetupNotice').style.display = 'none');
+  } catch(e) {
+    // Fallback: use simulated data + show notice
+    isSimulated = true;
+    cnt = Math.floor(Math.random() * 8) + 1;
+    views = Math.floor(Math.random() * 200) + 50;
+    sessions = _generateSimVisitors(cnt);
+    if (document.getElementById('lvSetupNotice')) {
+      document.getElementById('lvSetupNotice').style.display = 'block';
+    }
+  }
+
+  // Update KPIs
+  document.getElementById('liveCount').textContent = cnt;
+  document.getElementById('lvActive').textContent = cnt;
+  document.getElementById('lvViews').textContent = views.toLocaleString();
+  document.getElementById('sessionCount') && (document.getElementById('sessionCount').textContent = sessions.length);
+
+  const avgSec = sessions.length > 0
+    ? Math.round(sessions.reduce((s,v) => s + (v.duration || Math.random() * 300), 0) / sessions.length)
+    : 0;
+  document.getElementById('lvSession').textContent = avgSec > 0 ? Math.floor(avgSec/60) + 'm ' + String(avgSec%60).padStart(2,'0') + 's' : '–';
+
+  // Bounce rate & conversions (estimated)
+  const bounceEst = Math.round(40 + Math.random() * 20);
+  const convEst = sessions.filter(s => (s.status||'') === 'checkout' || s.page === '/checkout').length;
+  document.getElementById('lvBounce').textContent = bounceEst + '%';
+  document.getElementById('lvConv').textContent = convEst;
+
+  // Refresh time
+  document.getElementById('lvRefreshTime').textContent = (isSimulated ? '🔴 Demo · ' : '🟢 Live · ') + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+  // Update traffic sparkline
+  _lvTrafficData.push(cnt);
+  if (_lvTrafficData.length > 60) _lvTrafficData.shift();
+  drawLvTrafficChart();
+
+  // Sessions table
+  document.getElementById('liveSessionsTbody').innerHTML = sessions.length ? sessions.map(s => `
+    <tr>
+      <td style="font-family:var(--mono);font-size:0.75rem;color:var(--green-text);">${s.page || '/'}</td>
+      <td><span style="font-size:0.78rem;">🇮🇳 ${s.city || 'India'}</span></td>
+      <td style="font-size:0.78rem;">${s.device || 'Mobile 📱'}</td>
+      <td style="font-family:var(--mono);font-size:0.75rem;">${Math.floor((s.duration||0)/60)}:${String((s.duration||0)%60).padStart(2,'0')}</td>
+      <td><span class="badge badge-gray">${s.source || 'Direct'}</span></td>
+      <td><span class="badge ${(s.status||'') === 'checkout' ? 'badge-gold' : 'badge-green'}">${s.status || 'browsing'}</span></td>
+    </tr>`) .join('') :
+    '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:20px;font-size:0.82rem;">No active visitors right now</td></tr>';
+
+  // Add to activity stream
+  if (sessions.length > 0) {
+    const s = sessions[0];
+    addToActivityStream(`${s.city || 'Visitor'} is viewing <strong>${s.page || '/home'}</strong> · ${s.source || 'Direct'}`);
+  }
+
+  // Page distribution
+  renderPageDistribution(sessions);
+
+  // Animate globe
+  animateLiveGlobe(sessions);
+
+  // Peak hour
+  const hour = new Date().getHours();
+  document.getElementById('lvPeakHour') && (document.getElementById('lvPeakHour').textContent = hour + ':00 – ' + (hour+1) + ':00');
+
+  // Top page
+  const pageCounts = {};
+  sessions.forEach(s => { pageCounts[s.page||'/'] = (pageCounts[s.page||'/']||0)+1; });
+  const topPage = Object.entries(pageCounts).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('lvTopPage') && (document.getElementById('lvTopPage').textContent = topPage ? topPage[0] : '/home');
+}
+
+function addToActivityStream(msg) {
+  const stream = document.getElementById('activityStream');
+  if (!stream) return;
+  _lvStreamItems.unshift(msg);
+  if (_lvStreamItems.length > 20) _lvStreamItems.pop();
+  stream.innerHTML = _lvStreamItems.map((m,i) => `
+    <div class="act-item" style="animation-delay:${i*0.05}s;opacity:${1-i*0.04};">
+      <div class="act-dot" style="background:var(--green-text);flex-shrink:0;"></div>
+      <div style="font-size:0.78rem;color:var(--text2);">${m}</div>
+      <div style="font-size:0.65rem;color:var(--text3);white-space:nowrap;">${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+    </div>`).join('');
+}
+
+function clearActivityStream() {
+  _lvStreamItems = [];
+  const stream = document.getElementById('activityStream');
+  if (stream) stream.innerHTML = '<div style="color:var(--text3);font-size:0.8rem;padding:20px;text-align:center;">Cleared</div>';
+}
+
+function renderPageDistribution(sessions) {
+  const container = document.getElementById('pageDistribution');
+  if (!container) return;
+  const map = {};
+  sessions.forEach(s => { map[s.page||'/'] = (map[s.page||'/']||0)+1; });
+  const total = sessions.length || 1;
+  container.innerHTML = Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([page,cnt]) =>
+    `<div style="background:var(--surface2);border-radius:8px;padding:6px 12px;display:flex;align-items:center;gap:8px;">
+      <span style="font-family:var(--mono);font-size:0.72rem;color:var(--green-text);">${page}</span>
+      <span style="background:var(--green-glow);color:var(--green-text);border-radius:4px;padding:1px 6px;font-size:0.65rem;">${cnt}</span>
+      <div style="background:var(--border);border-radius:2px;height:4px;width:60px;"><div style="background:var(--green);width:${(cnt/total*100)}%;height:100%;border-radius:2px;"></div></div>
+    </div>`).join('') || '<span style="color:var(--text3);font-size:0.8rem;">No page data</span>';
+}
+
+function drawLvTrafficChart() {
+  const canvas = document.getElementById('trafficCanvas');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth || 300;
+  const H = 180;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const data = _lvTrafficData.slice(-30);
+  const max = Math.max(...data, 1);
+  const pad = {t:10,r:10,b:20,l:24};
+  const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
+  // Grid lines
+  [0,0.25,0.5,0.75,1].forEach(f => {
+    const y = pad.t + cH * (1-f);
+    ctx.strokeStyle = 'rgba(78,138,40,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+cW, y); ctx.stroke();
+    if (f > 0) {
+      ctx.fillStyle = 'rgba(106,120,96,0.6)';
+      ctx.font = '7px DM Sans,sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(Math.round(max*f), pad.l-2, y+3);
+    }
+  });
+  if (data.length < 2) return;
+  const ptX = (i) => pad.l + (i/(data.length-1))*cW;
+  const ptY = (v) => pad.t + cH - (v/max)*cH;
+  // Gradient fill
+  const grd = ctx.createLinearGradient(0, pad.t, 0, pad.t+cH);
+  grd.addColorStop(0, 'rgba(94,171,48,0.4)');
+  grd.addColorStop(1, 'rgba(94,171,48,0)');
+  ctx.beginPath();
+  ctx.moveTo(ptX(0), pad.t+cH);
+  data.forEach((v,i) => ctx.lineTo(ptX(i), ptY(v)));
+  ctx.lineTo(ptX(data.length-1), pad.t+cH);
+  ctx.closePath();
+  ctx.fillStyle = grd; ctx.fill();
+  // Line
+  ctx.beginPath();
+  data.forEach((v,i) => i===0 ? ctx.moveTo(ptX(i), ptY(v)) : ctx.lineTo(ptX(i), ptY(v)));
+  ctx.strokeStyle = '#5EAB30'; ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#5EAB30'; ctx.shadowBlur = 6;
+  ctx.stroke(); ctx.shadowBlur = 0;
+  // Dot for latest
+  const lx = ptX(data.length-1), ly = ptY(data[data.length-1]);
+  ctx.beginPath(); ctx.arc(lx, ly, 4, 0, Math.PI*2);
+  ctx.fillStyle = '#5EAB30'; ctx.shadowColor='#5EAB30'; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+}
+
+// 3D Globe animation for visitors
+let _globeAngle = 0;
+function animateLiveGlobe(sessions) {
+  const canvas = document.getElementById('visitorGlobeCanvas');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const size = Math.min(canvas.clientWidth, 260);
+  canvas.width = size * dpr; canvas.height = size * dpr;
+  canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const cx = size/2, cy = size/2, r = size*0.38;
+
+  // Draw sphere
+  const grad = ctx.createRadialGradient(cx-r*0.3, cy-r*0.3, r*0.1, cx, cy, r);
+  grad.addColorStop(0, 'rgba(94,171,48,0.25)');
+  grad.addColorStop(0.6, 'rgba(20,26,16,0.8)');
+  grad.addColorStop(1, 'rgba(10,13,10,0.95)');
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Globe grid lines
+  ctx.strokeStyle = 'rgba(78,138,40,0.15)';
+  ctx.lineWidth = 0.8;
+  // Latitudes
+  for (let lat = -60; lat <= 60; lat += 30) {
+    const ry = Math.cos((lat*Math.PI/180)) * r;
+    const rz = Math.sin((lat*Math.PI/180)) * r;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + rz, ry, ry * 0.15, 0, 0, Math.PI*2);
+    ctx.stroke();
+  }
+  // Longitudes
+  for (let lon = 0; lon < 180; lon += 30) {
+    const angle = (lon + _globeAngle) * Math.PI/180;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r * Math.abs(Math.cos(angle)), r, angle, 0, Math.PI*2);
+    ctx.stroke();
+  }
+
+  // Glow rim
+  const rimGrad = ctx.createRadialGradient(cx, cy, r*0.85, cx, cy, r*1.05);
+  rimGrad.addColorStop(0, 'transparent');
+  rimGrad.addColorStop(1, 'rgba(94,171,48,0.2)');
+  ctx.beginPath(); ctx.arc(cx, cy, r*1.02, 0, Math.PI*2);
+  ctx.strokeStyle = rimGrad; ctx.lineWidth = 8; ctx.stroke();
+
+  // Visitor dots
+  const dotPositions = sessions.length > 0 ? sessions.slice(0,8).map((_, i) => ({
+    lat: (Math.random()*120-60) * Math.PI/180,
+    lng: (Math.random()*360 + _globeAngle) * Math.PI/180,
+  })) : Array.from({length:3}, () => ({
+    lat: (Math.random()*120-60) * Math.PI/180,
+    lng: (Math.random()*360 + _globeAngle) * Math.PI/180,
+  }));
+
+  dotPositions.forEach(({lat, lng}) => {
+    const x = cx + r * Math.cos(lat) * Math.sin(lng);
+    const y = cy - r * Math.sin(lat);
+    const visible = Math.cos(lat) * Math.cos(lng - _globeAngle*Math.PI/180) > 0;
+    if (!visible) return;
+    // Pulse ring
+    const pulse = (Date.now()/1000) % 2;
+    ctx.beginPath(); ctx.arc(x, y, 4 + pulse*6, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(94,171,48,${0.6 - pulse*0.3})`; ctx.lineWidth = 1.5; ctx.stroke();
+    // Dot
+    ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2);
+    ctx.fillStyle = '#5EAB30'; ctx.shadowColor='#5EAB30'; ctx.shadowBlur=8; ctx.fill(); ctx.shadowBlur=0;
+  });
+
+  _globeAngle = (_globeAngle + 0.3) % 360;
+}
+
+let _globeAnimFrame;
+function startGlobeAnimation() {
+  if (_globeAnimFrame) cancelAnimationFrame(_globeAnimFrame);
+  const loop = () => {
+    animateLiveGlobe([]);
+    _globeAnimFrame = requestAnimationFrame(loop);
+  };
+  loop();
+}
+
+function startLiveVisitors() {
+  updateLiveVisitors();
+  setInterval(updateLiveVisitors, 15000);
+  setTimeout(startGlobeAnimation, 500);
+}
+
+// ═══════════════════════════════════════════════
+// NEW PAGE LOADERS
+// ═══════════════════════════════════════════════
+function loadGeoAnalytics() {
+  // Reuse existing india map data from allOrders
+  if (!allOrders.length) { loadOrders().then(loadGeoAnalytics); return; }
+  const cityMap = {};
+  allOrders.forEach(o => {
+    const city = o.city || o.address_city || 'Unknown';
+    if (!cityMap[city]) cityMap[city] = {orders:0, revenue:0, state: o.state||''};
+    cityMap[city].orders++;
+    cityMap[city].revenue += parseFloat(o.total||0);
+  });
+  // KPIs
+  const topCity = Object.entries(cityMap).sort((a,b)=>b[1].orders-a[1].orders)[0];
+  const stateMap = {};
+  Object.values(cityMap).forEach(c => { stateMap[c.state||'?'] = (stateMap[c.state||'?']||0) + c.orders; });
+  const topState = Object.entries(stateMap).sort((a,b)=>b[1]-a[1])[0];
+  if(document.getElementById('geoTopState')) document.getElementById('geoTopState').textContent = topState?.[0] || '–';
+  if(document.getElementById('geoTopCity')) document.getElementById('geoTopCity').textContent = topCity?.[0] || '–';
+  if(document.getElementById('geoStateCount')) document.getElementById('geoStateCount').textContent = Object.keys(stateMap).length;
+  if(document.getElementById('geoCityCount')) document.getElementById('geoCityCount').textContent = Object.keys(cityMap).length;
+  if(document.getElementById('mapOrderCount2')) document.getElementById('mapOrderCount2').textContent = Object.keys(cityMap).length + ' cities';
+  // Reuse india map function
+  const mapEl = document.getElementById('indiaMap2');
+  if(mapEl) renderIndiaMap(cityMap, 'indiaMap2', 'mapTooltip2');
+  // Top cities chart 2
+  const topCities = Object.entries(cityMap).sort((a,b)=>b[1].orders-a[1].orders).slice(0,10);
+  const maxCity = topCities[0]?.[1].orders || 1;
+  const cityColors = ['#5EAB30','#2080E8','#E8AD2C','#7C3AED','#E87020','#E53535','#06B6D4','#EC4899','#10B981','#F59E0B'];
+  const topCitiesEl = document.getElementById('topCitiesChart2');
+  if (topCitiesEl) topCitiesEl.innerHTML = topCities.map(([city,info],i)=>`
+    <div class="rank-row">
+      <div class="rank-num">${i+1}</div>
+      <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;">
+          <span class="rank-label">${city}</span>
+          <span class="rank-val">${info.orders} orders</span>
+        </div>
+        <div class="rank-bar"><div class="rank-fill" style="width:${(info.orders/maxCity*100).toFixed(1)}%;background:${cityColors[i%cityColors.length]};"></div></div>
+      </div>
+    </div>`).join('') || '<div class="empty-state" style="padding:20px;">No city data</div>';
+
+  // State revenue chart
+  const stateRevEntries = Object.entries(cityMap).sort((a,b)=>b[1].revenue-a[1].revenue).slice(0,8);
+  if (stateRevEntries.length) setTimeout(() => drawHBarChart('geoStateCanvas', stateRevEntries.map(e=>e[0]), stateRevEntries.map(e=>e[1]), cityColors), 100);
+}
+
+function loadPerformance() {
+  if (!allOrders.length) return;
+  const paid = allOrders.filter(o => (o.payment_status||'').toLowerCase().includes('paid') || o.payment_status==='SUCCESS');
+  const delivered = allOrders.filter(o => (o.fulfillment||o.status||'') === 'Delivered');
+  const totalRev = paid.reduce((s,o) => s+parseFloat(o.total||0), 0);
+  const aov = paid.length ? totalRev/paid.length : 0;
+  const convRate = allOrders.length ? (paid.length/allOrders.length*100) : 0;
+  const delRate = allOrders.length ? (delivered.length/allOrders.length*100) : 0;
+
+  if(document.getElementById('perfConv')) document.getElementById('perfConv').textContent = convRate.toFixed(1)+'%';
+  if(document.getElementById('perfAov')) document.getElementById('perfAov').textContent = '₹'+fmtNum(Math.round(aov));
+  if(document.getElementById('perfRpv')) document.getElementById('perfRpv').textContent = '₹'+fmtNum(Math.round(aov*0.02));
+  if(document.getElementById('perfDel')) document.getElementById('perfDel').textContent = delRate.toFixed(1)+'%';
+
+  // Funnel
+  const funnelEl = document.getElementById('funnelChart');
+  if (funnelEl) {
+    const steps = [
+      {label:'Total Orders', count: allOrders.length, color:'#5EAB30'},
+      {label:'Paid', count: paid.length, color:'#2080E8'},
+      {label:'Processing', count: allOrders.filter(o=>(o.fulfillment||o.status||'')==='Processing').length, color:'#E8AD2C'},
+      {label:'Shipped', count: allOrders.filter(o=>(o.fulfillment||o.status||'')==='Shipped').length, color:'#E87020'},
+      {label:'Delivered', count: delivered.length, color:'#7C3AED'},
+    ];
+    const maxV = steps[0].count || 1;
+    funnelEl.innerHTML = steps.map(s => `
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:0.78rem;color:var(--text2);">${s.label}</span>
+          <span style="font-family:var(--mono);font-size:0.75rem;color:var(--text);">${s.count} (${(s.count/maxV*100).toFixed(0)}%)</span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:10px;overflow:hidden;">
+          <div style="height:100%;width:${(s.count/maxV*100)}%;background:${s.color};border-radius:4px;transition:width 1s ease;box-shadow:0 0 8px ${s.color}60;"></div>
+        </div>
+      </div>`).join('');
+  }
+
+  // Rings
+  setTimeout(() => {
+    const cartAbandonment = 65;
+    drawRing('perfRing1Canvas', cartAbandonment, '#E87020', 'Abandonment');
+    drawRing('perfRing2Canvas', paid.length / Math.max(allOrders.length,1) * 100, '#2080E8', 'Paid');
+    drawRing('perfRing3Canvas', 8, '#E53535', 'Returns');
+  }, 100);
+}
+
+// ═══════════════════════════════════════════════
+// ENHANCED ANALYTICS WITH MORE CHARTS
+// ═══════════════════════════════════════════════
+function loadAnalyticsExtended(orders, products) {
+  if (!orders || !orders.length) return;
+  const paid = orders.filter(o => (o.payment_status||'').toLowerCase().includes('paid') || o.payment_status==='SUCCESS');
+
+  // 3D-effect revenue chart
+  const n30 = Array.from({length:30},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-(29-i));
+    return {label: d.getDate()+'/'+(d.getMonth()+1), date: d.toISOString().split('T')[0], rev:0, orders:0};
+  });
+  orders.forEach(o => {
+    const b = n30.find(b => b.date===(o.created_at||'').split('T')[0]);
+    if(b){b.orders++;if((o.payment_status||'').toLowerCase().includes('paid')||o.payment_status==='SUCCESS')b.rev+=parseFloat(o.total||0);}
+  });
+  setTimeout(() => {
+    draw3DBarChart('ana3dRevenueCanvas', n30.filter((_,i)=>i%3===0).map(b=>b.label), n30.filter((_,i)=>i%3===0).map(b=>b.rev));
+    drawAreaChart('anaOrderVolCanvas', n30.filter((_,i)=>i%3===0).map(b=>b.label), n30.filter((_,i)=>i%3===0).map(b=>b.orders), '#2080E8');
+
+    // Payment methods pie
+    const methods = {};
+    orders.forEach(o => { const m = o.payment_mode || (o.payment_status?.includes('COD') ? 'COD' : 'Online'); methods[m]=(methods[m]||0)+1; });
+    drawDonutChart('anaPayMethodCanvas', Object.keys(methods), Object.values(methods));
+
+    // Category pie
+    const cats = {};
+    paid.forEach(o => { try {(typeof o.items==='string'?JSON.parse(o.items||'[]'):(o.items||[])).forEach(it => { cats[it.category||'Other']=(cats[it.category||'Other']||0)+1; }); } catch {} });
+    drawDonutChart('anaCatPieCanvas', Object.keys(cats).slice(0,6), Object.values(cats).slice(0,6));
+
+    // Customer segments donut
+    const custOrderMap = {};
+    orders.forEach(o => { custOrderMap[o.customer_email||o.customer_phone||'?'] = (custOrderMap[o.customer_email||o.customer_phone||'?']||0)+1; });
+    const segs = {'1 order': 0, '2-3 orders': 0, '4+ orders': 0};
+    Object.values(custOrderMap).forEach(n => { if(n===1)segs['1 order']++; else if(n<=3)segs['2-3 orders']++; else segs['4+ orders']++; });
+    drawDonutChart('anaCustSegCanvas', Object.keys(segs), Object.values(segs));
+
+    // Hourly
+    const hourly = Array(24).fill(0);
+    orders.forEach(o => { const h = new Date(o.created_at||0).getHours(); hourly[h]++; });
+    drawAreaChart('anaHourCanvas', Array.from({length:24},(_,i)=>i+'h'), hourly, '#E87020');
+
+    // Order size
+    const sizeMap = {'<₹200':0,'₹200-500':0,'₹500-1000':0,'₹1000-2000':0,'>₹2000':0};
+    orders.forEach(o => {
+      const t = parseFloat(o.total||0);
+      if(t<200) sizeMap['<₹200']++;
+      else if(t<500) sizeMap['₹200-500']++;
+      else if(t<1000) sizeMap['₹500-1000']++;
+      else if(t<2000) sizeMap['₹1000-2000']++;
+      else sizeMap['>₹2000']++;
+    });
+    drawDonutChart('anaOrderSizeCanvas', Object.keys(sizeMap), Object.values(sizeMap));
+
+    // Stacked bar
+    drawStackedChart('anaStackedCanvas', n30.filter((_,i)=>i%5===0).map(b=>b.label), n30.filter((_,i)=>i%5===0).map(b=>b.rev), n30.filter((_,i)=>i%5===0).map(b=>b.orders));
+  }, 200);
+}
+
+// ═══════════════════════════════════════════════
+// 3D BAR CHART (pseudo-3D with canvas)
+// ═══════════════════════════════════════════════
+function draw3DBarChart(canvasId, labels, values) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth || 400, H = canvas.clientHeight || 200;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const max = Math.max(...values, 1);
+  const pad = {t:20,r:10,b:30,l:40};
+  const cW = W-pad.l-pad.r, cH = H-pad.t-pad.b;
+  const barW = cW/values.length - 4;
+  const depth = 6;
+  values.forEach((v, i) => {
+    const bH = (v/max)*cH;
+    const x = pad.l + i*(cW/values.length) + 2;
+    const y = pad.t + cH - bH;
+    const shade = 0.15 + (v/max)*0.7;
+    // Front face
+    const grd = ctx.createLinearGradient(x, y, x+barW, y+bH);
+    grd.addColorStop(0, `rgba(94,171,48,${shade+0.2})`);
+    grd.addColorStop(1, `rgba(45,80,22,${shade})`);
+    ctx.fillStyle = grd;
+    ctx.fillRect(x, y, barW, bH);
+    // Top face (3D effect)
+    ctx.fillStyle = `rgba(126,200,80,${shade+0.1})`;
+    ctx.beginPath();
+    ctx.moveTo(x, y); ctx.lineTo(x+depth, y-depth);
+    ctx.lineTo(x+barW+depth, y-depth); ctx.lineTo(x+barW, y);
+    ctx.closePath(); ctx.fill();
+    // Right face
+    ctx.fillStyle = `rgba(30,50,15,${shade})`;
+    ctx.beginPath();
+    ctx.moveTo(x+barW, y); ctx.lineTo(x+barW+depth, y-depth);
+    ctx.lineTo(x+barW+depth, y+bH-depth); ctx.lineTo(x+barW, y+bH);
+    ctx.closePath(); ctx.fill();
+    // Label
+    if(labels[i] && i % Math.ceil(labels.length/6) === 0) {
+      ctx.fillStyle = 'rgba(106,120,96,0.7)';
+      ctx.font = '7px DM Sans,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(labels[i], x+barW/2, H-pad.b+12);
+    }
+  });
+  // Y-axis labels
+  [0,0.5,1].forEach(f => {
+    const y = pad.t + cH*(1-f);
+    ctx.fillStyle = 'rgba(106,120,96,0.6)';
+    ctx.font = '7px DM Sans,sans-serif'; ctx.textAlign = 'right';
+    ctx.fillText('₹'+fmtNum(Math.round(max*f)), pad.l-2, y+3);
+    ctx.strokeStyle = 'rgba(78,138,40,0.08)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W-pad.r, y); ctx.stroke();
+  });
+}
+
+// Stacked dual-axis chart
+function drawStackedChart(canvasId, labels, revVals, orderVals) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth || 600, H = canvas.clientHeight || 200;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+'px'; canvas.style.height = H+'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const maxR = Math.max(...revVals, 1), maxO = Math.max(...orderVals, 1);
+  const pad = {t:16,r:40,b:24,l:44};
+  const cW = W-pad.l-pad.r, cH = H-pad.t-pad.b;
+  const barW = (cW/labels.length)*0.4;
+
+  // Bars (revenue)
+  revVals.forEach((v,i) => {
+    const bH = (v/maxR)*cH;
+    const x = pad.l + i*(cW/labels.length) + barW*0.1;
+    const y = pad.t+cH-bH;
+    const grd = ctx.createLinearGradient(0,y,0,y+bH);
+    grd.addColorStop(0,'rgba(94,171,48,0.8)');
+    grd.addColorStop(1,'rgba(94,171,48,0.2)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(x, y, barW, bH);
+  });
+
+  // Line (orders)
+  const ptX = i => pad.l + i*(cW/labels.length) + barW*0.6;
+  const ptY = v => pad.t + cH - (v/maxO)*cH;
+  ctx.beginPath();
+  orderVals.forEach((v,i) => i===0 ? ctx.moveTo(ptX(i), ptY(v)) : ctx.lineTo(ptX(i), ptY(v)));
+  ctx.strokeStyle = '#2080E8'; ctx.lineWidth = 2.5;
+  ctx.shadowColor='#2080E8'; ctx.shadowBlur=6; ctx.stroke(); ctx.shadowBlur=0;
+  orderVals.forEach((v,i) => {
+    ctx.beginPath(); ctx.arc(ptX(i), ptY(v), 3, 0, Math.PI*2);
+    ctx.fillStyle='#2080E8'; ctx.fill();
+    if(labels[i]) {
+      ctx.fillStyle='rgba(106,120,96,0.7)'; ctx.font='7px DM Sans,sans-serif'; ctx.textAlign='center';
+      ctx.fillText(labels[i], ptX(i), H-pad.b+10);
+    }
+  });
+
+  // Legend
+  [[' Revenue','#5EAB30'],[' Orders','#2080E8']].forEach(([lbl,col],i) => {
+    ctx.fillStyle = col;
+    ctx.fillRect(pad.l+i*80, 4, 10, 6);
+    ctx.fillStyle='rgba(158,170,144,0.8)'; ctx.font='8px DM Sans,sans-serif'; ctx.textAlign='left';
+    ctx.fillText(lbl, pad.l+i*80+13, 11);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// HOOK INTO EXISTING loadAnalytics
+// ═══════════════════════════════════════════════
+const _origLoadAnalytics = typeof loadAnalytics !== 'undefined' ? loadAnalytics : null;
+async function loadAnalytics() {
+  if (_origLoadAnalytics) await _origLoadAnalytics();
+  loadAnalyticsExtended(allOrders, allProducts);
+}
+
+// Also hook showPage for new pages
+const _origShowPage2 = showPage;
+function showPage(page) {
+  _origShowPage2(page);
+  if (page === 'heatmap') setTimeout(loadGeoAnalytics, 100);
+  if (page === 'performance') setTimeout(loadPerformance, 100);
+  if (page === 'discounts') { setTimeout(renderDiscountKpis, 100); }
+  if (page === 'livevisitors') { setTimeout(() => { startGlobeAnimation(); }, 200); }
+}
+
+
+// ═══ BACKWARD COMPAT ALIASES ═══
+function openCouponModal(id) { openDiscountModal(id); }
+function saveCoupon() { saveDiscount(); }
+function deleteCoupon(id) { deleteDiscount(id); }
+function setEpChip(page, v, el) {
+  document.querySelectorAll(`#ep-${page} .ep-chip`).forEach(c => c.classList.remove('active'));
+  if(el) el.classList.add('active');
+  const dateEl = document.getElementById(`epdate-${page}`);
+  if(dateEl) dateEl.style.display = v === 'custom' ? 'flex' : 'none';
+}
+function setEpFmt(page, fmt, el) {
+  document.querySelectorAll(`#ep-${page} .ep-fmt-btn`).forEach(b => b.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+
+
+// Update topbar live count from liveCount
+function updateTopbarLive() {
+  const lc = document.getElementById('liveCount');
+  const tl = document.getElementById('topbarLive');
+  if(tl && lc) tl.textContent = lc.textContent + ' live';
+}
+setInterval(updateTopbarLive, 16000);
+
+
+// Wrapper for 2nd India map
+const _origRenderIndiaMap = renderIndiaMap;
+function renderIndiaMap(cityData, svgId, tooltipId) {
+  if (!svgId || svgId === 'indiaMap') {
+    _origRenderIndiaMap(cityData);
+  } else {
+    // Temporarily swap SVG IDs
+    const el = document.getElementById('indiaMap');
+    const el2 = document.getElementById(svgId);
+    const tip = document.getElementById('mapTooltip');
+    const tip2 = tooltipId ? document.getElementById(tooltipId) : null;
+    if (el && el2) {
+      el.id = '_indiaMapTmp';
+      el2.id = 'indiaMap';
+      if (tip && tip2) { tip.id = '_mapTooltipTmp'; tip2.id = 'mapTooltip'; }
+      _origRenderIndiaMap(cityData);
+      el2.id = svgId;
+      el.id = 'indiaMap';
+      if (tip && tip2) { tip2.id = tooltipId; tip.id = 'mapTooltip'; }
+    }
+  }
 }
 
 // Load settings on init
