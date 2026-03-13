@@ -297,9 +297,57 @@ input[type=file]{display:none;}
 .card{transition:box-shadow 0.2s;}
 .card:hover{box-shadow:0 8px 32px rgba(0,0,0,0.4),0 0 0 1px var(--border2);}
 
-/* ═══ CHART CANVAS ═══ */
-.chart-canvas-wrap{position:relative;width:100%;}
-canvas.dash-chart{width:100%!important;}
+/* ═══ SPARK CARDS ═══ */
+.spark-card{padding:14px 16px;position:relative;overflow:hidden;}
+.spark-val{font-family:var(--display);font-size:1.6rem;font-weight:800;color:var(--white);margin-top:4px;}
+.spark-label{font-size:0.68rem;color:var(--text3);margin-top:2px;}
+.spark-card::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at top right,rgba(74,138,40,0.07),transparent 70%);pointer-events:none;}
+
+/* ═══ STATS TICKER ═══ */
+.stat-tick{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;display:flex;align-items:center;gap:10px;flex:1;min-width:140px;}
+.stat-tick-ico{font-size:1.1rem;}
+.stat-tick-val{font-family:var(--display);font-size:1rem;font-weight:700;color:var(--white);}
+.stat-tick-lbl{font-size:0.68rem;color:var(--text3);}
+.stat-tick.up .stat-tick-val{color:var(--green-text);}
+.stat-tick.down .stat-tick-val{color:#ff6b6b;}
+
+/* ═══ ACTIVITY FEED ═══ */
+.act-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);animation:fadeSlide 0.4s ease;}
+@keyframes fadeSlide{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.act-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.act-text{font-size:0.78rem;color:var(--text);}
+.act-time{font-size:0.68rem;color:var(--text3);white-space:nowrap;margin-left:auto;}
+
+/* ═══ GOAL WIDGET ═══ */
+.goal-ring{display:flex;justify-content:center;margin-bottom:10px;}
+.goal-info{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text3);}
+
+/* ═══ TOP CITIES / PRODUCTS ═══ */
+.rank-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);}
+.rank-num{font-family:var(--mono);font-size:0.7rem;color:var(--text3);width:18px;text-align:right;}
+.rank-bar-wrap{flex:1;}
+.rank-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.rank-fill{height:100%;border-radius:3px;transition:width 0.8s ease;}
+.rank-label{font-size:0.78rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+.rank-val{font-size:0.75rem;font-weight:600;color:var(--green-text);white-space:nowrap;}
+
+/* ═══ INDIA MAP ═══ */
+.map-state{fill:var(--surface2);stroke:var(--border2);stroke-width:0.8;transition:fill 0.3s,filter 0.3s;cursor:pointer;}
+.map-state:hover{filter:brightness(1.4);}
+.map-dot{fill:var(--green-bright);filter:drop-shadow(0 0 6px var(--green));animation:mapPulse 2s infinite;}
+@keyframes mapPulse{0%,100%{r:4;opacity:1}50%{r:7;opacity:0.5}}
+
+/* ═══ COUNTER ANIMATION ═══ */
+.count-up{transition:all 0.6s;}
+
+/* ═══ 3D GLOW CARDS ═══ */
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;cursor:default;}
+.kpi::before{content:'';position:absolute;top:0;right:0;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,var(--green-glow),transparent);transform:translate(20px,-20px);}
+.kpi-glow{position:absolute;inset:0;border-radius:var(--radius);opacity:0;transition:opacity 0.3s;pointer-events:none;}
+.kpi:hover .kpi-glow{opacity:1;}
+
+/* ═══ BADGE BLUE ═══ */
+.badge-blue{background:rgba(32,128,232,0.15);color:#60a5fa;}
 
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:900px){
@@ -466,37 +514,120 @@ canvas.dash-chart{width:100%!important;}
       <button class="ep-dl-btn" onclick="doPageExport('dashboard')">⬇ Download</button>
     </div>
   </div>
+  <!-- ══ KPI ROW ══ -->
   <div class="grid-4" id="kpiCards" style="margin-bottom:20px">
-    <div class="kpi skel" style="height:100px"></div>
-    <div class="kpi skel" style="height:100px"></div>
-    <div class="kpi skel" style="height:100px"></div>
-    <div class="kpi skel" style="height:100px"></div>
+    <div class="kpi skel" style="height:108px"></div>
+    <div class="kpi skel" style="height:108px"></div>
+    <div class="kpi skel" style="height:108px"></div>
+    <div class="kpi skel" style="height:108px"></div>
   </div>
-  <div class="grid-2" style="margin-bottom:20px">
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">Revenue Trend (7 days)</span><span class="badge badge-green" id="dashRevTotal">₹0</span></div>
-      <div class="chart-canvas-wrap" style="height:130px;"><canvas id="revenueCanvas" style="display:block;width:100%;height:130px;"></canvas></div>
+
+  <!-- ══ MINI STAT TICKER ══ -->
+  <div id="statsTicker" style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;"></div>
+
+  <!-- ══ ROW 1: Revenue + Sparkline Widgets ══ -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="card-hdr" style="padding:16px 20px 12px;">
+        <span class="card-title">📈 Revenue Trend</span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="badge badge-green" id="dashRevTotal">₹0</span>
+          <div style="display:flex;gap:4px;">
+            <button class="ep-chip active" id="revChip7" onclick="setRevRange(7,this)" style="padding:3px 10px;font-size:0.7rem;">7D</button>
+            <button class="ep-chip" id="revChip30" onclick="setRevRange(30,this)" style="padding:3px 10px;font-size:0.7rem;">30D</button>
+            <button class="ep-chip" id="revChip90" onclick="setRevRange(90,this)" style="padding:3px 10px;font-size:0.7rem;">90D</button>
+          </div>
+        </div>
+      </div>
+      <canvas id="revenueCanvas" style="display:block;width:100%;height:180px;"></canvas>
     </div>
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">⚠️ Low Stock Alert</span><span class="badge badge-red" id="lowStockBadge">0</span></div>
-      <div id="lowStockList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card spark-card" id="sparkRevCard">
+        <div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Today Revenue</div>
+        <div class="spark-val" id="sparkRevVal">₹0</div>
+        <canvas id="sparkRevCanvas" style="width:100%;height:36px;display:block;margin-top:6px;"></canvas>
+        <div class="spark-label" id="sparkRevLabel"></div>
+      </div>
+      <div class="card spark-card" id="sparkOrdCard">
+        <div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Orders Today</div>
+        <div class="spark-val" id="sparkOrdVal">0</div>
+        <canvas id="sparkOrdCanvas" style="width:100%;height:36px;display:block;margin-top:6px;"></canvas>
+        <div class="spark-label" id="sparkOrdLabel"></div>
+      </div>
+      <div class="card spark-card">
+        <div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;">Conversion</div>
+        <div class="spark-val" id="sparkConvVal">0%</div>
+        <div id="convBar" style="height:6px;background:var(--border);border-radius:3px;margin-top:8px;overflow:hidden;"><div id="convFill" style="height:100%;background:linear-gradient(90deg,var(--green),var(--green-bright));border-radius:3px;width:0%;transition:width 1s ease;"></div></div>
+        <div class="spark-label" id="sparkConvLabel" style="margin-top:4px;"></div>
+      </div>
     </div>
   </div>
-  <div class="grid-2" style="margin-bottom:20px">
+
+  <!-- ══ ROW 2: Status Donut + Pay Donut + Hourly bars ══ -->
+  <div class="grid-3" style="margin-bottom:16px;">
     <div class="card">
-      <div class="card-hdr"><span class="card-title">Order Status Breakdown</span></div>
-      <div class="chart-canvas-wrap" style="height:130px;"><canvas id="statusCanvas" style="display:block;width:100%;height:130px;"></canvas></div>
+      <div class="card-hdr"><span class="card-title">🔵 Order Status</span><span class="badge badge-gray" id="statusTotal">0</span></div>
+      <canvas id="statusCanvas" style="display:block;width:100%;height:160px;"></canvas>
     </div>
     <div class="card">
-      <div class="card-hdr"><span class="card-title">Payment Methods</span></div>
-      <div class="chart-canvas-wrap" style="height:130px;"><canvas id="payCanvas" style="display:block;width:100%;height:130px;"></canvas></div>
+      <div class="card-hdr"><span class="card-title">💳 Payment Split</span></div>
+      <canvas id="payCanvas" style="display:block;width:100%;height:160px;"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">⏰ Hourly Orders</span><span class="badge badge-blue" id="peakHour">–</span></div>
+      <canvas id="hourlyCanvas" style="display:block;width:100%;height:160px;"></canvas>
     </div>
   </div>
+
+  <!-- ══ ROW 3: India Map + Top Cities ══ -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">🗺️ Orders by State</span><span class="badge badge-green" id="mapOrderCount">0 cities</span></div>
+      <div id="indiaMapWrap" style="position:relative;width:100%;height:260px;overflow:hidden;border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;">
+        <svg id="indiaMap" viewBox="0 0 400 460" style="width:100%;height:100%;"></svg>
+        <div id="mapTooltip" style="position:absolute;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:0.75rem;pointer-events:none;display:none;z-index:10;"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">🏙️ Top Cities</span></div>
+      <div id="topCitiesChart" style="padding:4px 0;"></div>
+    </div>
+  </div>
+
+  <!-- ══ ROW 4: Category + Top Products ══ -->
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">🏷️ Revenue by Category</span></div>
+      <canvas id="catCanvas" style="display:block;width:100%;height:180px;"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">🏆 Top Products</span></div>
+      <div id="topProductsWidget" style="padding:4px 0;"></div>
+    </div>
+  </div>
+
+  <!-- ══ ROW 5: Activity Feed + Low Stock + Goal ══ -->
+  <div class="grid-3" style="margin-bottom:16px;">
+    <div class="card" style="grid-column:span 1;">
+      <div class="card-hdr"><span class="card-title">⚡ Live Activity</span><span class="badge badge-green" id="activityDot" style="animation:pulse 2s infinite">Live</span></div>
+      <div id="activityFeed" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">⚠️ Low Stock</span><span class="badge badge-red" id="lowStockBadge">0</span></div>
+      <div id="lowStockList" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">🎯 Monthly Goal</span></div>
+      <div id="goalWidget" style="padding:8px 0;"></div>
+    </div>
+  </div>
+
+  <!-- ══ ROW 6: Recent Orders Table ══ -->
   <div class="card">
-    <div class="card-hdr"><span class="card-title">Recent Orders</span><button class="btn btn-secondary btn-sm" onclick="showPage('orders')">View All →</button></div>
-    <div class="table-wrap"><table id="dashOrdersTable">
-      <thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Time</th></tr></thead>
-      <tbody id="dashOrdersTbody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+    <div class="card-hdr"><span class="card-title">📦 Recent Orders</span><button class="btn btn-secondary btn-sm" onclick="showPage('orders')">View All →</button></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Order ID</th><th>Customer</th><th>Amount</th><th>Payment</th><th>Status</th><th>Time</th></tr></thead>
+      <tbody id="dashOrdersTbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody>
     </table></div>
   </div>
 </div>
@@ -1377,7 +1508,12 @@ if(authToken) {
 
 // Redraw canvas charts on window resize
 window.addEventListener('resize', () => {
-  if(allOrders.length) { renderRevenueChart(allOrders); renderStatusChart(allOrders); renderPayChart(allOrders); }
+  if(allOrders.length) {
+    renderRevenueChart(allOrders, _revRange);
+    renderStatusChart(allOrders);
+    renderPayChart(allOrders);
+    renderHourlyChart(allOrders);
+  }
 });
 
 // ═══════════════════════════════════════════════
@@ -1445,119 +1581,370 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target===o) o.classList.remove('open'); }));
 
 // ═══════════════════════════════════════════════
-// CHART.JS MINI RENDERER (no CDN needed)
+// CANVAS CHART ENGINE — 3D / Animated
 // ═══════════════════════════════════════════════
-// Polyfill for older browsers
 if (!CanvasRenderingContext2D.prototype.roundRect) {
   CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
-    r = Array.isArray(r)?r[0]:r||0;
-    this.beginPath();
-    this.moveTo(x+r,y);
-    this.arcTo(x+w,y,x+w,y+h,r);
-    this.arcTo(x+w,y+h,x,y+h,r);
-    this.arcTo(x,y+h,x,y,r);
-    this.arcTo(x,y,x+w,y,r);
-    this.closePath();
-    return this;
+    r=Array.isArray(r)?r[0]:r||0;
+    this.beginPath();this.moveTo(x+r,y);
+    this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);
+    this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);
+    this.closePath();return this;
   };
 }
-function drawBarChart(canvasId, labels, data, color='#5EAB30') {
+
+// Animated counter
+function animateCount(el, from, to, fmt, dur=900) {
+  if(!el) return;
+  const start = performance.now();
+  const tick = now => {
+    const p = Math.min((now-start)/dur, 1);
+    const ease = 1 - Math.pow(1-p, 3);
+    const v = from + (to-from)*ease;
+    el.textContent = fmt(v);
+    if(p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// 3D Bar Chart with line overlay
+function drawBarChart(canvasId, labels, data, color='#5EAB30', lineData=null) {
   const canvas = document.getElementById(canvasId);
   if(!canvas) return;
-  canvas.width = canvas.offsetWidth || 400;
-  canvas.height = canvas.offsetHeight || 130;
+  const dpr = window.devicePixelRatio||1;
+  const W0 = canvas.clientWidth||canvas.offsetWidth||400;
+  const H0 = canvas.clientHeight||canvas.offsetHeight||180;
+  canvas.width = W0*dpr; canvas.height = H0*dpr;
+  canvas.style.width = W0+'px'; canvas.style.height = H0+'px';
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const W = canvas.width, H = canvas.height;
-  const pad = {t:10,r:10,b:28,l:50};
-  const cW = W - pad.l - pad.r, cH = H - pad.t - pad.b;
-  const max = Math.max(...data, 1);
-  const barW = Math.max(4, (cW / data.length) - 4);
+  ctx.scale(dpr,dpr);
+  const W=W0, H=H0;
+  const pad={t:14,r:14,b:32,l:54};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  const max=Math.max(...data,1);
+  const barW=Math.max(6,(cW/data.length)-5);
 
-  // Grid lines
-  ctx.strokeStyle = 'rgba(78,138,40,0.1)';
-  ctx.lineWidth = 1;
-  for(let i=0;i<=4;i++) {
-    const y = pad.t + cH - (i/4)*cH;
-    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
-    ctx.fillStyle = 'rgba(106,120,96,0.7)';
-    ctx.font = '9px DM Sans,sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(fmtNum(max*i/4), pad.l-4, y+3);
+  // Background grid
+  ctx.strokeStyle='rgba(78,138,40,0.08)'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+cH-(i/4)*cH;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='rgba(106,120,96,0.65)';
+    ctx.font=`${9*dpr/dpr}px DM Sans,sans-serif`;
+    ctx.textAlign='right';
+    const v=max*i/4;
+    ctx.fillText(v>=1000?'₹'+(v/1000).toFixed(0)+'k':'₹'+v.toFixed(0),pad.l-5,y+3);
   }
 
-  // Bars
-  data.forEach((v, i) => {
-    const x = pad.l + i*(cW/data.length) + (cW/data.length - barW)/2;
-    const barH = (v/max)*cH;
-    const y = pad.t + cH - barH;
-    // 3D shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath(); ctx.roundRect(x+3, y+3, barW, barH, [3,3,0,0]); ctx.fill();
-    // Gradient bar
-    const grd = ctx.createLinearGradient(0, y, 0, y+barH);
-    grd.addColorStop(0, color);
-    grd.addColorStop(1, color+'80');
-    ctx.fillStyle = grd;
-    ctx.beginPath(); ctx.roundRect(x, y, barW, barH, [3,3,0,0]); ctx.fill();
-    // Label
-    ctx.fillStyle = 'rgba(158,170,144,0.8)';
-    ctx.font = '8px DM Sans,sans-serif';
-    ctx.textAlign = 'center';
-    if(labels[i]) ctx.fillText(labels[i].slice(0,4), x + barW/2, H - pad.b + 10);
+  // 3D bars
+  data.forEach((v,i)=>{
+    const x=pad.l+i*(cW/data.length)+(cW/data.length-barW)/2;
+    const bH=Math.max(2,(v/max)*cH);
+    const y=pad.t+cH-bH;
+    // Side face (3D effect)
+    const sw=6;
+    ctx.fillStyle='rgba(0,0,0,0.3)';
+    ctx.beginPath();ctx.moveTo(x+barW,y);ctx.lineTo(x+barW+sw,y-sw/2);
+    ctx.lineTo(x+barW+sw,y+bH-sw/2);ctx.lineTo(x+barW,y+bH);ctx.closePath();ctx.fill();
+    // Top face
+    ctx.fillStyle='rgba(255,255,255,0.08)';
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+barW,y);
+    ctx.lineTo(x+barW+sw,y-sw/2);ctx.lineTo(x+sw,y-sw/2);ctx.closePath();ctx.fill();
+    // Front face gradient
+    const grd=ctx.createLinearGradient(0,y,0,y+bH);
+    grd.addColorStop(0,color+'FF');grd.addColorStop(1,color+'50');
+    ctx.fillStyle=grd;
+    ctx.beginPath();ctx.roundRect(x,y,barW,bH,[3,3,0,0]);ctx.fill();
+    // Value on hover (show top value)
+    if(v>0){
+      ctx.fillStyle='rgba(126,200,80,0.9)';ctx.font='8px DM Sans,sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(v>=1000?(v/1000).toFixed(1)+'k':Math.round(v),x+barW/2,y-3);
+    }
+    // X label
+    ctx.fillStyle='rgba(106,120,96,0.8)';ctx.font='8px DM Sans,sans-serif';ctx.textAlign='center';
+    if(labels[i]) ctx.fillText(labels[i].slice(0,3),x+barW/2,H-pad.b+12);
   });
+
+  // Line overlay
+  if(lineData&&lineData.length===data.length){
+    const lMax=Math.max(...lineData,1);
+    ctx.strokeStyle='rgba(232,173,44,0.85)';ctx.lineWidth=2;ctx.setLineDash([]);
+    ctx.beginPath();
+    lineData.forEach((v,i)=>{
+      const x=pad.l+i*(cW/data.length)+barW/2+(cW/data.length-barW)/2;
+      const y=pad.t+cH-(v/lMax)*cH;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+    // Dots
+    lineData.forEach((v,i)=>{
+      const x=pad.l+i*(cW/data.length)+barW/2+(cW/data.length-barW)/2;
+      const y=pad.t+cH-(v/lMax)*cH;
+      ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);
+      ctx.fillStyle='#E8AD2C';ctx.fill();
+    });
+  }
 }
 
-function drawDonutChart(canvasId, labels, data, colors) {
-  const canvas = document.getElementById(canvasId);
-  if(!canvas) return;
-  canvas.width = canvas.offsetWidth || 200;
-  canvas.height = canvas.offsetHeight || 130;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const W = canvas.width, H = canvas.height;
-  const total = data.reduce((s,v)=>s+v,0);
-  if(!total) return;
-  const cx = H/2 + 8, cy = H/2, r = (H/2) - 12, ir = r*0.55;
-  let startAngle = -Math.PI/2;
-  data.forEach((v, i) => {
-    const angle = (v/total)*Math.PI*2;
-    // Shadow
-    ctx.shadowColor = colors[i]+'60';
-    ctx.shadowBlur = 8;
-    ctx.beginPath(); ctx.moveTo(cx,cy);
-    ctx.arc(cx,cy,r,startAngle,startAngle+angle); ctx.closePath();
-    ctx.fillStyle = colors[i]; ctx.fill();
-    ctx.shadowBlur = 0;
-    startAngle += angle;
+// Sparkline
+function drawSparkline(canvasId, data, color='#5EAB30') {
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const W0=canvas.clientWidth||120,H0=36;
+  canvas.width=W0*dpr;canvas.height=H0*dpr;
+  canvas.style.width=W0+'px';canvas.style.height=H0+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=W0,H=H0,pad=4;
+  const max=Math.max(...data,1),min=Math.min(...data,0);
+  const range=max-min||1;
+  const pts=data.map((v,i)=>({x:pad+i*(W-pad*2)/(data.length-1),y:H-pad-(v-min)/range*(H-pad*2)}));
+  // Fill
+  const grd=ctx.createLinearGradient(0,0,0,H);
+  grd.addColorStop(0,color+'50');grd.addColorStop(1,color+'00');
+  ctx.beginPath();ctx.moveTo(pts[0].x,H);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,H);ctx.closePath();
+  ctx.fillStyle=grd;ctx.fill();
+  // Line
+  ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();
+}
+
+// Animated Donut
+function drawDonutChart(canvasId, labels, data, colors, centerLabel='') {
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const W0=canvas.clientWidth||260,H0=canvas.clientHeight||160;
+  canvas.width=W0*dpr;canvas.height=H0*dpr;
+  canvas.style.width=W0+'px';canvas.style.height=H0+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=W0,H=H0;
+  const total=data.reduce((s,v)=>s+v,0);if(!total)return;
+  const r=Math.min(H/2,70)-8,ir=r*0.6;
+  const cx=r+16,cy=H/2;
+  let startAngle=-Math.PI/2;
+  data.forEach((v,i)=>{
+    const angle=(v/total)*Math.PI*2;
+    // Outer shadow
+    ctx.shadowColor=colors[i%colors.length]+'80';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,startAngle,startAngle+angle);
+    ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();
+    ctx.shadowBlur=0;
+    startAngle+=angle;
   });
-  // Donut hole
-  ctx.beginPath(); ctx.arc(cx,cy,ir,0,Math.PI*2);
-  ctx.fillStyle = '#0A0D0A'; ctx.fill();
+  // Inner hole
+  ctx.beginPath();ctx.arc(cx,cy,ir,0,Math.PI*2);
+  const hGrd=ctx.createRadialGradient(cx,cy,ir*0.3,cx,cy,ir);
+  hGrd.addColorStop(0,'#0F1410');hGrd.addColorStop(1,'#0A0D0A');
+  ctx.fillStyle=hGrd;ctx.fill();
   // Center text
-  ctx.fillStyle = '#E8EDE0';
-  ctx.font = 'bold 14px Syne,sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(total, cx, cy+5);
+  ctx.fillStyle='#E8EDE0';ctx.font=`bold ${Math.min(16,r*0.35)}px Syne,sans-serif`;
+  ctx.textAlign='center';ctx.fillText(centerLabel||total,cx,cy+5);
+  ctx.fillStyle='rgba(106,120,96,0.7)';ctx.font='8px DM Sans,sans-serif';
+  ctx.fillText('total',cx,cy+17);
   // Legend
-  const lx = cx + r + 16;
-  labels.forEach((lbl,i) => {
-    const ly = 16 + i*20;
-    ctx.fillStyle = colors[i];
-    ctx.beginPath(); ctx.roundRect(lx, ly, 10, 10, 2); ctx.fill();
-    ctx.fillStyle = 'rgba(158,170,144,0.9)';
-    ctx.font = '9px DM Sans,sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText(`${lbl} (${data[i]})`, lx+14, ly+9);
+  const lx=cx+r+14;
+  labels.slice(0,6).forEach((lbl,i)=>{
+    const ly=8+i*22;
+    const pct=((data[i]/total)*100).toFixed(0);
+    // Color dot
+    ctx.fillStyle=colors[i%colors.length];
+    ctx.beginPath();ctx.arc(lx+5,ly+5,5,0,Math.PI*2);ctx.fill();
+    // Label
+    ctx.fillStyle='rgba(232,237,224,0.9)';ctx.font='bold 9px DM Sans,sans-serif';
+    ctx.textAlign='left';ctx.fillText(lbl,lx+14,ly+5);
+    ctx.fillStyle='rgba(126,200,80,0.8)';ctx.font='8px DM Sans,sans-serif';
+    ctx.fillText(`${data[i]} (${pct}%)`,lx+14,ly+15);
   });
 }
 
+// Horizontal bar chart (categories)
+function drawHBarChart(canvasId, labels, data, colors) {
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const W0=canvas.clientWidth||400,H0=canvas.clientHeight||180;
+  canvas.width=W0*dpr;canvas.height=H0*dpr;
+  canvas.style.width=W0+'px';canvas.style.height=H0+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=W0,H=H0;
+  const max=Math.max(...data,1);
+  const rowH=H/Math.max(labels.length,1);
+  const pad={l:90,r:20,t:8,b:8};
+  labels.forEach((lbl,i)=>{
+    const y=pad.t+i*rowH;
+    const bH=Math.max(8,rowH-8);
+    const bY=y+(rowH-bH)/2;
+    const bW=(data[i]/max)*(W-pad.l-pad.r);
+    // Label
+    ctx.fillStyle='rgba(158,170,144,0.9)';ctx.font='9px DM Sans,sans-serif';
+    ctx.textAlign='right';ctx.fillText(lbl.slice(0,10),pad.l-6,bY+bH/2+3);
+    // Shadow bar
+    ctx.fillStyle='rgba(0,0,0,0.2)';
+    ctx.beginPath();ctx.roundRect(pad.l+2,bY+2,bW,bH,[3]);ctx.fill();
+    // Colored bar
+    const c=colors?colors[i%colors.length]:'#5EAB30';
+    const grd=ctx.createLinearGradient(pad.l,0,pad.l+bW,0);
+    grd.addColorStop(0,c);grd.addColorStop(1,c+'80');
+    ctx.fillStyle=grd;ctx.beginPath();ctx.roundRect(pad.l,bY,bW,bH,[3]);ctx.fill();
+    // Value
+    ctx.fillStyle='rgba(232,237,224,0.9)';ctx.font='bold 9px DM Sans,sans-serif';
+    ctx.textAlign='left';ctx.fillText('₹'+(data[i]>=1000?(data[i]/1000).toFixed(1)+'k':Math.round(data[i])),pad.l+bW+5,bY+bH/2+3);
+  });
+}
+
+// Hourly bars
+function drawHourlyChart(canvasId, data) {
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const W0=canvas.clientWidth||260,H0=canvas.clientHeight||160;
+  canvas.width=W0*dpr;canvas.height=H0*dpr;
+  canvas.style.width=W0+'px';canvas.style.height=H0+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=W0,H=H0,pad={t:10,r:8,b:22,l:28};
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  const max=Math.max(...data,1);
+  const barW=Math.max(4,cW/24-2);
+  const now=new Date().getHours();
+  data.forEach((v,i)=>{
+    const x=pad.l+i*(cW/24)+(cW/24-barW)/2;
+    const bH=Math.max(2,(v/max)*cH);
+    const y=pad.t+cH-bH;
+    const isCurrent=i===now;
+    const col=isCurrent?'#E8AD2C':v>0?'#4A8A28':'#1C2418';
+    ctx.fillStyle=col+'80';ctx.fillRect(x+2,y+2,barW,bH);
+    ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(x,y,barW,bH,[2,2,0,0]);ctx.fill();
+    if(i%4===0){
+      ctx.fillStyle='rgba(106,120,96,0.6)';ctx.font='7px DM Sans,sans-serif';
+      ctx.textAlign='center';ctx.fillText(i+'h',x+barW/2,H-pad.b+10);
+    }
+  });
+  // Current time line
+  const cx=pad.l+now*(cW/24)+(cW/24)/2;
+  ctx.strokeStyle='rgba(232,173,44,0.6)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(cx,pad.t);ctx.lineTo(cx,pad.t+cH);ctx.stroke();ctx.setLineDash([]);
+}
+
+// India Map SVG
+function renderIndiaMap(cityData) {
+  const svg = document.getElementById('indiaMap');
+  if(!svg) return;
+  // Simplified India states paths (key states)
+  const states = [
+    {id:'MH',name:'Maharashtra',d:'M 140 230 L 155 220 L 175 225 L 185 240 L 180 260 L 165 270 L 150 265 L 135 250 Z',cx:160,cy:245},
+    {id:'DL',name:'Delhi',d:'M 165 155 L 172 150 L 178 155 L 175 163 L 168 163 Z',cx:172,cy:157},
+    {id:'KA',name:'Karnataka',d:'M 145 280 L 165 272 L 180 280 L 178 305 L 160 310 L 142 302 Z',cx:162,cy:292},
+    {id:'TN',name:'Tamil Nadu',d:'M 155 308 L 175 303 L 182 318 L 175 340 L 163 348 L 150 335 L 148 318 Z',cx:165,cy:325},
+    {id:'GJ',name:'Gujarat',d:'M 108 195 L 128 188 L 140 195 L 142 215 L 130 225 L 112 220 L 105 210 Z',cx:125,cy:208},
+    {id:'RJ',name:'Rajasthan',d:'M 115 145 L 150 135 L 168 148 L 165 175 L 148 185 L 125 180 L 110 168 Z',cx:142,cy:162},
+    {id:'UP',name:'Uttar Pradesh',d:'M 172 145 L 205 140 L 218 152 L 215 172 L 198 180 L 178 178 L 165 165 Z',cx:195,cy:162},
+    {id:'WB',name:'West Bengal',d:'M 230 175 L 245 168 L 255 178 L 252 200 L 238 205 L 226 198 Z',cx:241,cy:188},
+    {id:'TS',name:'Telangana',d:'M 170 255 L 188 248 L 200 258 L 198 278 L 182 282 L 168 275 Z',cx:185,cy:265},
+    {id:'AP',name:'Andhra Pradesh',d:'M 175 280 L 200 272 L 212 283 L 208 305 L 192 310 L 172 303 Z',cx:193,cy:292},
+    {id:'KL',name:'Kerala',d:'M 148 330 L 160 325 L 165 345 L 158 368 L 148 370 L 142 355 Z',cx:154,cy:350},
+    {id:'MP',name:'Madhya Pradesh',d:'M 148 188 L 185 182 L 198 192 L 195 215 L 178 225 L 155 222 L 142 210 Z',cx:172,cy:205},
+    {id:'HR',name:'Haryana',d:'M 155 148 L 175 142 L 182 152 L 178 163 L 160 165 L 152 158 Z',cx:167,cy:155},
+    {id:'PB',name:'Punjab',d:'M 148 130 L 168 124 L 178 132 L 175 148 L 158 150 L 145 142 Z',cx:162,cy:138},
+    {id:'OD',name:'Odisha',d:'M 218 205 L 238 198 L 248 210 L 244 232 L 228 238 L 215 228 Z',cx:232,cy:220},
+    {id:'BR',name:'Bihar',d:'M 208 168 L 228 162 L 238 172 L 235 188 L 218 192 L 205 183 Z',cx:222,cy:178},
+    {id:'JH',name:'Jharkhand',d:'M 215 190 L 235 185 L 245 195 L 242 212 L 225 215 L 212 206 Z',cx:228,cy:200},
+    {id:'CG',name:'Chhattisgarh',d:'M 188 215 L 210 210 L 220 222 L 216 248 L 200 252 L 185 242 Z',cx:203,cy:232},
+    {id:'AS',name:'Assam',d:'M 268 158 L 292 152 L 302 162 L 298 175 L 278 178 L 265 170 Z',cx:283,cy:165},
+    {id:'UK',name:'Uttarakhand',d:'M 170 130 L 192 124 L 202 132 L 200 148 L 182 152 L 168 145 Z',cx:185,cy:138},
+  ];
+
+  const maxOrders = Math.max(...Object.values(cityData).map(c=>c.orders||0), 1);
+
+  svg.innerHTML = states.map(s => {
+    // Map state to city data (rough match)
+    const stateMatch = Object.entries(cityData).find(([city]) =>
+      city.toLowerCase().includes(s.name.toLowerCase().split(' ')[0]) ||
+      s.name.toLowerCase().includes(city.toLowerCase().split(' ')[0])
+    );
+    const orders = stateMatch ? stateMatch[1].orders||0 : 0;
+    const intensity = orders/maxOrders;
+    const fill = orders > 0
+      ? `rgba(74,138,40,${0.2 + intensity*0.7})`
+      : 'var(--surface2)';
+    const stroke = orders > 0 ? '#5EAB30' : 'rgba(78,138,40,0.2)';
+    return `<path class="map-state" id="state-${s.id}" d="${s.d}" fill="${fill}" stroke="${stroke}"
+      onmouseenter="showMapTip(event,'${s.name}',${orders})"
+      onmouseleave="hideMapTip()"
+      style="filter:${orders>0?'drop-shadow(0 0 4px rgba(74,138,40,'+(intensity*0.5)+'))':'none'}"/>`;
+  }).join('') +
+  // City dots for top cities
+  Object.entries(cityData).slice(0,8).map(([city, info]) => {
+    const state = states.find(s => s.name.toLowerCase().includes(city.toLowerCase().split(' ')[0]) ||
+      city.toLowerCase().includes(s.name.toLowerCase().split(' ')[0]));
+    if(!state) return '';
+    const r = 3 + (info.orders/maxOrders)*6;
+    return `<circle cx="${state.cx}" cy="${state.cy}" r="${r}"
+      fill="var(--green-bright)" style="filter:drop-shadow(0 0 6px var(--green));opacity:0.85;"
+      onmouseenter="showMapTip(event,'${city}',${info.orders})"
+      onmouseleave="hideMapTip()"/>`;
+  }).join('') +
+  // Labels for big states
+  states.filter(s => ['MH','DL','KA','UP','GJ','TN'].includes(s.id)).map(s =>
+    `<text x="${s.cx}" y="${s.cy+3}" text-anchor="middle" fill="rgba(232,237,224,0.5)"
+      font-size="7" font-family="DM Sans,sans-serif">${s.id}</text>`
+  ).join('');
+}
+
+function showMapTip(e, name, orders) {
+  const tip = document.getElementById('mapTooltip');
+  if(!tip) return;
+  tip.innerHTML = `<strong style="color:var(--green-text)">${name}</strong><br>${orders} orders`;
+  tip.style.display = 'block';
+  const wrap = document.getElementById('indiaMapWrap');
+  const rect = wrap.getBoundingClientRect();
+  tip.style.left = (e.clientX - rect.left + 10) + 'px';
+  tip.style.top  = (e.clientY - rect.top  - 10) + 'px';
+}
+function hideMapTip() {
+  const tip = document.getElementById('mapTooltip');
+  if(tip) tip.style.display = 'none';
+}
+
+// Goal ring
+function drawGoalRing(canvasId, pct, color='#5EAB30') {
+  const canvas = document.getElementById(canvasId);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const S=100;
+  canvas.width=S*dpr;canvas.height=S*dpr;
+  canvas.style.width=S+'px';canvas.style.height=S+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const cx=S/2,cy=S/2,r=38;
+  // BG ring
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='rgba(78,138,40,0.1)';ctx.lineWidth=8;ctx.stroke();
+  // Progress ring
+  const endAngle=-Math.PI/2+(pct/100)*Math.PI*2;
+  const grd=ctx.createLinearGradient(cx-r,cy,cx+r,cy);
+  grd.addColorStop(0,color);grd.addColorStop(1,'#E8AD2C');
+  ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,endAngle);
+  ctx.strokeStyle=grd;ctx.lineWidth=8;ctx.lineCap='round';
+  ctx.shadowColor=color;ctx.shadowBlur=12;ctx.stroke();ctx.shadowBlur=0;
+  // Center
+  ctx.fillStyle='#E8EDE0';ctx.font='bold 16px Syne,sans-serif';
+  ctx.textAlign='center';ctx.fillText(Math.round(pct)+'%',cx,cy+4);
+  ctx.fillStyle='rgba(106,120,96,0.7)';ctx.font='8px DM Sans,sans-serif';
+  ctx.fillText('achieved',cx,cy+16);
+}
+
 // ═══════════════════════════════════════════════
-// DASHBOARD — Real data fetching
+// DASHBOARD — Full real-data render
 // ═══════════════════════════════════════════════
+let _revRange = 7;
+function setRevRange(days, btn) {
+  _revRange = days;
+  document.querySelectorAll('[id^=revChip]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRevenueChart(allOrders, days);
+}
+
 async function loadDashboard() {
-  // Show skeletons
-  document.getElementById('kpiCards').innerHTML = Array(4).fill('<div class="kpi skel" style="height:100px"></div>').join('');
+  document.getElementById('kpiCards').innerHTML = Array(4).fill('<div class="kpi skel" style="height:108px"></div>').join('');
   try {
     const [statsR, ordersR, prodsR] = await Promise.all([
       apiFetch('/api/admin/stats'),
@@ -1567,108 +1954,270 @@ async function loadDashboard() {
     const stats   = (await statsR.json()).stats || {};
     const ordData = await ordersR.json();
     const prdData = await prodsR.json();
-    const orders  = ordData.data || ordData.orders || (Array.isArray(ordData)?ordData:[]);
-    const prods   = prdData.data || prdData.products || (Array.isArray(prdData)?prdData:[]);
-    allOrders  = orders;
-    allProducts = prods;
+    const orders  = ordData.data||ordData.orders||(Array.isArray(ordData)?ordData:[]);
+    const prods   = prdData.data||prdData.products||(Array.isArray(prdData)?prdData:[]);
+    allOrders = orders; allProducts = prods;
 
-    // Compute live stats from orders if backend stats missing
     const todayStr = new Date().toISOString().split('T')[0];
-    const paidOrders = orders.filter(o => (o.payment_status||'').toLowerCase().includes('paid') || o.payment_status === 'SUCCESS');
-    const todayPaid  = paidOrders.filter(o => (o.created_at||'').startsWith(todayStr));
+    const isPaid = o=>(o.payment_status||'').toLowerCase().includes('paid')||o.payment_status==='SUCCESS';
+    const paidOrders = orders.filter(isPaid);
+    const todayPaid  = paidOrders.filter(o=>(o.created_at||'').startsWith(todayStr));
+    const todayAll   = orders.filter(o=>(o.created_at||'').startsWith(todayStr));
     const totalRev   = stats.totalRevenue  || paidOrders.reduce((s,o)=>s+parseFloat(o.total||0),0);
     const todayRev   = stats.todayRevenue  || todayPaid.reduce((s,o)=>s+parseFloat(o.total||0),0);
-    const pending    = stats.pendingOrders || orders.filter(o=>(o.fulfillment||o.status||'')===('Pending')).length;
-    const totalCust  = stats.totalCustomers|| allCustomers.length || 0;
+    const pending    = stats.pendingOrders || orders.filter(o=>(o.fulfillment||o.status||'')==='Pending').length;
+    const conv       = orders.length ? ((paidOrders.length/orders.length)*100) : 0;
+    const avgOrder   = paidOrders.length ? totalRev/paidOrders.length : 0;
 
-    // KPI Cards with trend
-    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-    const yStr = yesterday.toISOString().split('T')[0];
+    // Trend vs yesterday
+    const yday = new Date(); yday.setDate(yday.getDate()-1);
+    const yStr = yday.toISOString().split('T')[0];
     const yestRev = paidOrders.filter(o=>(o.created_at||'').startsWith(yStr)).reduce((s,o)=>s+parseFloat(o.total||0),0);
-    const revTrend = yestRev>0 ? ((todayRev-yestRev)/yestRev*100).toFixed(1) : null;
+    const revPct = yestRev>0?((todayRev-yestRev)/yestRev*100):0;
+    const revUp = revPct>=0;
 
+    // KPI Cards with animated counters
     document.getElementById('kpiCards').innerHTML = `
-      <div class="kpi"><div class="kpi-label">Today's Revenue</div><div class="kpi-val">₹${fmtNum(todayRev)}</div>
-        <div class="kpi-trend ${revTrend>=0?'up':'down'}">${revTrend!==null?(revTrend>=0?'↑':'↓')+Math.abs(revTrend)+'% vs yesterday':'First sale today 🎉'}</div><span class="kpi-ico">💰</span></div>
-      <div class="kpi"><div class="kpi-label">Total Revenue</div><div class="kpi-val">₹${fmtNum(totalRev)}</div>
-        <div class="kpi-trend" style="color:var(--text3)">${paidOrders.length} paid orders</div><span class="kpi-ico">📈</span></div>
-      <div class="kpi"><div class="kpi-label">Pending Orders</div><div class="kpi-val" style="color:var(--gold-text)">${pending}</div>
-        <div class="kpi-trend" style="color:var(--gold-text)">⏳ Awaiting fulfilment</div><span class="kpi-ico">📦</span></div>
-      <div class="kpi"><div class="kpi-label">Total Orders</div><div class="kpi-val">${orders.length}</div>
-        <div class="kpi-trend" style="color:var(--text3)">${todayPaid.length} paid today</div><span class="kpi-ico">🛒</span></div>
+      <div class="kpi" style="border-color:rgba(94,171,48,0.3);">
+        <div class="kpi-glow" style="background:radial-gradient(circle at 50% 0%,rgba(94,171,48,0.08),transparent 60%);"></div>
+        <div class="kpi-label">Today's Revenue</div>
+        <div class="kpi-val" id="kv0">₹0</div>
+        <div class="kpi-trend ${revUp?'up':'down'}">${revUp?'↑':'↓'}${Math.abs(revPct).toFixed(1)}% vs yesterday</div>
+        <span class="kpi-ico">💰</span>
+      </div>
+      <div class="kpi" style="border-color:rgba(32,128,232,0.3);">
+        <div class="kpi-glow" style="background:radial-gradient(circle at 50% 0%,rgba(32,128,232,0.08),transparent 60%);"></div>
+        <div class="kpi-label">Total Revenue</div>
+        <div class="kpi-val" id="kv1">₹0</div>
+        <div class="kpi-trend" style="color:var(--text3)">${paidOrders.length} paid orders</div>
+        <span class="kpi-ico">📈</span>
+      </div>
+      <div class="kpi" style="border-color:rgba(232,173,44,0.3);">
+        <div class="kpi-glow" style="background:radial-gradient(circle at 50% 0%,rgba(232,173,44,0.08),transparent 60%);"></div>
+        <div class="kpi-label">Pending Orders</div>
+        <div class="kpi-val" id="kv2" style="color:var(--gold-text)">0</div>
+        <div class="kpi-trend" style="color:var(--gold-text)">⏳ Need action</div>
+        <span class="kpi-ico">📦</span>
+      </div>
+      <div class="kpi" style="border-color:rgba(124,58,237,0.3);">
+        <div class="kpi-glow" style="background:radial-gradient(circle at 50% 0%,rgba(124,58,237,0.08),transparent 60%);"></div>
+        <div class="kpi-label">Avg Order Value</div>
+        <div class="kpi-val" id="kv3">₹0</div>
+        <div class="kpi-trend" style="color:var(--text3)">${orders.length} total orders</div>
+        <span class="kpi-ico">🛒</span>
+      </div>
     `;
+    // Animate counters
+    setTimeout(()=>{
+      animateCount(document.getElementById('kv0'), 0, todayRev, v=>'₹'+fmtNum(Math.round(v)));
+      animateCount(document.getElementById('kv1'), 0, totalRev,  v=>'₹'+fmtNum(Math.round(v)));
+      animateCount(document.getElementById('kv2'), 0, pending,   v=>Math.round(v));
+      animateCount(document.getElementById('kv3'), 0, avgOrder,  v=>'₹'+fmtNum(Math.round(v)));
+    }, 100);
 
     document.getElementById('pendingBadge').textContent = pending;
 
+    // Stats Ticker
+    const week = new Date(); week.setDate(week.getDate()-7);
+    const weekRev = paidOrders.filter(o=>new Date(o.created_at)>=week).reduce((s,o)=>s+parseFloat(o.total||0),0);
+    document.getElementById('statsTicker').innerHTML = `
+      <div class="stat-tick up"><span class="stat-tick-ico">📅</span><div><div class="stat-tick-val">₹${fmtNum(Math.round(weekRev))}</div><div class="stat-tick-lbl">This Week</div></div></div>
+      <div class="stat-tick"><span class="stat-tick-ico">🧾</span><div><div class="stat-tick-val">${todayAll.length}</div><div class="stat-tick-lbl">Orders Today</div></div></div>
+      <div class="stat-tick"><span class="stat-tick-ico">💳</span><div><div class="stat-tick-val">${conv.toFixed(1)}%</div><div class="stat-tick-lbl">Conversion</div></div></div>
+      <div class="stat-tick"><span class="stat-tick-ico">🔴</span><div><div class="stat-tick-val">${prods.filter(p=>!p.deleted_at&&(p.stock||0)===0).length}</div><div class="stat-tick-lbl">Out of Stock</div></div></div>
+      <div class="stat-tick"><span class="stat-tick-ico">🏷️</span><div><div class="stat-tick-val">${prods.filter(p=>!p.deleted_at&&(p.stock||0)>0&&(p.stock||0)<10).length}</div><div class="stat-tick-lbl">Low Stock</div></div></div>
+      <div class="stat-tick"><span class="stat-tick-ico">🚚</span><div><div class="stat-tick-val">${orders.filter(o=>(o.fulfillment||o.status||'')==='Shipped').length}</div><div class="stat-tick-lbl">In Transit</div></div></div>
+    `;
+
     // Revenue chart
-    renderRevenueChart(orders);
+    renderRevenueChart(orders, _revRange);
+
+    // Sparklines
+    const last7 = Array.from({length:7},(_,i)=>{ const d=new Date(); d.setDate(d.getDate()-(6-i)); return d.toISOString().split('T')[0]; });
+    const revSpark = last7.map(d=>paidOrders.filter(o=>(o.created_at||'').startsWith(d)).reduce((s,o)=>s+parseFloat(o.total||0),0));
+    const ordSpark = last7.map(d=>orders.filter(o=>(o.created_at||'').startsWith(d)).length);
+    document.getElementById('sparkRevVal').textContent = '₹'+fmtNum(Math.round(todayRev));
+    document.getElementById('sparkOrdVal').textContent = todayAll.length;
+    document.getElementById('sparkConvVal').textContent = conv.toFixed(1)+'%';
+    document.getElementById('sparkRevLabel').textContent = `${paidOrders.length} paid · 7-day trend`;
+    document.getElementById('sparkOrdLabel').textContent = `${orders.length} total orders`;
+    document.getElementById('sparkConvLabel').textContent = `${paidOrders.length} of ${orders.length} paid`;
+    setTimeout(()=>{
+      drawSparkline('sparkRevCanvas', revSpark, '#5EAB30');
+      drawSparkline('sparkOrdCanvas', ordSpark, '#2080E8');
+      document.getElementById('convFill').style.width = Math.min(conv,100)+'%';
+    }, 80);
+
+    // Status + Payment donuts
     renderStatusChart(orders);
     renderPayChart(orders);
 
-    // Low stock
-    const lowStock = prods.filter(p => !p.deleted_at && (p.stock||0) < 20).sort((a,b) => (a.stock||0)-(b.stock||0)).slice(0, 6);
-    document.getElementById('lowStockBadge').textContent = lowStock.length;
-    document.getElementById('lowStockList').innerHTML = lowStock.map(p => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:0.8rem;color:var(--text)">${p.name}</span>
-        <span class="badge ${(p.stock||0)===0?'badge-red':'badge-gold'}">${(p.stock||0)===0?'Out':''+p.stock+' left'}</span>
-      </div>
-    `).join('') || '<div style="color:var(--text3);font-size:0.82rem;padding:12px 0;">✅ All products well stocked</div>';
+    // Hourly orders
+    renderHourlyChart(orders);
 
-    // Recent orders
-    document.getElementById('dashOrdersTbody').innerHTML = orders.slice(0, 8).map(o => `
+    // India map + top cities
+    const cityMap = {};
+    orders.forEach(o => {
+      const city = o.city||o.address_city||'Unknown';
+      if(!cityMap[city]) cityMap[city]={orders:0,revenue:0};
+      cityMap[city].orders++;
+      cityMap[city].revenue+=parseFloat(o.total||0);
+    });
+    renderIndiaMap(cityMap);
+    document.getElementById('mapOrderCount').textContent = Object.keys(cityMap).length+' cities';
+
+    // Top cities chart
+    const topCities = Object.entries(cityMap).sort((a,b)=>b[1].orders-a[1].orders).slice(0,8);
+    const maxCity = topCities[0]?.[1].orders||1;
+    const cityColors = ['#5EAB30','#2080E8','#E8AD2C','#7C3AED','#E87020','#E53535','#06B6D4','#EC4899'];
+    document.getElementById('topCitiesChart').innerHTML = topCities.map(([city,info],i)=>`
+      <div class="rank-row">
+        <div class="rank-num">${i+1}</div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;">
+            <span class="rank-label">${city}</span>
+            <span class="rank-val">${info.orders} orders</span>
+          </div>
+          <div class="rank-bar"><div class="rank-fill" style="width:${(info.orders/maxCity*100).toFixed(1)}%;background:${cityColors[i%cityColors.length]};"></div></div>
+        </div>
+      </div>`).join('') || '<div class="empty-state" style="padding:20px;">No city data</div>';
+
+    // Category revenue chart
+    const catRev={};
+    paidOrders.forEach(o=>{
+      try{(typeof o.items==='string'?JSON.parse(o.items||'[]'):(o.items||[])).forEach(it=>{
+        const c=it.category||'Other'; catRev[c]=(catRev[c]||0)+parseFloat(it.price||0)*(it.qty||1);
+      });}catch{}
+    });
+    const catEntries=Object.entries(catRev).sort((a,b)=>b[1]-a[1]).slice(0,7);
+    if(catEntries.length) {
+      setTimeout(()=>drawHBarChart('catCanvas',catEntries.map(e=>e[0]),catEntries.map(e=>e[1]),cityColors),100);
+    } else {
+      const cv=document.getElementById('catCanvas'); if(cv){const ctx=cv.getContext('2d');ctx.fillStyle='rgba(106,120,96,0.5)';ctx.font='12px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText('No category data yet',cv.offsetWidth/2,(cv.offsetHeight||180)/2);}
+    }
+
+    // Top products widget
+    const prodCount={};
+    paidOrders.forEach(o=>{try{(typeof o.items==='string'?JSON.parse(o.items||'[]'):(o.items||[])).forEach(it=>{prodCount[it.name||'?']=(prodCount[it.name||'?']||0)+(it.qty||1)});}catch{}});
+    const topProds=Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const maxP=topProds[0]?.[1]||1;
+    document.getElementById('topProductsWidget').innerHTML = topProds.map(([name,qty],i)=>`
+      <div class="rank-row">
+        <div class="rank-num">${i+1}</div>
+        <div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;">
+            <span class="rank-label">${name.length>22?name.slice(0,22)+'…':name}</span>
+            <span class="rank-val">${qty} sold</span>
+          </div>
+          <div class="rank-bar"><div class="rank-fill" style="width:${(qty/maxP*100).toFixed(1)}%;background:${cityColors[i%cityColors.length]};"></div></div>
+        </div>
+      </div>`).join('') || '<div class="empty-state" style="padding:20px;">No sales data yet</div>';
+
+    // Activity feed
+    const activities = orders.slice(0,10).map(o=>({
+      text:`<strong>${o.customer_name||'Customer'}</strong> placed order <span style="color:var(--green-text)">₹${fmtNum(o.total||0)}</span>`,
+      time: fmtTime(o.created_at),
+      color: isPaid(o)?'var(--green)':'var(--gold)'
+    }));
+    document.getElementById('activityFeed').innerHTML = activities.map(a=>`
+      <div class="act-item">
+        <div class="act-dot" style="background:${a.color};box-shadow:0 0 6px ${a.color}60;"></div>
+        <div class="act-text">${a.text}</div>
+        <div class="act-time">${a.time}</div>
+      </div>`).join('') || '<div style="color:var(--text3);font-size:0.8rem;padding:12px;">No activity yet</div>';
+
+    // Low stock
+    const lowStock = prods.filter(p=>!p.deleted_at&&(p.stock||0)<20).sort((a,b)=>(a.stock||0)-(b.stock||0)).slice(0,6);
+    document.getElementById('lowStockBadge').textContent = lowStock.length;
+    document.getElementById('lowStockList').innerHTML = lowStock.map(p=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+        <div><div style="font-size:0.8rem;color:var(--text)">${p.name}</div><div style="font-size:0.68rem;color:var(--text3)">${p.category||''}</div></div>
+        <span class="badge ${(p.stock||0)===0?'badge-red':'badge-gold'}">${(p.stock||0)===0?'Out':p.stock+' left'}</span>
+      </div>`).join('') || '<div style="color:var(--text3);font-size:0.82rem;padding:12px 0;">✅ All stocked</div>';
+
+    // Goal widget
+    const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+    const monthRev = paidOrders.filter(o=>new Date(o.created_at)>=monthStart).reduce((s,o)=>s+parseFloat(o.total||0),0);
+    const goalTarget = 100000; // ₹1L monthly goal
+    const goalPct = Math.min((monthRev/goalTarget)*100, 100);
+    document.getElementById('goalWidget').innerHTML = `
+      <div class="goal-ring"><canvas id="goalCanvas" style="width:100px;height:100px;display:block;"></canvas></div>
+      <div class="goal-info">
+        <span>₹${fmtNum(Math.round(monthRev))} earned</span>
+        <span>₹${fmtNum(goalTarget)} goal</span>
+      </div>
+      <div style="font-size:0.72rem;color:var(--text3);text-align:center;margin-top:6px;">
+        ${goalPct>=100?'🎉 Goal achieved!':'₹'+fmtNum(Math.round(goalTarget-monthRev))+' to go'}
+      </div>`;
+    setTimeout(()=>drawGoalRing('goalCanvas', goalPct), 120);
+
+    // Revenue total badge
+    const el=document.getElementById('dashRevTotal'); if(el) el.textContent='₹'+fmtNum(Math.round(totalRev));
+
+    // Recent orders table
+    document.getElementById('dashOrdersTbody').innerHTML = orders.slice(0,10).map(o=>`
       <tr>
         <td class="td-id" style="color:var(--green-text);cursor:pointer" onclick="showPage('orders')">${o.id}</td>
-        <td>${o.customer_name||'-'}</td>
+        <td><div style="font-size:0.83rem;font-weight:500;">${o.customer_name||'-'}</div><div style="font-size:0.7rem;color:var(--text3);">${o.city||o.customer_phone||''}</div></td>
         <td style="color:var(--green-text);font-weight:600;">₹${fmtNum(o.total||0)}</td>
+        <td>${payBadge(o.payment_status)}</td>
         <td>${statusBadge(o.fulfillment||o.status)}</td>
         <td style="color:var(--text3);font-size:0.75rem;">${fmtTime(o.created_at)}</td>
-      </tr>
-    `).join('') || '<tr><td colspan="5" class="empty-state">No orders yet</td></tr>';
+      </tr>`).join('') || '<tr><td colspan="6" class="empty-state">No orders yet</td></tr>';
 
-    // Update rev total badge
-    const el = document.getElementById('dashRevTotal');
-    if(el) el.textContent = '₹'+fmtNum(totalRev);
-
-  } catch(e) { toast('Dashboard load error: '+e.message, 'error'); }
+  } catch(e) { toast('Dashboard error: '+e.message, 'error'); console.error(e); }
 }
 
-function renderRevenueChart(orders) {
-  const days = 7;
-  const buckets = Array.from({length:days}, (_,i) => {
-    const d = new Date(); d.setDate(d.getDate() - (days-1-i));
-    return { label: d.toLocaleDateString('en-IN',{weekday:'short'}), date: d.toISOString().split('T')[0], rev: 0 };
+function renderRevenueChart(orders, days=7) {
+  const buckets = Array.from({length:Math.min(days,30)},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-(Math.min(days,30)-1-i));
+    return {label:days<=7?d.toLocaleDateString('en-IN',{weekday:'short'}):d.getDate()+'/'+(d.getMonth()+1),
+      date:d.toISOString().split('T')[0], rev:0, cnt:0};
   });
-  orders.filter(o => (o.payment_status||'').toLowerCase().includes('paid') || o.payment_status==='SUCCESS').forEach(o => {
-    const d = (o.created_at||'').split('T')[0];
-    const b = buckets.find(b => b.date === d);
-    if(b) b.rev += parseFloat(o.total||0);
+  orders.forEach(o=>{
+    const isPaid=(o.payment_status||'').toLowerCase().includes('paid')||o.payment_status==='SUCCESS';
+    const b=buckets.find(b=>b.date===(o.created_at||'').split('T')[0]);
+    if(b){b.cnt++;if(isPaid)b.rev+=parseFloat(o.total||0);}
   });
-  setTimeout(()=>drawBarChart('revenueCanvas', buckets.map(b=>b.label), buckets.map(b=>b.rev), '#5EAB30'), 50);
+  setTimeout(()=>drawBarChart('revenueCanvas',buckets.map(b=>b.label),buckets.map(b=>b.rev),'#5EAB30',buckets.map(b=>b.cnt)),80);
 }
 
 function renderStatusChart(orders) {
-  const counts = {};
-  orders.forEach(o => { const s = o.fulfillment||o.status||'Pending'; counts[s]=(counts[s]||0)+1; });
-  const statusColors = {Pending:'#E8AD2C',Processing:'#2080E8',Shipped:'#7C3AED',Delivered:'#5EAB30',Cancelled:'#E53535'};
-  const labels = Object.keys(counts), data = Object.values(counts);
-  const colors = labels.map(l => statusColors[l]||'#6A7860');
-  setTimeout(()=>drawDonutChart('statusCanvas', labels, data, colors), 60);
+  const counts={};
+  orders.forEach(o=>{const s=o.fulfillment||o.status||'Pending';counts[s]=(counts[s]||0)+1;});
+  const statusColors={Pending:'#E8AD2C',Processing:'#2080E8',Shipped:'#7C3AED',Delivered:'#5EAB30',Cancelled:'#E53535'};
+  const labels=Object.keys(counts),data=Object.values(counts);
+  const colors=labels.map(l=>statusColors[l]||'#6A7860');
+  const total=data.reduce((s,v)=>s+v,0);
+  const el=document.getElementById('statusTotal'); if(el) el.textContent=total;
+  setTimeout(()=>drawDonutChart('statusCanvas',labels,data,colors,total),90);
 }
 
 function renderPayChart(orders) {
-  const m = {'Paid':0,'COD - Pending':0,'Failed':0,'Other':0};
-  orders.forEach(o => {
-    const s = o.payment_status||'Other';
-    if(s.includes('Paid')||s==='SUCCESS') m['Paid']++;
-    else if(s.includes('COD')) m['COD - Pending']++;
-    else if(s.includes('Fail')||s==='FAILED') m['Failed']++;
-    else m['Other']++;
+  const m={'Paid':0,'COD':0,'Failed':0,'Pending':0};
+  orders.forEach(o=>{
+    const s=o.payment_status||'';
+    if(s.toLowerCase().includes('paid')||s==='SUCCESS') m['Paid']++;
+    else if(s.includes('COD')) m['COD']++;
+    else if(s.toLowerCase().includes('fail')) m['Failed']++;
+    else m['Pending']++;
   });
-  const labels = Object.keys(m).filter(k=>m[k]>0);
-  const data   = labels.map(k=>m[k]);
-  const colors = ['#5EAB30','#E8AD2C','#E53535','#6A7860'];
-  setTimeout(()=>drawDonutChart('payCanvas', labels, data, colors.slice(0,labels.length)), 70);
+  const labels=Object.keys(m).filter(k=>m[k]>0);
+  const data=labels.map(k=>m[k]);
+  const colors=['#5EAB30','#E8AD2C','#E53535','#6A7860'];
+  setTimeout(()=>drawDonutChart('payCanvas',labels,data,colors),100);
+}
+
+function renderHourlyChart(orders) {
+  const hourly=Array(24).fill(0);
+  const today=new Date().toISOString().split('T')[0];
+  orders.filter(o=>(o.created_at||'').startsWith(today)).forEach(o=>{
+    const h=new Date(o.created_at).getHours(); hourly[h]++;
+  });
+  const peakH=hourly.indexOf(Math.max(...hourly));
+  const el=document.getElementById('peakHour');
+  if(el) el.textContent=hourly[peakH]>0?`Peak: ${peakH}:00`:'No orders today';
+  setTimeout(()=>drawHourlyChart('hourlyCanvas',hourly),110);
 }
 
 // ═══════════════════════════════════════════════
@@ -3511,4 +4060,5 @@ loadSettings();
 
 
 </body>
+</html>
 </html>
