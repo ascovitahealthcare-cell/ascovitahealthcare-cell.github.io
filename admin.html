@@ -265,7 +265,27 @@ textarea.form-control{resize:vertical;min-height:80px;}
 .revenue-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-bright));border-radius:4px;transition:width 0.8s ease;}
 input[type=file]{display:none;}
 
-/* ═══ EXPORT PANEL ═══ */
+/* ═══ EXPORT MODAL ═══ */
+@keyframes modalIn{from{opacity:0;transform:scale(0.92) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes modalOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(0.94)}}
+#exportModalOverlay.open{display:flex!important;animation:fadeIn 0.2s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#exportModalBox{animation:modalIn 0.28s cubic-bezier(0.34,1.56,0.64,1);}
+.em-chip{padding:7px 16px;border:1.5px solid var(--border);border-radius:20px;background:var(--surface2);color:var(--text2);font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:var(--font);}
+.em-chip:hover{border-color:var(--green);color:var(--green-text);background:rgba(74,138,40,0.08);}
+.em-chip.active{border-color:var(--green);background:rgba(74,138,40,0.15);color:var(--green-text);box-shadow:0 0 12px rgba(74,138,40,0.2);}
+.em-fmt-btn{flex:1;max-width:100px;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;color:var(--text2);padding:10px 14px;cursor:pointer;text-align:center;font-family:var(--font);transition:all 0.15s;}
+.em-fmt-btn:hover{border-color:var(--green);color:var(--green-text);}
+.em-fmt-btn.active{border-color:var(--green);background:rgba(74,138,40,0.12);color:var(--green-text);box-shadow:0 0 16px rgba(74,138,40,0.2);}
+.em-date-input{background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-family:var(--font);font-size:0.8rem;outline:none;transition:border-color 0.2s;}
+.em-date-input:focus{border-color:var(--green);}
+.em-cancel-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text2);padding:10px 24px;font-family:var(--font);font-size:0.85rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.em-cancel-btn:hover{border-color:rgba(229,53,53,0.6);color:#ff6b6b;background:var(--red-soft);}
+.em-dl-btn{background:linear-gradient(135deg,var(--green),var(--green-bright));border:none;border-radius:10px;color:white;padding:10px 28px;font-family:var(--display);font-size:0.88rem;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 20px rgba(74,138,40,0.4);}
+.em-dl-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(74,138,40,0.6);}
+.em-dl-btn:active{transform:translateY(0);}
+/* Override old inline export panels - now hidden, use modal instead */
+.export-panel{display:none!important;}
 .export-panel{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;display:none;animation:slideDown 0.2s ease;}
 .export-panel.open{display:block;}
 @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
@@ -495,7 +515,7 @@ input[type=file]{display:none;}
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadDashboard()">↺ Refresh</button>
       <button class="btn btn-gold" onclick="showPage('analytics')">📈 Analytics</button>
-      <button class="btn-export" onclick="toggleExportPanel('dashboard')">📤 Export ▾</button>
+      <button class="btn-export" onclick="openExportModal('dashboard')">📤 Export ▾</button>
     </div>
   </div>
   <div class="export-panel" id="ep-dashboard">
@@ -608,7 +628,7 @@ input[type=file]{display:none;}
 
   <!-- ══ ROW 5: Activity Feed + Low Stock + Goal ══ -->
   <div class="grid-3" style="margin-bottom:16px;">
-    <div class="card" style="grid-column:span 1;">
+    <div class="card">
       <div class="card-hdr"><span class="card-title">⚡ Live Activity</span><span class="badge badge-green" id="activityDot" style="animation:pulse 2s infinite">Live</span></div>
       <div id="activityFeed" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
     </div>
@@ -622,7 +642,39 @@ input[type=file]{display:none;}
     </div>
   </div>
 
-  <!-- ══ ROW 6: Recent Orders Table ══ -->
+  <!-- ══ ROW 6: Revenue Area + Weekly Heatmap ══ -->
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">📉 Revenue Area (30 Days)</span></div>
+      <canvas id="areaCanvas" style="display:block;width:100%;height:160px;"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">🗓️ Order Heatmap (Weekly)</span></div>
+      <div id="heatmapWidget" style="padding:6px 0;"></div>
+    </div>
+  </div>
+
+  <!-- ══ ROW 7: KPI Progress Rings + Forecast ══ -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1.4fr;gap:16px;margin-bottom:16px;">
+    <div class="card" style="text-align:center;padding:20px 12px;">
+      <canvas id="ring1Canvas" style="width:90px;height:90px;display:inline-block;"></canvas>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:6px;">Delivery Rate</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px 12px;">
+      <canvas id="ring2Canvas" style="width:90px;height:90px;display:inline-block;"></canvas>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:6px;">Paid Orders</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px 12px;">
+      <canvas id="ring3Canvas" style="width:90px;height:90px;display:inline-block;"></canvas>
+      <div style="font-size:0.72rem;color:var(--text3);margin-top:6px;">Stock Health</div>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><span class="card-title">🔮 7-Day Forecast</span></div>
+      <canvas id="forecastCanvas" style="display:block;width:100%;height:100px;"></canvas>
+    </div>
+  </div>
+
+  <!-- ══ ROW 8: Recent Orders Table ══ -->
   <div class="card">
     <div class="card-hdr"><span class="card-title">📦 Recent Orders</span><button class="btn btn-secondary btn-sm" onclick="showPage('orders')">View All →</button></div>
     <div class="table-wrap"><table>
@@ -643,7 +695,7 @@ input[type=file]{display:none;}
         <option value="90">Last 90 Days</option>
         <option value="365">All Time</option>
       </select>
-      <button class="btn-export" onclick="toggleExportPanel('analytics')">📤 Export ▾</button>
+      <button class="btn-export" onclick="openExportModal('analytics')">📤 Export ▾</button>
     </div>
   </div>
   <div class="export-panel" id="ep-analytics">
@@ -712,7 +764,7 @@ input[type=file]{display:none;}
     <div><div class="page-title">Orders</div><div class="page-sub">Manage and fulfil customer orders</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadOrders()">↺ Refresh</button>
-      <button class="btn-export" onclick="toggleExportPanel('orders')">📤 Export ▾</button>
+      <button class="btn-export" onclick="openExportModal('orders')">📤 Export ▾</button>
     </div>
   </div>
   <div class="export-panel" id="ep-orders">
@@ -763,7 +815,7 @@ input[type=file]{display:none;}
     <div class="page-actions">
       <button class="btn btn-secondary btn-sm" onclick="loadProducts()">↺ Refresh</button>
       <button class="btn btn-secondary btn-sm" onclick="toggleShowDeleted()">🗑️ Deleted</button>
-      <button class="btn-export" onclick="toggleExportPanel('products')">📤 Export ▾</button>
+      <button class="btn-export" onclick="openExportModal('products')">📤 Export ▾</button>
       <button class="btn btn-primary" onclick="openProductModal(null)">＋ New Product</button>
     </div>
   </div>
@@ -814,7 +866,7 @@ input[type=file]{display:none;}
     <div><div class="page-title">Inventory</div><div class="page-sub">Stock levels & restock management</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadInventory()">↺ Refresh</button>
-      <button class="btn-export" onclick="toggleExportPanel('inventory')">📤 Export ▾</button>
+      <button class="btn-export" onclick="openExportModal('inventory')">📤 Export ▾</button>
     </div>
   </div>
   <div class="export-panel" id="ep-inventory">
@@ -852,7 +904,7 @@ input[type=file]{display:none;}
     <div><div class="page-title">Discounts & Coupons</div><div class="page-sub">Manage coupon codes and promotions</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadDiscounts()">↺ Refresh</button>
-      <button class="btn-export" onclick="toggleExportPanel('discounts')">📤 Export ▾</button>
+      <button class="btn-export" onclick="openExportModal('discounts')">📤 Export ▾</button>
       <button class="btn btn-primary" onclick="openCouponModal(null)">＋ New Coupon</button>
     </div>
   </div>
@@ -884,7 +936,7 @@ input[type=file]{display:none;}
     <div><div class="page-title">Customers</div><div class="page-sub">Customer database & order history</div></div>
     <div class="page-actions">
       <button class="btn btn-secondary" onclick="loadCustomers()">↺ Refresh</button>
-      <button class="btn-export" onclick="toggleExportPanel('customers')">📤 Export ▾</button>
+      <button class="btn-export" onclick="openExportModal('customers')">📤 Export ▾</button>
     </div>
   </div>
   <div class="export-panel" id="ep-customers">
@@ -951,7 +1003,7 @@ input[type=file]{display:none;}
       <select class="filter-select" id="payFilterStatus" onchange="filterPayments()">
         <option value="">All</option><option value="Paid">Paid</option><option value="COD - Pending">COD</option><option value="Failed">Failed</option>
       </select>
-      <button class="btn-export" onclick="toggleExportPanel('payments')">📤 Export ▾</button>
+      <button class="btn-export" onclick="openExportModal('payments')">📤 Export ▾</button>
     </div>
   </div>
   <div class="export-panel" id="ep-payments">
@@ -985,7 +1037,7 @@ input[type=file]{display:none;}
     <div><div class="page-title">Invoices</div><div class="page-sub">GST tax invoices (CGST + SGST)</div></div>
     <div class="page-actions">
       <input class="filter-input" placeholder="🔍 Search order ID..." id="invoiceSearch" oninput="filterInvoices()" style="width:200px">
-      <button class="btn-export" onclick="toggleExportPanel('invoices')">📤 Export ▾</button>
+      <button class="btn-export" onclick="openExportModal('invoices')">📤 Export ▾</button>
     </div>
   </div>
   <div class="export-panel" id="ep-invoices">
@@ -1377,6 +1429,74 @@ input[type=file]{display:none;}
     <div class="modal-ftr">
       <button class="btn btn-secondary" onclick="closeModal('invoiceModal')">Close</button>
       <button class="btn btn-primary" onclick="window.print()">🖨️ Print Invoice</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════ EXPORT MODAL (centered popup) ═══════════ -->
+<div id="exportModalOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div id="exportModalBox" style="background:var(--surface);border:1px solid rgba(94,171,48,0.3);border-radius:20px;width:100%;max-width:600px;box-shadow:0 32px 96px rgba(0,0,0,0.8),0 0 80px rgba(74,138,40,0.08);">
+    <!-- Header -->
+    <div style="padding:24px 28px 0;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:16px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:38px;height:38px;background:linear-gradient(135deg,var(--green),var(--green-bright));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 16px rgba(74,138,40,0.4);">📤</div>
+          <div>
+            <div style="font-family:var(--display);font-size:1.1rem;font-weight:800;color:var(--white);">Export Data</div>
+            <div style="font-size:0.75rem;color:var(--text3);" id="emPageLabel">Choose period and format</div>
+          </div>
+        </div>
+      </div>
+      <button id="emCloseBtn" onclick="closeExportModal()" title="Cancel" style="background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text2);width:38px;height:38px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;">✕</button>
+    </div>
+    <!-- Body -->
+    <div style="padding:20px 28px;">
+      <!-- Period chips -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">📅 Period</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;" id="emPeriodChips">
+          <button class="em-chip active" onclick="emSetPeriod('today',this)">Today</button>
+          <button class="em-chip" onclick="emSetPeriod('week',this)">This Week</button>
+          <button class="em-chip" onclick="emSetPeriod('month',this)">This Month</button>
+          <button class="em-chip" onclick="emSetPeriod('year',this)">This Year</button>
+          <button class="em-chip" onclick="emSetPeriod('all',this)">All Time</button>
+          <button class="em-chip" onclick="emSetPeriod('custom',this)">Custom Range</button>
+        </div>
+        <div id="emCustomDates" style="display:none;margin-top:10px;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:0.75rem;color:var(--text3);">From</span>
+            <input type="date" id="emFromDate" class="em-date-input" oninput="emUpdatePreview()">
+            <span style="font-size:0.75rem;color:var(--text3);">To</span>
+            <input type="date" id="emToDate" class="em-date-input" oninput="emUpdatePreview()">
+          </div>
+        </div>
+      </div>
+      <!-- Format -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">📄 Format</div>
+        <div style="display:flex;gap:8px;">
+          <button class="em-fmt-btn active" onclick="emSetFmt('csv',this)">
+            <span style="font-size:1.2rem;">📊</span>
+            <div style="margin-top:4px;font-weight:700;font-size:0.85rem;">CSV</div>
+            <div style="font-size:0.65rem;color:var(--text3);">Excel / Sheets</div>
+          </button>
+          <button class="em-fmt-btn" onclick="emSetFmt('json',this)">
+            <span style="font-size:1.2rem;">{ }</span>
+            <div style="margin-top:4px;font-weight:700;font-size:0.85rem;">JSON</div>
+            <div style="font-size:0.65rem;color:var(--text3);">Developers</div>
+          </button>
+        </div>
+      </div>
+      <!-- Live Preview -->
+      <div id="emPreview" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px;min-height:58px;">
+        <div style="color:var(--text3);font-size:0.8rem;">Select a period to preview export…</div>
+      </div>
+      <!-- Buttons -->
+      <div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;">
+        <button onclick="closeExportModal()" class="em-cancel-btn">✕ Cancel</button>
+        <button onclick="emDoExport()" id="emDlBtn" class="em-dl-btn">⬇ Download</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2298,171 +2418,369 @@ async function loadAnalytics() {
   `).join('');
 }
 
-// ═══════════════════════════════════════════════
-// EXPORT ENGINE — per-page with date filter
-// ═══════════════════════════════════════════════
-const _epState = {}; // {page: {range, fmt}}
-
-function getEpState(page) {
-  if(!_epState[page]) _epState[page] = {range:'all', fmt:'csv'};
-  return _epState[page];
-}
-
-function toggleExportPanel(page) {
-  // Close all others
-  document.querySelectorAll('.export-panel').forEach(el => {
-    if(el.id !== 'ep-'+page) el.classList.remove('open');
-    else { el.classList.toggle('open'); if(el.classList.contains('open')) updateEpPreview(page); }
-  });
-  document.querySelectorAll('.btn-export').forEach(b => b.classList.remove('active'));
-  const ep = document.getElementById('ep-'+page);
-  if(ep && ep.classList.contains('open')) {
-    ep.previousElementSibling?.querySelector('.btn-export')?.classList.add('active');
+// Area Chart (smooth curve)
+function drawAreaChart(canvasId, labels, data, color='#5EAB30') {
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const W0=canvas.clientWidth||400,H0=canvas.clientHeight||160;
+  canvas.width=W0*dpr;canvas.height=H0*dpr;
+  canvas.style.width=W0+'px';canvas.style.height=H0+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=W0,H=H0,pad={t:14,r:14,b:28,l:50};
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  const max=Math.max(...data,1);
+  const pts=data.map((v,i)=>({x:pad.l+i*cW/(data.length-1||1),y:pad.t+cH-(v/max)*cH}));
+  // Grid
+  ctx.strokeStyle='rgba(78,138,40,0.08)';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+cH*(1-i/4);
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
+    ctx.fillStyle='rgba(106,120,96,0.6)';ctx.font='8px DM Sans,sans-serif';ctx.textAlign='right';
+    ctx.fillText('₹'+(max*i/4>=1000?(max*i/4/1000).toFixed(0)+'k':(max*i/4).toFixed(0)),pad.l-4,y+3);
   }
+  // Smooth area fill using bezier
+  const grd=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);
+  grd.addColorStop(0,color+'50');grd.addColorStop(1,color+'00');
+  ctx.beginPath();ctx.moveTo(pts[0].x,pad.t+cH);
+  ctx.lineTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const cp1x=(pts[i-1].x+pts[i].x)/2,cp1y=pts[i-1].y;
+    const cp2x=(pts[i-1].x+pts[i].x)/2,cp2y=pts[i].y;
+    ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,pts[i].x,pts[i].y);
+  }
+  ctx.lineTo(pts[pts.length-1].x,pad.t+cH);ctx.closePath();
+  ctx.fillStyle=grd;ctx.fill();
+  // Line
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++){
+    const cp1x=(pts[i-1].x+pts[i].x)/2,cp1y=pts[i-1].y;
+    const cp2x=(pts[i-1].x+pts[i].x)/2,cp2y=pts[i].y;
+    ctx.bezierCurveTo(cp1x,cp1y,cp2x,cp2y,pts[i].x,pts[i].y);
+  }
+  ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.shadowColor=color;ctx.shadowBlur=8;ctx.stroke();ctx.shadowBlur=0;
+  // Dots on data
+  pts.forEach((p,i)=>{
+    if(i%Math.ceil(pts.length/8)===0||i===pts.length-1){
+      ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);
+      ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=6;ctx.fill();ctx.shadowBlur=0;
+      if(labels[i]){ctx.fillStyle='rgba(106,120,96,0.7)';ctx.font='7px DM Sans,sans-serif';ctx.textAlign='center';ctx.fillText(labels[i].slice(0,5),p.x,H-pad.b+10);}
+    }
+  });
 }
 
-function setEpChip(page, range, el) {
-  getEpState(page).range = range;
-  el.closest('.ep-chips').querySelectorAll('.ep-chip').forEach(c=>c.classList.remove('active'));
+// Weekly Heatmap (7 cols = days, N rows = weeks)
+function renderHeatmap(orders) {
+  const el = document.getElementById('heatmapWidget');if(!el)return;
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const map={};// key = "W-D"
+  orders.forEach(o=>{
+    const d=new Date(o.created_at||0);
+    const week=Math.floor((Date.now()-d.getTime())/(7*86400000));
+    const day=(d.getDay()+6)%7; // 0=Mon
+    if(week<8){const k=week+'-'+day;map[k]=(map[k]||0)+1;}
+  });
+  const maxV=Math.max(...Object.values(map),1);
+  let html=`<div style="display:flex;gap:3px;align-items:flex-start;">
+    <div style="display:flex;flex-direction:column;gap:3px;padding-top:16px;">
+      ${Array.from({length:8},(_,w)=>`<div style="font-size:0.6rem;color:var(--text3);height:14px;line-height:14px;text-align:right;padding-right:4px;">${w===0?'Now':'-'+w+'w'}</div>`).join('')}
+    </div>
+    <div style="flex:1;">
+      <div style="display:flex;gap:3px;margin-bottom:3px;">
+        ${days.map(d=>`<div style="flex:1;font-size:0.6rem;color:var(--text3);text-align:center;">${d}</div>`).join('')}
+      </div>
+      ${Array.from({length:8},(_,w)=>`
+        <div style="display:flex;gap:3px;margin-bottom:3px;">
+          ${Array.from({length:7},(_,d)=>{
+            const v=map[w+'-'+d]||0;
+            const i=v/maxV;
+            const bg=v===0?'var(--surface2)':`rgba(94,171,48,${0.15+i*0.75})`;
+            const glow=v>0?`box-shadow:0 0 ${Math.round(i*8)}px rgba(74,138,40,${i*0.5});`:'';
+            return `<div title="${v} orders" style="flex:1;height:14px;border-radius:3px;background:${bg};${glow}cursor:default;transition:transform 0.1s;" onmouseover="this.style.transform='scale(1.3)'" onmouseout="this.style.transform=''"></div>`;
+          }).join('')}
+        </div>`).join('')}
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;margin-top:8px;">
+    <span style="font-size:0.65rem;color:var(--text3);">Less</span>
+    ${[0,0.2,0.4,0.6,0.8,1].map(i=>`<div style="width:12px;height:12px;border-radius:2px;background:rgba(94,171,48,${0.1+i*0.8});"></div>`).join('')}
+    <span style="font-size:0.65rem;color:var(--text3);">More</span>
+  </div>`;
+  el.innerHTML=html;
+}
+
+// Small progress ring
+function drawRing(canvasId, pct, color, label) {
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const S=90;
+  canvas.width=S*dpr;canvas.height=S*dpr;
+  canvas.style.width=S+'px';canvas.style.height=S+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const cx=S/2,cy=S/2,r=35;
+  // Track
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.strokeStyle='rgba(78,138,40,0.1)';ctx.lineWidth=7;ctx.stroke();
+  // Progress
+  const end=-Math.PI/2+(pct/100)*Math.PI*2;
+  const grd=ctx.createLinearGradient(cx-r,cy,cx+r,cy);
+  grd.addColorStop(0,color);grd.addColorStop(1,color+'AA');
+  ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,end);
+  ctx.strokeStyle=grd;ctx.lineWidth=7;ctx.lineCap='round';
+  ctx.shadowColor=color;ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+  // Text
+  ctx.fillStyle='#E8EDE0';ctx.font=`bold 15px Syne,sans-serif`;ctx.textAlign='center';
+  ctx.fillText(Math.round(pct)+'%',cx,cy+4);
+  ctx.fillStyle='rgba(106,120,96,0.7)';ctx.font='7px DM Sans,sans-serif';
+  ctx.fillText(label||'',cx,cy+14);
+}
+
+// Forecast line (dashed extrapolation)
+function drawForecastChart(canvasId, actualData, forecastData) {
+  const canvas=document.getElementById(canvasId);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const W0=canvas.clientWidth||300,H0=100;
+  canvas.width=W0*dpr;canvas.height=H0*dpr;
+  canvas.style.width=W0+'px';canvas.style.height=H0+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const W=W0,H=H0,pad={t:10,r:10,b:18,l:36};
+  const allData=[...actualData,...forecastData];
+  const max=Math.max(...allData,1);
+  const cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
+  const totalLen=allData.length;
+  const ptX=(_,i)=>pad.l+i*(cW/(totalLen-1));
+  const ptY=v=>pad.t+cH-(v/max)*cH;
+  // Actual area
+  const grd=ctx.createLinearGradient(0,pad.t,0,pad.t+cH);
+  grd.addColorStop(0,'rgba(94,171,48,0.3)');grd.addColorStop(1,'rgba(94,171,48,0)');
+  ctx.beginPath();
+  ctx.moveTo(ptX(0,0),pad.t+cH);
+  actualData.forEach((v,i)=>ctx.lineTo(ptX(null,i),ptY(v)));
+  ctx.lineTo(ptX(null,actualData.length-1),pad.t+cH);ctx.closePath();
+  ctx.fillStyle=grd;ctx.fill();
+  // Actual line
+  ctx.beginPath();actualData.forEach((v,i)=>i===0?ctx.moveTo(ptX(null,i),ptY(v)):ctx.lineTo(ptX(null,i),ptY(v)));
+  ctx.strokeStyle='#5EAB30';ctx.lineWidth=2;ctx.stroke();
+  // Forecast line (dashed)
+  ctx.beginPath();ctx.setLineDash([4,3]);
+  forecastData.forEach((v,i)=>i===0?ctx.moveTo(ptX(null,actualData.length-1+i),ptY(actualData[actualData.length-1])):ctx.lineTo(ptX(null,actualData.length+i),ptY(v)));
+  ctx.strokeStyle='#E8AD2C';ctx.lineWidth=2;ctx.stroke();ctx.setLineDash([]);
+  // Labels
+  ['Past 7d','Forecast'].forEach((lbl,i)=>{
+    ctx.fillStyle=i===0?'#5EAB30':'#E8AD2C';
+    ctx.beginPath();ctx.arc(pad.l+i*(cW*0.6),H-4,4,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(106,120,96,0.8)';ctx.font='7px DM Sans,sans-serif';ctx.textAlign='left';
+    ctx.fillText(lbl,pad.l+i*(cW*0.6)+7,H-1);
+  });
+}
+
+// Extend loadDashboard to render new charts  
+const _origLoadDashboard = loadDashboard;
+async function loadDashboard() {
+  await _origLoadDashboard();
+  // These run after main data is loaded — wrap in timeout to ensure DOM updated
+  setTimeout(()=>renderAdvancedWidgets(allOrders, allProducts), 300);
+}
+
+function renderAdvancedWidgets(orders, prods) {
+  // Area chart (30-day revenue)
+  const n30=Array.from({length:30},(_,i)=>{
+    const d=new Date();d.setDate(d.getDate()-(29-i));
+    return{label:d.getDate()+'/'+(d.getMonth()+1),date:d.toISOString().split('T')[0],rev:0};
+  });
+  orders.filter(o=>(o.payment_status||'').toLowerCase().includes('paid')||o.payment_status==='SUCCESS').forEach(o=>{
+    const b=n30.find(b=>b.date===(o.created_at||'').split('T')[0]);
+    if(b)b.rev+=parseFloat(o.total||0);
+  });
+  drawAreaChart('areaCanvas',n30.map(b=>b.label),n30.map(b=>b.rev),'#5EAB30');
+
+  // Heatmap
+  renderHeatmap(orders);
+
+  // Progress rings
+  const delivered=orders.filter(o=>(o.fulfillment||o.status||'')==='Delivered').length;
+  const delivPct=orders.length?delivered/orders.length*100:0;
+  const paidPct=orders.length?orders.filter(o=>(o.payment_status||'').toLowerCase().includes('paid')||o.payment_status==='SUCCESS').length/orders.length*100:0;
+  const inStockProds=prods.filter(p=>!p.deleted_at&&(p.stock||0)>10).length;
+  const stockPct=prods.filter(p=>!p.deleted_at).length?(inStockProds/prods.filter(p=>!p.deleted_at).length*100):100;
+  setTimeout(()=>{
+    drawRing('ring1Canvas',delivPct,'#5EAB30','Delivered');
+    drawRing('ring2Canvas',paidPct,'#2080E8','Paid');
+    drawRing('ring3Canvas',stockPct,'#E8AD2C','In Stock');
+  },50);
+
+  // Forecast (simple linear from last 7 days trend)
+  const last7=n30.slice(-7).map(b=>b.rev);
+  const avg7=last7.reduce((s,v)=>s+v,0)/7;
+  const trend=(last7[last7.length-1]-last7[0])/7;
+  const forecast=Array.from({length:7},(_,i)=>Math.max(0,avg7+(trend*(i+1))*0.6));
+  setTimeout(()=>drawForecastChart('forecastCanvas',last7,forecast),60);
+}
+let _emPage = 'orders';
+let _emRange = 'today';
+let _emFmt = 'csv';
+
+function openExportModal(page) {
+  _emPage = page;
+  _emRange = 'today';
+  _emFmt = 'csv';
+  const overlay = document.getElementById('exportModalOverlay');
+  const pageNames = {dashboard:'Dashboard',analytics:'Analytics',orders:'Orders',products:'Products',inventory:'Inventory',discounts:'Discounts',customers:'Customers',payments:'Payments',invoices:'Invoices'};
+  document.getElementById('emPageLabel').textContent = `Exporting: ${pageNames[page]||page}`;
+  // Reset chips
+  document.querySelectorAll('.em-chip').forEach((c,i) => c.classList.toggle('active', i===0));
+  document.querySelectorAll('.em-fmt-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  document.getElementById('emCustomDates').style.display = 'none';
+  overlay.classList.add('open');
+  emUpdatePreview();
+}
+
+function closeExportModal() {
+  const overlay = document.getElementById('exportModalOverlay');
+  overlay.classList.remove('open');
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeExportModal(); });
+// Close on backdrop click
+document.getElementById('exportModalOverlay').addEventListener('click', e => {
+  if(e.target === document.getElementById('exportModalOverlay')) closeExportModal();
+});
+
+function emSetPeriod(range, el) {
+  _emRange = range;
+  document.querySelectorAll('#emPeriodChips .em-chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
-  const dateRow = document.getElementById('epdate-'+page);
-  if(dateRow) dateRow.style.display = range==='custom'?'flex':'none';
-  updateEpPreview(page);
+  const cd = document.getElementById('emCustomDates');
+  cd.style.display = range==='custom' ? 'flex' : 'none';
+  emUpdatePreview();
 }
 
-function setEpFmt(page, fmt, el) {
-  getEpState(page).fmt = fmt;
-  el.closest('.ep-fmt').querySelectorAll('.ep-fmt-btn').forEach(b=>b.classList.remove('active'));
+// alias so year chip works
+function emSetYear(range, el) { emSetPeriod(range, el); }
+
+function emSetFmt(fmt, el) {
+  _emFmt = fmt;
+  document.querySelectorAll('.em-fmt-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  updateEpPreview(page);
+  emUpdatePreview();
 }
 
-function getEpDateRange(page) {
-  const {range} = getEpState(page);
+function emGetDateRange() {
   const now = new Date();
   const pad = n=>String(n).padStart(2,'0');
   const ymd = d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  if(range==='all') return {from:null,to:null};
-  if(range==='today') { const t=ymd(now); return {from:t,to:t}; }
-  if(range==='week') { const m=new Date(now); m.setDate(now.getDate()-now.getDay()+1); return {from:ymd(m),to:ymd(now)}; }
-  if(range==='month') { const f=new Date(now.getFullYear(),now.getMonth(),1); return {from:ymd(f),to:ymd(now)}; }
-  if(range==='year') { const f=new Date(now.getFullYear(),0,1); return {from:ymd(f),to:ymd(now)}; }
-  if(range==='custom') {
-    const f=document.getElementById('epfrom-'+page)?.value;
-    const t=document.getElementById('epto-'+page)?.value;
-    return {from:f||null,to:t||null};
+  if(_emRange==='all') return {from:null,to:null};
+  if(_emRange==='today'){const t=ymd(now);return{from:t,to:t};}
+  if(_emRange==='week'){const m=new Date(now);m.setDate(now.getDate()-now.getDay()+1);return{from:ymd(m),to:ymd(now)};}
+  if(_emRange==='month'){const f=new Date(now.getFullYear(),now.getMonth(),1);return{from:ymd(f),to:ymd(now)};}
+  if(_emRange==='year'){const f=new Date(now.getFullYear(),0,1);return{from:ymd(f),to:ymd(now)};}
+  if(_emRange==='custom'){
+    return{from:document.getElementById('emFromDate').value||null, to:document.getElementById('emToDate').value||null};
   }
-  return {from:null,to:null};
+  return{from:null,to:null};
 }
 
-function epInRange(dateStr, from, to) {
+function emInRange(dateStr,from,to){
   if(!from||!to) return true;
-  const d=(dateStr||'').split('T')[0];
-  return d>=from && d<=to;
+  const d=(dateStr||'').split('T')[0]; return d>=from&&d<=to;
 }
 
-function getEpData(page) {
-  const {from,to} = getEpDateRange(page);
-  const inR = ds => epInRange(ds,from,to);
-  if(page==='dashboard'||page==='orders') {
+function emGetData() {
+  const {from,to}=emGetDateRange();
+  const inR=ds=>emInRange(ds,from,to);
+  const page=_emPage;
+  if(page==='dashboard'||page==='orders'){
     const cols=['Order ID','Customer','Email','Phone','City','Items','Subtotal','Discount','Shipping','Total','Payment','Status','Coupon','Tracking','Date'];
     const rows=allOrders.filter(o=>inR(o.created_at)).map(o=>{
-      let items=[];try{items=typeof o.items==='string'?JSON.parse(o.items||'[]'):(o.items||[]);}catch{}
-      return [o.id,o.customer_name||'',o.customer_email||'',o.customer_phone||'',o.city||'',
-        items.map(i=>`${i.name}x${i.qty||1}`).join('; '),
+      let it=[];try{it=typeof o.items==='string'?JSON.parse(o.items||'[]'):(o.items||[]);}catch{}
+      return[o.id,o.customer_name||'',o.customer_email||'',o.customer_phone||'',o.city||'',
+        it.map(i=>`${i.name||'?'}x${i.qty||1}`).join('; '),
         o.subtotal||0,o.discount||0,o.shipping||0,o.total||0,
         o.payment_method||o.payment_status||'',o.status||o.fulfillment||'',
         o.coupon_code||'',o.tracking_id||'',fmtDate(o.created_at)];
     });
-    return {cols,rows};
+    return{cols,rows};
   }
-  if(page==='analytics') {
+  if(page==='analytics'){
     const paid=allOrders.filter(o=>inR(o.created_at)&&((o.payment_status||'').toLowerCase().includes('paid')||o.payment_status==='SUCCESS'));
-    const cols=['Date','Order ID','Customer','Total','Status'];
-    const rows=paid.map(o=>[fmtDate(o.created_at),o.id,o.customer_name||'',o.total||0,o.status||o.fulfillment||'']);
-    return {cols,rows};
+    return{cols:['Date','Order ID','Customer','Total','Payment','Status'],
+      rows:paid.map(o=>[fmtDate(o.created_at),o.id,o.customer_name||'',o.total||0,o.payment_status||'',o.status||o.fulfillment||''])};
   }
-  if(page==='products') {
+  if(page==='products'){
     const cols=['ID','Name','Brand','Category','MRP','Sale Price','Stock','Rating','Reviews','Active','Badge','HSN','Created'];
-    const rows=allProducts.filter(p=>inR(p.created_at)).map(p=>[
+    return{cols,rows:allProducts.filter(p=>inR(p.created_at)).map(p=>[
       p.id,p.name,p.brand||'Ascovita',p.category||'',p.mrp||p.price||0,p.sale_price||p.price||0,
-      p.stock||0,p.rating||'',p.reviews||0,p.active?'Yes':'No',p.badge||'',p.hsn||'30049099',fmtDate(p.created_at)
-    ]);
-    return {cols,rows};
+      p.stock||0,p.rating||'',p.reviews||0,p.active?'Yes':'No',p.badge||'',p.hsn||'30049099',fmtDate(p.created_at)])};
   }
-  if(page==='inventory') {
-    const cols=['ID','Product','Category','Stock','Status'];
-    const rows=allProducts.map(p=>[p.id,p.name,p.category||'',p.stock||0,
-      (p.stock||0)===0?'Out of Stock':(p.stock||0)<=10?'Low Stock':'In Stock']);
-    return {cols,rows};
+  if(page==='inventory')
+    return{cols:['ID','Product','Category','Stock','Status'],
+      rows:allProducts.map(p=>[p.id,p.name,p.category||'',p.stock||0,(p.stock||0)===0?'Out of Stock':(p.stock||0)<=10?'Low Stock':'In Stock'])};
+  if(page==='customers')
+    return{cols:['Name','Email','Phone','City','Orders','Total Spent','Joined'],
+      rows:allCustomers.filter(c=>inR(c.created_at)).map(c=>[c.name||'',c.email||'',c.phone||'',c.city||'',c.order_count||0,c.total_spent||0,fmtDate(c.created_at)])};
+  if(page==='discounts')
+    return{cols:['Code','Type','Value','Min Order','Max Uses','Used','Expires','Active'],
+      rows:allDiscounts.map(d=>[d.code||'',d.type||'',d.value||0,d.min_order||0,d.max_uses||'∞',d.used_count||0,d.expires_at?fmtDate(d.expires_at):'Never',d.active?'Yes':'No'])};
+  if(page==='payments')
+    return{cols:['Order ID','Customer','Amount','Method','Status','Date'],
+      rows:allOrders.filter(o=>inR(o.created_at)).map(o=>[o.id,o.customer_name||'',o.total||0,o.payment_method||'',o.payment_status||'',fmtDate(o.created_at)])};
+  if(page==='invoices'){
+    return{cols:['Invoice #','Customer','Order ID','Subtotal','CGST 9%','SGST 9%','Total','Date'],
+      rows:allOrders.filter(o=>inR(o.created_at)&&(o.payment_status||'').toLowerCase().includes('paid')).map((o,i)=>{
+        const sub=o.subtotal||o.total||0;
+        return[`INV-${String(i+1).padStart(4,'0')}`,o.customer_name||'',o.id,sub,+(sub*.09).toFixed(2),+(sub*.09).toFixed(2),o.total||0,fmtDate(o.created_at)];
+      })};
   }
-  if(page==='customers') {
-    const cols=['Name','Email','Phone','City','Orders','Total Spent','Joined'];
-    const rows=allCustomers.filter(c=>inR(c.created_at)).map(c=>[
-      c.name||'',c.email||'',c.phone||'',c.city||'',c.order_count||0,c.total_spent||0,fmtDate(c.created_at)
-    ]);
-    return {cols,rows};
-  }
-  if(page==='discounts') {
-    const cols=['Code','Type','Value','Min Order','Max Uses','Used','Expires','Active'];
-    const rows=allDiscounts.map(d=>[d.code||'',d.type||'',d.value||0,d.min_order||0,
-      d.max_uses||'∞',d.used_count||0,d.expires_at?fmtDate(d.expires_at):'Never',d.active?'Yes':'No']);
-    return {cols,rows};
-  }
-  if(page==='payments') {
-    const cols=['Order ID','Customer','Amount','Method','Status','Date'];
-    const rows=allOrders.filter(o=>inR(o.created_at)).map(o=>[
-      o.id,o.customer_name||'',o.total||0,o.payment_method||'',o.payment_status||'',fmtDate(o.created_at)
-    ]);
-    return {cols,rows};
-  }
-  if(page==='invoices') {
-    const cols=['Invoice #','Customer','Order ID','Subtotal','CGST 9%','SGST 9%','Total','Date'];
-    const rows=allOrders.filter(o=>inR(o.created_at)&&((o.payment_status||'').toLowerCase().includes('paid'))).map((o,i)=>{
-      const sub=o.subtotal||o.total||0;
-      return [`INV-${String(i+1).padStart(4,'0')}`,o.customer_name||'',o.id,sub,+(sub*.09).toFixed(2),+(sub*.09).toFixed(2),o.total||0,fmtDate(o.created_at)];
-    });
-    return {cols,rows};
-  }
-  return {cols:[],rows:[]};
+  return{cols:[],rows:[]};
 }
 
-function updateEpPreview(page) {
-  const el = document.getElementById('epprev-'+page);
+function emUpdatePreview() {
+  const el = document.getElementById('emPreview');
   if(!el) return;
-  const {cols,rows} = getEpData(page);
-  const {range} = getEpState(page);
-  const rangeLabels = {today:'Today',week:'This Week',month:'This Month',year:'This Year',all:'All Time',custom:'Custom Range'};
-  if(!rows.length) {
-    el.innerHTML = `<span style="color:var(--gold-text)">⚠️ 0 rows for <strong>${rangeLabels[range]||range}</strong>. Try "All".</span>`;
+  const {cols,rows} = emGetData();
+  const rl={today:'Today',week:'This Week',month:'This Month',year:'This Year',all:'All Time',custom:'Custom Range'};
+  const fmtIcon = _emFmt==='csv'?'📊':'{ }';
+  if(!rows.length){
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:1.2rem;">⚠️</span><div><div style="font-size:0.82rem;color:var(--gold-text);font-weight:600;">0 rows for ${rl[_emRange]||_emRange}</div><div style="font-size:0.72rem;color:var(--text3);">Try "All Time" or a different period</div></div></div>`;
   } else {
-    el.innerHTML = `<strong>${rows.length} rows</strong> · ${rangeLabels[range]||range} · ${cols.length} cols<br>
-      <span style="font-size:0.7rem;opacity:0.7">${cols.slice(0,4).join(', ')}${cols.length>4?'…':''}</span>`;
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="background:rgba(74,138,40,0.12);border:1px solid rgba(74,138,40,0.3);border-radius:8px;padding:8px 14px;text-align:center;">
+        <div style="font-family:var(--display);font-size:1.3rem;font-weight:800;color:var(--green-text);">${rows.length}</div>
+        <div style="font-size:0.65rem;color:var(--text3);">ROWS</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;text-align:center;">
+        <div style="font-family:var(--display);font-size:1.3rem;font-weight:800;color:var(--text);">${cols.length}</div>
+        <div style="font-size:0.65rem;color:var(--text3);">COLUMNS</div>
+      </div>
+      <div style="flex:1;min-width:120px;">
+        <div style="font-size:0.78rem;color:var(--text);font-weight:600;">${rl[_emRange]||_emRange} · ${fmtIcon} ${_emFmt.toUpperCase()}</div>
+        <div style="font-size:0.68rem;color:var(--text3);margin-top:3px;">${cols.slice(0,4).join(', ')}${cols.length>4?' +'+( cols.length-4)+' more':''}</div>
+      </div>
+    </div>`;
   }
 }
 
-function toCSV(cols, rows) {
+function emDoExport() {
+  const {cols,rows}=emGetData();
+  if(!rows.length){toast('No data for selected range','warning');return;}
+  const rs={today:'today',week:'week',month:'month',year:'year',all:'all',custom:'custom'}[_emRange]||_emRange;
+  const filename=`ascovita-${_emPage}-${rs}.${_emFmt}`;
   const e=v=>`"${String(v??'').replace(/"/g,'""')}"`;
-  return [cols.map(e).join(','), ...rows.map(r=>r.map(e).join(','))].join('\n');
-}
-function toJSON(cols, rows) {
-  return JSON.stringify({exported_at:new Date().toISOString(),count:rows.length,
-    data:rows.map(r=>Object.fromEntries(cols.map((c,i)=>[c,r[i]??''])))},null,2);
-}
-
-function doPageExport(page) {
-  const {cols,rows} = getEpData(page);
-  if(!rows.length) { toast('No data for selected range','warning'); return; }
-  const {fmt,range} = getEpState(page);
-  const rangeStr = {today:'today',week:'week',month:'month',year:'year',all:'all'}[range]||range;
-  const filename = `ascovita-${page}-${rangeStr}.${fmt}`;
-  const content  = fmt==='csv' ? toCSV(cols,rows) : toJSON(cols,rows);
-  const mime     = fmt==='csv' ? 'text/csv;charset=utf-8,' : 'application/json;charset=utf-8,';
-  const a = document.createElement('a');
-  a.href = 'data:'+mime+encodeURIComponent(content);
-  a.download = filename; a.click();
+  const content=_emFmt==='csv'
+    ?[cols.map(e).join(','),...rows.map(r=>r.map(e).join(','))].join('\n')
+    :JSON.stringify({exported_at:new Date().toISOString(),count:rows.length,data:rows.map(r=>Object.fromEntries(cols.map((c,i)=>[c,r[i]??''])))},null,2);
+  const mime=_emFmt==='csv'?'text/csv;charset=utf-8,':'application/json;charset=utf-8,';
+  const a=document.createElement('a');
+  a.href='data:'+mime+encodeURIComponent(content);
+  a.download=filename;a.click();
+  closeExportModal();
   toast(`✅ Exported ${rows.length} rows → ${filename}`);
 }
+
+// Keep old functions as aliases for backward compat
+function toggleExportPanel(page){ openExportModal(page); }
+function getEpState(page){ return {range:_emRange,fmt:_emFmt}; }
+function doPageExport(page){ _emPage=page; emDoExport(); }
 
 
 // ═══════════════════════════════════════════════
@@ -2846,6 +3164,14 @@ async function saveProduct() {
   // Sort tiers by tablet count ascending
   tiers.sort((a, b) => a.tabs - b.tabs);
 
+  // ── Build body using EXACT Supabase column names ──────────────
+  // Confirmed columns: name, brand, category, badge, description,
+  // price, sale_price, offer_text, stock, active, rating, reviews,
+  // image, image2, image3, image4, image5, images (JSONB array),
+  // how_to_use, has_tiers, tiers (JSONB), tags (JSONB),
+  // key_ingredients (JSONB), seo_keywords (JSONB),
+  // meta_description, hsn, created_at, updated_at, deleted_at
+  const mediaSlots = getMediaSlotData();
   const body = {
     name,
     brand:            document.getElementById('pBrand').value || 'Ascovita',
@@ -2853,19 +3179,20 @@ async function saveProduct() {
     badge:            document.getElementById('pBadge').value,
     description:      document.getElementById('pDescription').value,
     stock:            parseInt(document.getElementById('pStock').value) || 0,
-    active:           document.getElementById('pActive').value !== 'false',   // DB column: active
-    mrp:              price,                                                   // DB column: mrp
-    price:            price,                                                   // alias fallback
+    active:           document.getElementById('pActive').value !== 'false',
+    price:            price,
     sale_price:       parseFloat(document.getElementById('pSalePrice').value) || null,
     offer_text:       document.getElementById('pOfferText').value,
     hsn:              document.getElementById('pHsn').value || '30049099',
     how_to_use:       document.getElementById('pHowToUse').value,
     key_ingredients:  document.getElementById('pIngredients').value.split(',').map(s=>s.trim()).filter(Boolean),
     tags:             document.getElementById('pTags').value.split(',').map(s=>s.trim()).filter(Boolean),
-    media:            getMediaSlotData(),
-    image:            (getMediaSlotData()[0]||{}).url || document.getElementById('pImage').value || '',
-    image2:           (getMediaSlotData()[1]||{}).url || document.getElementById('pImage2').value || '',
-    seo_title:        document.getElementById('pSeoTitle').value,
+    image:            (mediaSlots[0]||{}).url || document.getElementById('pImage').value || '',
+    image2:           (mediaSlots[1]||{}).url || document.getElementById('pImage2').value || '',
+    image3:           (mediaSlots[2]||{}).url || '',
+    image4:           (mediaSlots[3]||{}).url || '',
+    image5:           (mediaSlots[4]||{}).url || '',
+    images:           mediaSlots.map(m=>m.url).filter(Boolean),
     meta_description: document.getElementById('pMetaDesc').value,
     seo_keywords:     document.getElementById('pSeoKeywords').value.split(',').map(s=>s.trim()).filter(Boolean),
     has_tiers:        tiers.length > 0,
@@ -4060,5 +4387,4 @@ loadSettings();
 
 
 </body>
-</html>
 </html>
