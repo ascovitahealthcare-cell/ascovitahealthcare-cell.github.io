@@ -503,7 +503,6 @@ app.post('/api/upload/image', authMiddleware, upload.single('image'), async (req
   try {
     if (!req.file) return res.status(400).json({ error: 'No file provided (field name must be "image")' });
 
-    // Auto-create bucket if missing — fixes "Storage bucket not found" error
     await ensureBucket(supabase);
 
     const ext          = req.file.originalname.split('.').pop().toLowerCase() || 'jpg';
@@ -521,7 +520,6 @@ app.post('/api/upload/image', authMiddleware, upload.single('image'), async (req
     const publicUrl = urlData?.publicUrl;
     if (!publicUrl) throw new Error('Could not get public URL after upload');
 
-    // Save to image_library table (non-fatal if it fails)
     await supabase.from('image_library').insert([{
       file_name: storagePath.split('/').pop(),
       storage_path: storagePath,
@@ -531,7 +529,7 @@ app.post('/api/upload/image', authMiddleware, upload.single('image'), async (req
       mime_type: req.file.mimetype,
       uploaded_by: req.user?.email || 'admin',
       created_at: new Date().toISOString(),
-  }]);
+    }]);
 
     res.json({ url: publicUrl, public_url: publicUrl, filename: storagePath, success: true });
   } catch(err) {
@@ -543,12 +541,10 @@ app.post('/api/upload/image', authMiddleware, upload.single('image'), async (req
   }
 });
 
-// GET /api/upload/library — list all uploaded images
 app.get('/api/upload/library', authMiddleware, async (req, res) => {
   try {
     const { data, error } = await supabase.from('image_library').select('*').order('created_at', { ascending: false }).limit(100);
     if (error) {
-      // Fallback: list directly from storage
       const { data: files } = await supabase.storage.from('products').list('products', { limit: 100, sortBy: { column: 'created_at', order: 'desc' } });
       const urls = (files || []).map(f => ({
         filename: `products/${f.name}`,
@@ -562,7 +558,6 @@ app.get('/api/upload/library', authMiddleware, async (req, res) => {
   } catch(err) { res.status(500).json({ error: err.message, data: [] }); }
 });
 
-// DELETE image from library
 app.delete('/api/upload/library/:filename', authMiddleware, async (req, res) => {
   try {
     const filename = decodeURIComponent(req.params.filename);
@@ -577,14 +572,12 @@ app.delete('/api/upload/library/:filename', authMiddleware, async (req, res) => 
 // ═══════════════════════════════════════════════════════════════
 app.get('/api/products', async (req, res) => {
   try {
-    // ✅ FIX 1: No-cache headers — prevents browser/CDN from serving stale products
     res.set({
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma':        'no-cache',
       'Expires':       '0',
       'Surrogate-Control': 'no-store',
     });
-    // ✅ FIX 4: Order by created_at DESC so new products appear first on the website
     const { data, error } = await supabase
       .from('products')
       .select('*')
@@ -598,7 +591,6 @@ app.get('/api/products', async (req, res) => {
 
 app.get('/api/admin/products', authMiddleware, async (req, res) => {
   try {
-    // ✅ FIX 1: No-cache headers on admin endpoint too
     res.set({
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'Pragma':        'no-cache',
@@ -613,18 +605,9 @@ app.get('/api/admin/products', authMiddleware, async (req, res) => {
   } catch(err) { res.status(500).json({ error: err.message, data: [] }); }
 });
 
-// ── /api/admin/products — POST (create) ──────────────────────────
-// Admin frontend calls /api/admin/products, not /api/products
 app.post('/api/admin/products', authMiddleware, async (req, res) => {
   try {
     const b = req.body;
-
-    // Build insert body using only columns that exist in the products table
-    // (matches schema: id, name, brand, category, badge, description, tags,
-    //  price, sale_price, offer_text, stock, rating, reviews, active, deleted_at,
-    //  image, image2, image3, image4, image5, images, key_ingredients,
-    //  how_to_use, has_tiers, tiers, seo_keywords, meta_description, hsn,
-    //  created_at, updated_at)
     const body = {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -640,11 +623,9 @@ app.post('/api/admin/products', authMiddleware, async (req, res) => {
     ];
     safeFields.forEach(f => { if (b[f] !== undefined) body[f] = b[f]; });
 
-    // price: accept mrp or price from frontend
     if (!body.price && b.mrp) body.price = b.mrp;
     if ('sale_price' in b) body.sale_price = b.sale_price || null;
 
-    // Arrays — store as JSONB array (not string) for Supabase
     const arrayFields = ['tags','key_ingredients','seo_keywords','tiers','images'];
     arrayFields.forEach(f => {
       const val = b[f];
@@ -670,7 +651,6 @@ app.post('/api/admin/products', authMiddleware, async (req, res) => {
   }
 });
 
-// ── /api/admin/products/:id — PUT (update) ────────────────────────
 app.put('/api/admin/products/:id', authMiddleware, async (req, res) => {
   try {
     const b = req.body;
@@ -684,14 +664,11 @@ app.put('/api/admin/products/:id', authMiddleware, async (req, res) => {
     ];
     safeFields.forEach(f => { if (b[f] !== undefined) body[f] = b[f]; });
 
-    // Sync active from is_active if sent
     if (b.is_active !== undefined) body.active = Boolean(b.is_active);
-    // price aliasing
     if (!body.price && b.mrp) body.price = b.mrp;
     if ('sale_price' in b) body.sale_price = b.sale_price || null;
     if ('deleted_at' in b) body.deleted_at = b.deleted_at || null;
 
-    // Arrays
     const arrayFields = ['tags','key_ingredients','seo_keywords','tiers','images'];
     arrayFields.forEach(f => {
       const val = b[f];
@@ -718,7 +695,6 @@ app.put('/api/admin/products/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// ── /api/admin/products/:id — DELETE (soft) ───────────────────────
 app.delete('/api/admin/products/:id', authMiddleware, async (req, res) => {
   try {
     const { data: old } = await supabase.from('products').select('*').eq('id', req.params.id).single();
@@ -736,7 +712,6 @@ app.delete('/api/admin/products/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// ── /api/admin/products/:id/restore — PUT ─────────────────────────
 app.put('/api/admin/products/:id/restore', authMiddleware, async (req, res) => {
   try {
     const { error } = await supabase.from('products').update({
@@ -755,7 +730,6 @@ app.put('/api/admin/products/:id/restore', authMiddleware, async (req, res) => {
 
 app.get('/api/products/:id', async (req, res) => {
   try {
-    // ✅ FIX 1: No-cache on single product fetch too
     res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
     const { data, error } = await supabase.from('products').select('*').eq('id', req.params.id).single();
     if (error) return res.status(404).json({ error: 'Product not found' });
@@ -763,7 +737,6 @@ app.get('/api/products/:id', async (req, res) => {
   } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
-// RESTORE soft-deleted product
 app.put('/api/products/:id/restore', authMiddleware, async (req, res) => {
   try {
     await supabase.from('products').update({ active: true, deleted_at: null, updated_at: new Date().toISOString() }).eq('id', req.params.id);
@@ -820,7 +793,6 @@ app.post('/api/coupons/validate', async (req, res) => {
 // ORDERS — full stored procedure based
 // ═══════════════════════════════════════════════════════════════
 app.get('/api/admin/orders', authMiddleware, async (req, res) => {
-  // ✅ FIX: Exclude soft-deleted orders from admin view
   const { data } = await supabase.from('orders').select('*').is('deleted_at', null).order('created_at', { ascending: false });
   res.json({ data: data || [] });
 });
@@ -837,7 +809,6 @@ app.get('/api/orders/my', authMiddleware, async (req, res) => {
   res.json({ data: data || [] });
 });
 
-// CREATE ORDER — uses stored procedure
 app.post('/api/orders', async (req, res) => {
   try {
     const order = await sp_place_order(req.body);
@@ -849,14 +820,12 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// UPDATE ORDER STATUS — with trigger for status log
 app.put('/api/admin/orders/:id', authMiddleware, async (req, res) => {
   try {
     const body = { ...req.body, updated_at: new Date().toISOString() };
     const { data: old } = await supabase.from('orders').select('*').eq('id', req.params.id).single();
     const { data, error } = await supabase.from('orders').update(body).eq('id', req.params.id).select().single();
     if (error) throw error;
-    // TRIGGER: log status change
     if (old && body.fulfillment && body.fulfillment !== old.fulfillment) {
       await supabase.from('order_status_logs').insert([{
         order_id: req.params.id, old_status: old.fulfillment, new_status: body.fulfillment,
@@ -869,7 +838,6 @@ app.put('/api/admin/orders/:id', authMiddleware, async (req, res) => {
   } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
-// CANCEL ORDER — uses stored procedure
 app.post('/api/orders/:id/cancel', authMiddleware, async (req, res) => {
   try {
     await sp_cancel_order(req.params.id, req.body.reason, req.user?.email);
@@ -877,7 +845,6 @@ app.post('/api/orders/:id/cancel', authMiddleware, async (req, res) => {
   } catch(err) { res.status(400).json({ error: err.message }); }
 });
 
-// SOFT DELETE ORDER
 app.delete('/api/admin/orders/:id', authMiddleware, async (req, res) => {
   try {
     const { data: old } = await supabase.from('orders').select('*').eq('id', req.params.id).single();
@@ -887,7 +854,6 @@ app.delete('/api/admin/orders/:id', authMiddleware, async (req, res) => {
   } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
-// GET ORDER STATUS HISTORY
 app.get('/api/orders/:id/history', authMiddleware, async (req, res) => {
   const { data } = await supabase.from('order_status_logs').select('*').eq('order_id', req.params.id).order('created_at', { ascending: true });
   res.json({ data: data || [] });
@@ -923,7 +889,6 @@ app.get('/api/admin/stats', authMiddleware, async (req, res) => {
 // CUSTOMERS — soft delete + restore
 // ═══════════════════════════════════════════════════════════════
 app.get('/api/admin/customers', authMiddleware, async (req, res) => {
-  // ✅ FIX: Exclude soft-deleted customers from admin view
   const { data } = await supabase.from('customers').select('*').is('deleted_at', null).order('created_at', { ascending: false });
   res.json({ data: data || [] });
 });
@@ -944,7 +909,6 @@ app.put('/api/admin/customers/:id/restore', authMiddleware, async (req, res) => 
   } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
-// AUDIT LOGS
 app.get('/api/admin/audit', authMiddleware, async (req, res) => {
   const { data } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(200);
   res.json({ data: data || [] });
@@ -953,8 +917,6 @@ app.get('/api/admin/audit', authMiddleware, async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 // WHATSAPP REPORTS
 // ═══════════════════════════════════════════════════════════════
-
-// Manual send report from admin panel
 app.post('/api/admin/whatsapp/send-report', authMiddleware, async (req, res) => {
   try {
     const report = req.body.message || await buildDailyReport();
@@ -964,7 +926,6 @@ app.post('/api/admin/whatsapp/send-report', authMiddleware, async (req, res) => 
   } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
-// Get report preview
 app.get('/api/admin/whatsapp/preview', authMiddleware, async (req, res) => {
   try {
     const report = await buildDailyReport();
@@ -979,7 +940,6 @@ const CF_BASE = process.env.CASHFREE_ENV === 'PRODUCTION'
   ? 'https://api.cashfree.com/pg'
   : 'https://sandbox.cashfree.com/pg';
 
-// ── CF helper: verify an order ID directly with Cashfree ──────────────────
 async function cfVerifyOrder(orderId) {
   const r = await fetch(`${CF_BASE}/orders/${orderId}`, {
     headers: {
@@ -989,10 +949,9 @@ async function cfVerifyOrder(orderId) {
     },
   });
   if (!r.ok) throw new Error(`Cashfree verify HTTP ${r.status}`);
-  return r.json(); // { order_status, cf_order_id, order_amount, ... }
+  return r.json();
 }
 
-// ── CF helper: get payment details for an order ────────────────────────────
 async function cfGetPayments(orderId) {
   try {
     const r = await fetch(`${CF_BASE}/orders/${orderId}/payments`, {
@@ -1008,8 +967,6 @@ async function cfGetPayments(orderId) {
   } catch(e) { return []; }
 }
 
-// ── POST /api/create-cashfree-order ───────────────────────────────────────
-// Creates a Cashfree order session. Returns payment_session_id for the SDK.
 app.post('/api/create-cashfree-order', async (req, res) => {
   try {
     const body           = req.body || {};
@@ -1022,7 +979,7 @@ app.post('/api/create-cashfree-order', async (req, res) => {
     if (!amount)         return res.status(400).json({ error: 'Missing amount' });
     if (!customer_email) return res.status(400).json({ error: 'Missing customer_email' });
 
-    const BACKEND_URL = process.env.RENDER_EXTERNAL_URL || 'https://ascovita-backend.onrender.com';
+    const BACKEND_URL  = process.env.RENDER_EXTERNAL_URL || 'https://ascovita-backend.onrender.com';
     const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.ascovita.com';
 
     const payload = {
@@ -1061,19 +1018,14 @@ app.post('/api/create-cashfree-order', async (req, res) => {
   }
 });
 
-// ── GET /api/verify-order/:orderId ────────────────────────────────────────
-// Called by frontend after redirect back from Cashfree. Checks payment status.
-// If PAID, marks the existing order record as paid (if one exists from webhook).
 app.get('/api/verify-order/:orderId', async (req, res) => {
   try {
     const cfData = await cfVerifyOrder(req.params.orderId);
 
     if (cfData.order_status === 'PAID') {
-      // Get the actual cf_payment_id from the payments list
-      const payments = await cfGetPayments(req.params.orderId);
+      const payments    = await cfGetPayments(req.params.orderId);
       const cfPaymentId = payments[0]?.cf_payment_id || cfData.cf_order_id || req.params.orderId;
 
-      // If order already exists in DB (saved by webhook), just update payment fields
       const { data: existing } = await supabase
         .from('orders').select('id, payment_status').eq('id', req.params.orderId).single();
 
@@ -1094,12 +1046,7 @@ app.get('/api/verify-order/:orderId', async (req, res) => {
   }
 });
 
-// ── POST /api/cashfree-webhook ────────────────────────────────────────────
-// Cashfree calls this URL automatically when payment completes.
-// This is the AUTHORITATIVE confirmation — always verify with Cashfree API before trusting.
-// Register this URL in Cashfree Dashboard → Webhooks → Add Endpoint.
 app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  // Always ACK immediately — Cashfree will retry if we don't respond in time
   res.json({ status: 'ok' });
 
   try {
@@ -1108,7 +1055,6 @@ app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), asy
     const receivedSig = req.headers['x-webhook-signature'];
     const timestamp   = req.headers['x-webhook-timestamp'];
 
-    // ── 1. Verify signature (skip if secret not configured) ────────────────
     if (receivedSig && timestamp && process.env.CASHFREE_SECRET_KEY) {
       const expected = crypto
         .createHmac('sha256', process.env.CASHFREE_SECRET_KEY)
@@ -1120,11 +1066,10 @@ app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), asy
       }
     }
 
-    const event = Buffer.isBuffer(rawBody) ? JSON.parse(rawBody.toString()) : rawBody;
+    const event     = Buffer.isBuffer(rawBody) ? JSON.parse(rawBody.toString()) : rawBody;
     const eventType = event?.type || '';
     console.log(`[webhook] Event: ${eventType}`);
 
-    // ── 2. Only handle payment success events ──────────────────────────────
     const isPaymentSuccess =
       eventType === 'PAYMENT_SUCCESS_WEBHOOK' ||
       event?.data?.order?.order_status === 'PAID' ||
@@ -1135,7 +1080,6 @@ app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), asy
     const orderId = event?.data?.order?.order_id;
     if (!orderId) { console.warn('[webhook] No order_id in event'); return; }
 
-    // ── 3. Re-verify with Cashfree API (never trust webhook payload alone) ──
     const cfData = await cfVerifyOrder(orderId);
     if (cfData.order_status !== 'PAID') {
       console.warn(`[webhook] Order ${orderId} re-verify: ${cfData.order_status} — ignoring`);
@@ -1143,14 +1087,12 @@ app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), asy
     }
 
     const cfPaymentId = event?.data?.payment?.cf_payment_id || cfData.cf_order_id || orderId;
-    const now = new Date().toISOString();
+    const now         = new Date().toISOString();
 
-    // ── 4. Check if order already exists in DB ─────────────────────────────
     const { data: existing } = await supabase
       .from('orders').select('id, payment_status').eq('id', orderId).single();
 
     if (existing) {
-      // Order exists — just update payment status if not already paid
       if (existing.payment_status !== 'Paid') {
         await supabase.from('orders').update({
           payment_status: 'Paid',
@@ -1164,27 +1106,23 @@ app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), asy
       return;
     }
 
-    // ── 5. Order not in DB yet — this means webhook arrived before frontend confirm-order call
-    //       Save it now using whatever metadata Cashfree provides in the webhook
-    //       The frontend confirm-order call will see the duplicate check and skip re-insertion
     const webhookOrderData = {
-      id:               orderId,
-      customer_name:    event?.data?.customer_details?.customer_name  || 'Customer',
-      customer_email:   event?.data?.customer_details?.customer_email || '',
-      customer_phone:   event?.data?.customer_details?.customer_phone || '',
-      total:            cfData.order_amount,
-      payment_status:   'Paid',
-      fulfillment:      'Pending',
-      payment_method:   event?.data?.payment?.payment_method || 'online',
-      cf_payment_id:    cfPaymentId,
-      items:            '[]',  // Items arrive from frontend confirm-order call
+      id:             orderId,
+      customer_name:  event?.data?.customer_details?.customer_name  || 'Customer',
+      customer_email: event?.data?.customer_details?.customer_email || '',
+      customer_phone: event?.data?.customer_details?.customer_phone || '',
+      total:          cfData.order_amount,
+      payment_status: 'Paid',
+      fulfillment:    'Pending',
+      payment_method: event?.data?.payment?.payment_method || 'online',
+      cf_payment_id:  cfPaymentId,
+      items:          '[]',
     };
 
     try {
       await sp_place_order(webhookOrderData);
       console.log(`[webhook] ✅ Created new order ${orderId} from webhook`);
     } catch(saveErr) {
-      // Duplicate key = already saved by another path — fine
       if (saveErr.code === '23505' || saveErr.message?.includes('duplicate') || saveErr.message?.includes('already exists')) {
         console.log(`[webhook] Order ${orderId} duplicate on insert — already saved`);
       } else {
@@ -1197,17 +1135,12 @@ app.post('/api/cashfree-webhook', express.raw({ type: 'application/json' }), asy
   }
 });
 
-// ── POST /api/confirm-order ───────────────────────────────────────────────
-// Called by frontend AFTER Cashfree payment SDK completes.
-// This is the primary order save path — re-verifies payment, then saves order
-// with full customer + item data from the frontend.
 app.post('/api/confirm-order', async (req, res) => {
   try {
     const { cf_order_id, order_data } = req.body;
     if (!cf_order_id)  return res.status(400).json({ error: 'Missing cf_order_id' });
     if (!order_data)   return res.status(400).json({ error: 'Missing order_data' });
 
-    // ── 1. Re-verify payment with Cashfree ─────────────────────────────────
     let cfData;
     try {
       cfData = await cfVerifyOrder(cf_order_id);
@@ -1227,24 +1160,19 @@ app.post('/api/confirm-order', async (req, res) => {
       });
     }
 
-    // Get actual payment ID
-    const payments = await cfGetPayments(cf_order_id);
+    const payments    = await cfGetPayments(cf_order_id);
     const cfPaymentId = payments[0]?.cf_payment_id || cfData.cf_order_id || cf_order_id;
 
-    // ── 2. Check for duplicate (webhook may have already saved this order) ──
     const { data: existing } = await supabase
       .from('orders').select('id, payment_status, customer_email').eq('id', cf_order_id).single();
 
     if (existing) {
-      // Order already saved (by webhook or previous confirm call)
-      // Update with full order_data from frontend in case webhook had partial data
       const updatePayload = {
-        payment_status:   'Paid',
-        cf_payment_id:    cfPaymentId,
-        fulfillment:      existing.fulfillment || 'Pending',
-        updated_at:       new Date().toISOString(),
+        payment_status: 'Paid',
+        cf_payment_id:  cfPaymentId,
+        fulfillment:    existing.fulfillment || 'Pending',
+        updated_at:     new Date().toISOString(),
       };
-      // Only overwrite customer fields if webhook left them blank
       if (!existing.customer_email && order_data.customer_email) {
         Object.assign(updatePayload, {
           customer_name:  order_data.customer_name,
@@ -1260,7 +1188,6 @@ app.post('/api/confirm-order', async (req, res) => {
       }
       await supabase.from('orders').update(updatePayload).eq('id', cf_order_id);
 
-      // Send confirmation email if not already sent (webhook path skips email)
       if (order_data.customer_email) {
         await sendOrderEmail({ ...order_data, id: cf_order_id, payment_status: 'Paid' }).catch(e =>
           console.warn('[confirm-order] Email failed:', e.message)
@@ -1271,7 +1198,6 @@ app.post('/api/confirm-order', async (req, res) => {
       return res.json({ success: true, duplicate: true, order_id: cf_order_id });
     }
 
-    // ── 3. New order — save with full data from frontend ───────────────────
     const orderPayload = {
       ...order_data,
       id:             cf_order_id,
@@ -1284,7 +1210,6 @@ app.post('/api/confirm-order', async (req, res) => {
     try {
       savedOrder = await sp_place_order(orderPayload);
     } catch(saveErr) {
-      // Race condition: webhook saved it between our check and insert
       if (saveErr.code === '23505' || saveErr.message?.includes('duplicate') || saveErr.message?.includes('already exists')) {
         console.log(`[confirm-order] Race condition duplicate — ${cf_order_id} already saved`);
         await supabase.from('orders').update({
@@ -1298,7 +1223,6 @@ app.post('/api/confirm-order', async (req, res) => {
       throw saveErr;
     }
 
-    // ── 4. Send confirmation email ─────────────────────────────────────────
     await sendOrderEmail(savedOrder).catch(e =>
       console.warn('[confirm-order] Email failed:', e.message)
     );
@@ -1312,18 +1236,12 @@ app.post('/api/confirm-order', async (req, res) => {
   }
 });
 
-// ── POST /api/confirm-cod-order ───────────────────────────────────────────
-// Dedicated COD order confirmation endpoint.
-// Unlike online payments there is no payment gateway to verify against —
-// we validate the request itself (duplicate check, stock, required fields)
-// then save the order and send confirmation email + admin notification.
 app.post('/api/confirm-cod-order', async (req, res) => {
   try {
     const { order_id, order_data } = req.body;
     if (!order_id)   return res.status(400).json({ error: 'Missing order_id' });
     if (!order_data) return res.status(400).json({ error: 'Missing order_data' });
 
-    // Validate required fields
     const required = ['customer_name','customer_email','customer_phone','city','state','pincode','total'];
     if (!order_data.address && !order_data.address_line1) {
       return res.status(400).json({ error: 'Missing required field: address' });
@@ -1333,12 +1251,11 @@ app.post('/api/confirm-cod-order', async (req, res) => {
     }
     delete order_data.address_line1;
     delete order_data.address_line2;
-    const missing  = required.filter(f => !order_data[f]);
+    const missing = required.filter(f => !order_data[f]);
     if (missing.length) {
       return res.status(400).json({ error: `Missing required fields: ${missing.join(', ')}` });
     }
 
-    // ── 1. Duplicate check — prevent double-submission ─────────────────────
     const { data: existing } = await supabase
       .from('orders').select('id, fulfillment').eq('id', order_id).single();
 
@@ -1347,7 +1264,6 @@ app.post('/api/confirm-cod-order', async (req, res) => {
       return res.json({ success: true, duplicate: true, order_id });
     }
 
-    // ── 2. Save order via stored procedure (validates stock, logs audit) ────
     const orderPayload = {
       ...order_data,
       id:             order_id,
@@ -1360,19 +1276,16 @@ app.post('/api/confirm-cod-order', async (req, res) => {
     try {
       savedOrder = await sp_place_order(orderPayload);
     } catch(saveErr) {
-      // Race condition duplicate
       if (saveErr.code === '23505' || saveErr.message?.includes('duplicate') || saveErr.message?.includes('already exists')) {
         console.log(`[confirm-cod] Race-condition duplicate ${order_id}`);
         return res.json({ success: true, duplicate: true, order_id });
       }
-      // Stock error — surface to customer
       if (saveErr.message?.includes('stock') || saveErr.message?.includes('Insufficient')) {
         return res.status(409).json({ error: saveErr.message });
       }
       throw saveErr;
     }
 
-    // ── 3. Send confirmation email ─────────────────────────────────────────
     await sendOrderEmail(savedOrder).catch(e =>
       console.warn('[confirm-cod] Email failed:', e.message)
     );
@@ -1495,63 +1408,52 @@ app.put('/api/settings', authMiddleware, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
-// LIVE VISITORS — in-memory session tracking
-// Frontend pings POST /api/visitors/ping every 30s
-// Admin reads GET /api/visitors/active (sessions active in last 2min)
+// LIVE VISITORS
 // ═══════════════════════════════════════════════════════════════
-const visitorSessions = new Map(); // sessionId → { ip, page, ua, lastSeen, firstSeen }
+const visitorSessions = new Map();
 
-// POST /api/visitors/ping — called by frontend heartbeat
 app.post('/api/visitors/ping', (req, res) => {
   try {
     const { session_id, page = '/', referrer = '' } = req.body || {};
-    const id = session_id || req.ip + '-anon';
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
-    const ua = req.headers['user-agent'] || '';
+    const id  = session_id || req.ip + '-anon';
+    const ip  = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown';
+    const ua  = req.headers['user-agent'] || '';
     const now = Date.now();
     const existing = visitorSessions.get(id) || {};
-    visitorSessions.set(id, {
-      ip, page, referrer, ua,
-      lastSeen:  now,
-      firstSeen: existing.firstSeen || now,
-    });
-    // Prune sessions older than 2 minutes
+    visitorSessions.set(id, { ip, page, referrer, ua, lastSeen: now, firstSeen: existing.firstSeen || now });
     for (const [k, v] of visitorSessions.entries()) {
       if (now - v.lastSeen > 2 * 60 * 1000) visitorSessions.delete(k);
     }
     res.json({ ok: true });
-  } catch (e) { res.json({ ok: false }); }
+  } catch(e) { res.json({ ok: false }); }
 });
 
-// GET /api/visitors/active — used by admin Live Visitors panel
 app.get('/api/visitors/active', authMiddleware, (req, res) => {
   try {
-    const now = Date.now();
-    const cutoff = now - 2 * 60 * 1000; // last 2 minutes
+    const now    = Date.now();
+    const cutoff = now - 2 * 60 * 1000;
     const active = [];
     for (const [id, v] of visitorSessions.entries()) {
       if (v.lastSeen >= cutoff) {
         active.push({
-          session_id:  id,
-          ip:          v.ip,
-          page:        v.page,
-          referrer:    v.referrer || '',
-          user_agent:  v.ua,
+          session_id:   id,
+          ip:           v.ip,
+          page:         v.page,
+          referrer:     v.referrer || '',
+          user_agent:   v.ua,
           duration_sec: Math.round((now - v.firstSeen) / 1000),
-          last_seen:   new Date(v.lastSeen).toISOString(),
+          last_seen:    new Date(v.lastSeen).toISOString(),
         });
       }
     }
-    // Sort most-recent first
     active.sort((a, b) => b.last_seen.localeCompare(a.last_seen));
     res.json({ count: active.length, data: active });
-  } catch (e) { res.status(500).json({ error: e.message, count: 0, data: [] }); }
+  } catch(e) { res.status(500).json({ error: e.message, count: 0, data: [] }); }
 });
 
-
-// ══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 // ADMIN SETTINGS
-// ══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 app.get('/api/admin/settings', authMiddleware, async (req, res) => {
   try {
     const { data, error } = await supabase.from('settings').select('*');
@@ -1560,7 +1462,6 @@ app.get('/api/admin/settings', authMiddleware, async (req, res) => {
     (data || []).forEach(row => { obj[row.key] = row.value; });
     res.json({ data: obj });
   } catch(err) {
-    // settings table may not exist yet — return empty gracefully
     res.json({ data: {} });
   }
 });
@@ -1583,21 +1484,20 @@ app.get('/', (_, res) => res.json({
   status:'ok', service:'Ascovita Backend', version:'7.0.0',
   timestamp: new Date().toISOString(),
   features: ['google-oauth','email-auth','soft-delete','audit-logs','order-status-history','image-upload','image-library','whatsapp-reports','cashfree','shiprocket','email-notifications'],
-  env: { supabase:!!process.env.SUPABASE_URL, cashfree:!!process.env.CASHFREE_APP_ID, shiprocket:!!process.env.SHIPROCKET_EMAIL, twilio:!!process.env.TWILIO_ACCOUNT_SID, email:!!process.env.MAIL_USER }
+  env: { supabase:!!process.env.SUPABASE_URL, cashfree:!!process.env.CASHFREE_APP_ID, shiprocket:!!process.env.SHIPROCKET_EMAIL, twilio:!!process.env.TWILIO_ACCOUNT_SID, email:!!process.env.MAIL_USER },
 }));
 app.get('/health', (_, res) => res.json({ status:'ok' }));
 
 // ═══════════════════════════════════════════════════════════════
-// KEEP-ALIVE — prevents Render free tier from spinning down
-// Pings itself every 14 minutes (Render sleeps after 15min idle)
+// KEEP-ALIVE
 // ═══════════════════════════════════════════════════════════════
 function startKeepAlive() {
-  const SELF_URL = process.env.RENDER_EXTERNAL_URL || `https://ascovita-backend.onrender.com`;
-  const INTERVAL = 10 * 60 * 1000; // 10 minutes — Render sleeps after 15min, stay well under that
+  const SELF_URL = process.env.RENDER_EXTERNAL_URL || 'https://ascovita-backend.onrender.com';
+  const INTERVAL = 10 * 60 * 1000;
 
   setInterval(async () => {
     try {
-      const r = await fetch(`${SELF_URL}/health`, { signal: AbortSignal.timeout(10000) });
+      const r   = await fetch(`${SELF_URL}/health`, { signal: AbortSignal.timeout(10000) });
       const now = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
       if (r.ok) console.log(`✅ [KEEP-ALIVE] Pinged at ${now} IST`);
       else       console.warn(`⚠️ [KEEP-ALIVE] Ping returned ${r.status}`);
@@ -1610,14 +1510,9 @@ function startKeepAlive() {
   console.log(`💡 TIP: Also register ${SELF_URL}/health on UptimeRobot.com (free, every 5min) for guaranteed uptime.`);
 }
 
-
 // ═══════════════════════════════════════════════════════════════
-// INTEGRATION HEALTH CHECK ROUTES
-// Used by admin panel → Integrations page to verify connectivity
-// Always returns 200 — frontend reads the `status` field
+// INTEGRATION HEALTH CHECKS
 // ═══════════════════════════════════════════════════════════════
-
-// GET /api/health/cashfree
 app.get('/api/health/cashfree', authMiddleware, adminOnly, async (req, res) => {
   const appId  = process.env.CASHFREE_APP_ID;
   const secret = process.env.CASHFREE_SECRET_KEY;
@@ -1632,16 +1527,14 @@ app.get('/api/health/cashfree', authMiddleware, adminOnly, async (req, res) => {
       headers: { 'x-client-id': appId, 'x-client-secret': secret, 'x-api-version': '2023-08-01', 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(8000),
     });
-    // 422 = valid credentials but missing/bad params — credentials are valid
     if (r.ok || r.status === 422) return res.json({ ok: true, status: 'connected', env, detail: 'Credentials valid' });
     if (r.status === 401)         return res.json({ ok: true, status: 'auth_error', detail: 'Invalid App ID or Secret Key' });
     return res.json({ ok: true, status: 'error', detail: `Cashfree returned HTTP ${r.status}` });
-  } catch (e) {
+  } catch(e) {
     return res.json({ ok: true, status: 'unreachable', detail: e.message });
   }
 });
 
-// GET /api/health/shiprocket
 app.get('/api/health/shiprocket', authMiddleware, adminOnly, async (req, res) => {
   const email    = process.env.SHIPROCKET_EMAIL;
   const password = process.env.SHIPROCKET_PASSWORD;
@@ -1659,7 +1552,7 @@ app.get('/api/health/shiprocket', authMiddleware, adminOnly, async (req, res) =>
     const data = await r.json();
     if (r.ok && data.token) return res.json({ ok: true, status: 'connected', detail: 'Authenticated successfully' });
     return res.json({ ok: true, status: 'auth_error', detail: data.message || 'Invalid email or password' });
-  } catch (e) {
+  } catch(e) {
     return res.json({ ok: true, status: 'unreachable', detail: e.message });
   }
 });
@@ -1669,7 +1562,7 @@ app.get('/api/health/shiprocket', authMiddleware, adminOnly, async (req, res) =>
 // ═══════════════════════════════════════════════════════════════
 async function checkDbTables() {
   const required = ['products','orders','customers','coupons','order_status_logs','audit_logs','settings','image_library','banners'];
-  const missing = [];
+  const missing  = [];
   for (const t of required) {
     const { error } = await supabase.from(t).select('id').limit(1);
     if (error && (error.code === '42P01' || error.message?.includes('does not exist'))) missing.push(t);
@@ -1690,5 +1583,4 @@ app.listen(PORT, async () => {
   await checkDbTables();
   scheduleReports();
   startKeepAlive();
-});
-});
+});;
