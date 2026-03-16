@@ -1439,7 +1439,8 @@ app.post('/api/create-shiprocket-order', async (req, res) => {
     const data = await srRequest('https://apiv2.shiprocket.in/v1/external/orders/create/adhoc', { method:'POST', body:JSON.stringify(payload) });
     if (!data.order_id) return res.status(422).json({ error: data.message||'Rejected', details: data.errors||data });
     if (payload.order_id) {
-      await supabase.from('orders').update({ shiprocket_id:String(data.order_id), fulfillment:'Processing', updated_at:new Date().toISOString() }).eq('id', payload.order_id).catch(()=>{});
+      const { error: srUpdateErr } = await supabase.from('orders').update({ shiprocket_id:String(data.order_id), fulfillment:'Processing', updated_at:new Date().toISOString() }).eq('id', payload.order_id);
+      if (srUpdateErr) console.error('⚠️ Supabase order update failed after Shiprocket push:', srUpdateErr.message);
     }
     res.json(data);
   } catch(err) { res.status(500).json({ error: err.message }); }
@@ -1689,4 +1690,5 @@ app.listen(PORT, async () => {
   await checkDbTables();
   scheduleReports();
   startKeepAlive();
+});
 });
