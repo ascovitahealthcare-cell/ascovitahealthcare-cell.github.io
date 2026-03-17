@@ -1703,5 +1703,4 @@ app.listen(PORT, async () => {
   await checkDbTables();
   scheduleReports();
   startKeepAlive();
-});;
-});;
+});
