@@ -110,10 +110,35 @@ app.options('*', cors());
 app.use(express.json({ limit: '5mb' }));
 
 // ── Email ─────────────────────────────────────────────────────────
-const mailer = nodemailer.createTransport({
-  service: 'gmail',
-  auth: { user: process.env.MAIL_USER||'', pass: process.env.MAIL_PASSWORD||'' },
-});
+// Explicit SMTP config — more reliable than service:'gmail' shorthand on Render
+function createMailer() {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.MAIL_USER     || '',
+      pass: process.env.MAIL_PASSWORD || '',
+    },
+    tls: { rejectUnauthorized: false },
+  });
+}
+const mailer = createMailer();
+
+// Verify SMTP on startup — readable output in Render logs
+async function verifyMailer() {
+  if (!process.env.MAIL_USER || !process.env.MAIL_PASSWORD) {
+    console.warn('⚠️  [EMAIL] MAIL_USER or MAIL_PASSWORD not set — emails disabled');
+    return;
+  }
+  try {
+    await mailer.verify();
+    console.log('✅ [EMAIL] SMTP connected — sending as ' + process.env.MAIL_USER);
+  } catch(e) {
+    console.error('❌ [EMAIL] SMTP failed: ' + e.message);
+    console.error('   Fix: use Gmail App Password (myaccount.google.com/apppasswords), NOT your login password');
+  }
+}
 
 // ── JWT helpers ───────────────────────────────────────────────────
 function signToken(payload) {
@@ -314,10 +339,39 @@ async function sendOrderEmail(order) {
   </div></body></html>`;
 
   try {
-    await mailer.sendMail({ from: process.env.MAIL_FROM||`Ascovita <${process.env.MAIL_USER}>`, to: order.customer_email, subject: `✅ Order Confirmed — ${order.id} | Ascovita Healthcare`, html });
-    await mailer.sendMail({ from: process.env.MAIL_FROM||`Ascovita <${process.env.MAIL_USER}>`, to: process.env.MAIL_USER, subject: `🛒 New Order: ${order.id} — ₹${order.total} — ${order.customer_name}`, html: `<p><b>Order:</b> ${order.id}</p><p><b>Customer:</b> ${order.customer_name} (${order.customer_email})</p><p><b>Phone:</b> ${order.customer_phone}</p><p><b>Total:</b> ₹${order.total}</p><p><b>Payment:</b> ${order.payment_status}</p>` });
-    console.log(`✅ [EMAIL] Sent to ${order.customer_email}`);
-  } catch(e) { console.error('[EMAIL]', e.message); }
+    const fromAddr = process.env.MAIL_FROM || `Ascovita Healthcare <${process.env.MAIL_USER}>`;
+    // Send to customer
+    await mailer.sendMail({
+      from: fromAddr,
+      to: order.customer_email,
+      subject: `✅ Order Confirmed — ${order.id} | Ascovita Healthcare`,
+      html,
+    });
+    console.log(`✅ [EMAIL] Order confirmation sent to ${order.customer_email}`);
+    // Send admin copy
+    await mailer.sendMail({
+      from: fromAddr,
+      to: process.env.MAIL_USER,
+      subject: `🛒 New Order: ${order.id} — ₹${order.total} — ${order.customer_name}`,
+      html: `<div style="font-family:Arial,sans-serif;padding:20px">
+        <h3 style="color:#2d5016">New Order Received</h3>
+        <p><b>Order ID:</b> ${order.id}</p>
+        <p><b>Customer:</b> ${order.customer_name} (${order.customer_email})</p>
+        <p><b>Phone:</b> ${order.customer_phone}</p>
+        <p><b>Total:</b> ₹${order.total}</p>
+        <p><b>Payment:</b> ${order.payment_status}</p>
+        <p><b>City:</b> ${order.city || '-'}</p>
+      </div>`,
+    });
+    console.log(`✅ [EMAIL] Admin copy sent to ${process.env.MAIL_USER}`);
+  } catch(e) {
+    console.error(`❌ [EMAIL] Failed for order ${order.id}: ${e.message}`);
+    if (e.message.includes('535') || e.message.includes('Username and Password')) {
+      console.error('   → MAIL_PASSWORD is wrong. Use Gmail App Password from myaccount.google.com/apppasswords');
+    } else if (e.message.includes('ECONNREFUSED') || e.message.includes('ETIMEDOUT')) {
+      console.error('   → Render is blocking SMTP port 465. Switch to port 587 in mailer config.');
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1746,6 +1800,50 @@ app.get('/api/admin/stats/heatmap', authMiddleware, async (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message, data: {} }); }
 });
 
+
+// ═══════════════════════════════════════════════════════════════
+// EMAIL TEST ROUTE — hit this from browser to verify email works
+// GET /api/admin/test-email?to=yourmail@gmail.com
+// ═══════════════════════════════════════════════════════════════
+app.get('/api/admin/test-email', authMiddleware, async (req, res) => {
+  const to = req.query.to || process.env.MAIL_USER;
+  if (!to) return res.status(400).json({ error: 'No recipient — add ?to=your@email.com' });
+  if (!process.env.MAIL_USER || !process.env.MAIL_PASSWORD) {
+    return res.status(503).json({ error: 'MAIL_USER or MAIL_PASSWORD not set in Render env vars' });
+  }
+  try {
+    await mailer.verify();
+    await mailer.sendMail({
+      from: process.env.MAIL_FROM || `Ascovita Healthcare <${process.env.MAIL_USER}>`,
+      to,
+      subject: '✅ Ascovita Email Test — System Working!',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:500px;margin:30px auto;background:#f8fdf4;border:2px solid #4a8a28;border-radius:12px;padding:28px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:#2d5016;margin-bottom:8px">ASCOVITA HEALTHCARE</div>
+          <div style="font-size:40px;margin:16px 0">✅</div>
+          <h2 style="color:#2d5016;margin:0 0 8px">Email System Working!</h2>
+          <p style="color:#555;font-size:14px">Your Nodemailer + Gmail SMTP setup is configured correctly.<br>Order confirmation emails will be delivered automatically.</p>
+          <div style="margin-top:20px;background:#2d5016;color:white;padding:10px 20px;border-radius:8px;font-size:12px">
+            Sent from: ${process.env.MAIL_USER}<br>
+            Time: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST
+          </div>
+        </div>`,
+    });
+    console.log(`✅ [EMAIL TEST] Sent to ${to}`);
+    res.json({ success: true, message: `Test email sent to ${to} — check your inbox (and spam folder)` });
+  } catch(e) {
+    console.error('[EMAIL TEST]', e.message);
+    res.status(500).json({
+      error: e.message,
+      fix: e.message.includes('535') || e.message.includes('Username and Password')
+        ? 'Wrong password — use Gmail App Password from myaccount.google.com/apppasswords (NOT your login password)'
+        : e.message.includes('ECONNREFUSED') || e.message.includes('ETIMEDOUT')
+        ? 'SMTP connection blocked — Render free tier may block port 465. Try switching to port 587.'
+        : 'Check Render logs for details',
+    });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════
 // INTEGRATION HEALTH CHECKS
 // ═══════════════════════════════════════════════════════════════
@@ -1838,6 +1936,7 @@ async function checkDbTables() {
 app.listen(PORT, async () => {
   console.log(`✅ Ascovita Backend v7.0 running on port ${PORT}`);
   await checkDbTables();
+  await verifyMailer();
   scheduleReports();
   startKeepAlive();
 });
