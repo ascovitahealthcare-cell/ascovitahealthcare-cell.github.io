@@ -1618,6 +1618,135 @@ function startKeepAlive() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// ANALYTICS ROUTES — used by admin dashboard charts + GA4 widget
+// ═══════════════════════════════════════════════════════════════
+
+// GA4 Realtime — proxies to Google Analytics Data API using service account
+app.get('/api/analytics/realtime', authMiddleware, async (req, res) => {
+  try {
+    const propertyId = process.env.GA4_PROPERTY_ID;
+    const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+
+    // If not configured, fall back to internal visitor session count
+    if (!propertyId || !serviceAccountJson) {
+      const now    = Date.now();
+      const cutoff = now - 2 * 60 * 1000;
+      let active = 0;
+      for (const [, v] of visitorSessions.entries()) {
+        if (v.lastSeen >= cutoff) active++;
+      }
+      return res.json({
+        activeUsers: active,
+        screenPageViews: active,
+        source: 'internal',
+        note: 'Set GA4_PROPERTY_ID and GOOGLE_SERVICE_ACCOUNT_JSON in Render env vars for real GA4 data',
+      });
+    }
+
+    // Build JWT for Google OAuth2 service account
+    const crypto = require('crypto');
+    const sa = JSON.parse(serviceAccountJson);
+    const now = Math.floor(Date.now() / 1000);
+    const header  = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+    const payload = Buffer.from(JSON.stringify({
+      iss: sa.client_email,
+      scope: 'https://www.googleapis.com/auth/analytics.readonly',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: now + 3600,
+      iat: now,
+    })).toString('base64url');
+    const sign = crypto.createSign('RSA-SHA256');
+    sign.update(`${header}.${payload}`);
+    const sig = sign.sign(sa.private_key, 'base64url');
+    const jwtToken = `${header}.${payload}.${sig}`;
+
+    // Exchange JWT for access token
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: jwtToken }),
+      signal: AbortSignal.timeout(8000),
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) throw new Error('Could not get GA4 access token');
+
+    // Call GA4 Realtime API
+    const ga4Res = await fetch(
+      `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runRealtimeReport`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${tokenData.access_token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dimensions: [{ name: 'unifiedScreenName' }],
+          metrics:    [{ name: 'activeUsers' }, { name: 'screenPageViews' }],
+        }),
+        signal: AbortSignal.timeout(10000),
+      }
+    );
+    const ga4Data = await ga4Res.json();
+    if (ga4Data.error) throw new Error(ga4Data.error.message || 'GA4 API error');
+
+    const rows = ga4Data.rows || [];
+    const totalActive = rows.reduce((s, r) => s + parseInt(r.metricValues?.[0]?.value || 0), 0);
+    const totalViews  = rows.reduce((s, r) => s + parseInt(r.metricValues?.[1]?.value || 0), 0);
+    const sessions    = rows.slice(0, 10).map(r => ({
+      page:   r.dimensionValues?.[0]?.value || '/',
+      active: parseInt(r.metricValues?.[0]?.value || 0),
+    }));
+
+    res.json({ activeUsers: totalActive, screenPageViews: totalViews, sessions, source: 'ga4' });
+  } catch(e) {
+    console.error('[GA4 realtime]', e.message);
+    // Graceful fallback — return internal ping count instead of error
+    const now    = Date.now();
+    const cutoff = now - 2 * 60 * 1000;
+    let active = 0;
+    for (const [, v] of visitorSessions.entries()) {
+      if (v.lastSeen >= cutoff) active++;
+    }
+    res.json({ activeUsers: active, screenPageViews: active, source: 'internal', error: e.message });
+  }
+});
+
+// Revenue over last 30 days — for the area chart
+app.get('/api/admin/stats/revenue', authMiddleware, async (req, res) => {
+  try {
+    const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+    const { data } = await supabase.from('orders')
+      .select('created_at,total,payment_status')
+      .is('deleted_at', null)
+      .gte('created_at', since);
+
+    const byDay = {};
+    (data || []).filter(o => o.payment_status === 'Paid').forEach(o => {
+      const d = (o.created_at || '').split('T')[0];
+      byDay[d] = (byDay[d] || 0) + parseFloat(o.total || 0);
+    });
+    res.json({ data: byDay });
+  } catch(e) { res.status(500).json({ error: e.message, data: {} }); }
+});
+
+// Weekly order heatmap (day-of-week × week)
+app.get('/api/admin/stats/heatmap', authMiddleware, async (req, res) => {
+  try {
+    const since = new Date(Date.now() - 8 * 7 * 24 * 3600 * 1000).toISOString();
+    const { data } = await supabase.from('orders')
+      .select('created_at')
+      .is('deleted_at', null)
+      .gte('created_at', since);
+
+    const matrix = {};
+    (data || []).forEach(o => {
+      const d    = new Date(o.created_at || 0);
+      const week = Math.floor((Date.now() - d.getTime()) / (7 * 86400000));
+      const day  = (d.getDay() + 6) % 7; // 0=Mon
+      if (week < 8) { const k = `${week}-${day}`; matrix[k] = (matrix[k] || 0) + 1; }
+    });
+    res.json({ data: matrix });
+  } catch(e) { res.status(500).json({ error: e.message, data: {} }); }
+});
+
+// ═══════════════════════════════════════════════════════════════
 // INTEGRATION HEALTH CHECKS
 // ═══════════════════════════════════════════════════════════════
 app.get('/api/health/cashfree', authMiddleware, adminOnly, async (req, res) => {
@@ -1630,11 +1759,14 @@ app.get('/api/health/cashfree', authMiddleware, adminOnly, async (req, res) => {
   }
   try {
     const baseUrl = env === 'PROD' ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
-    const r = await fetch(`${baseUrl}/orders?limit=1`, {
-      headers: { 'x-client-id': appId, 'x-client-secret': secret, 'x-api-version': '2023-08-01', 'Content-Type': 'application/json' },
+    // Fetch a dummy order — 404 "order not found" means credentials ARE valid
+    // (listing orders via GET /orders?limit=1 is not a valid Cashfree endpoint → always 404)
+    const r = await fetch(`${baseUrl}/orders/ASC-health-check-000`, {
+      headers: { 'x-client-id': appId, 'x-client-secret': secret, 'x-api-version': '2023-08-01' },
       signal: AbortSignal.timeout(8000),
     });
-    if (r.ok || r.status === 422) return res.json({ ok: true, status: 'connected', env, detail: 'Credentials valid' });
+    // 404 = order not found → credentials are accepted by Cashfree ✅
+    if (r.ok || r.status === 404 || r.status === 422) return res.json({ ok: true, status: 'connected', env, detail: 'Credentials valid' });
     if (r.status === 401)         return res.json({ ok: true, status: 'auth_error', detail: 'Invalid App ID or Secret Key' });
     return res.json({ ok: true, status: 'error', detail: `Cashfree returned HTTP ${r.status}` });
   } catch(e) {
