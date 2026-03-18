@@ -383,7 +383,7 @@ async function buildDailyReport() {
     paid.slice(0, 3).forEach(o => { msg += `  • ${o.customer_name} — ₹${o.total}\n`; });
   }
 
-  msg += `\n🔗 Admin: https://ascovita-backend.onrender.com\n`;
+  msg += `\n🔗 Admin: https://ascovitahealthcare-cell-github-io.onrender.com\n`;
   return msg;
 }
 
@@ -1056,8 +1056,8 @@ app.post('/api/create-cashfree-order', async (req, res) => {
     if (!amount)         return res.status(400).json({ error: 'Missing amount' });
     if (!customer_email) return res.status(400).json({ error: 'Missing customer_email' });
 
-    const BACKEND_URL  = process.env.RENDER_EXTERNAL_URL || 'https://ascovita-backend.onrender.com';
-    const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.ascovita.com';
+    const BACKEND_URL  = process.env.RENDER_EXTERNAL_URL || 'https://ascovitahealthcare-cell-github-io.onrender.com';
+    const FRONTEND_URL = process.env.FRONTEND_URL || 'https://ascovitahealthcare-cell.github.io';
 
     const payload = {
       order_id,
@@ -1599,7 +1599,7 @@ app.get('/health', (_, res) => res.json({ status:'ok' }));
 // KEEP-ALIVE
 // ═══════════════════════════════════════════════════════════════
 function startKeepAlive() {
-  const SELF_URL = process.env.RENDER_EXTERNAL_URL || 'https://ascovita-backend.onrender.com';
+  const SELF_URL = process.env.RENDER_EXTERNAL_URL || 'https://ascovitahealthcare-cell-github-io.onrender.com';
   const INTERVAL = 10 * 60 * 1000;
 
   setInterval(async () => {
