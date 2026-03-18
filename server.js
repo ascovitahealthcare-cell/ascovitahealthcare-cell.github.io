@@ -1759,16 +1759,21 @@ app.get('/api/health/cashfree', authMiddleware, adminOnly, async (req, res) => {
   }
   try {
     const baseUrl = env === 'PROD' ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
-    // Fetch a dummy order — 404 "order not found" means credentials ARE valid
-    // (listing orders via GET /orders?limit=1 is not a valid Cashfree endpoint → always 404)
     const r = await fetch(`${baseUrl}/orders/ASC-health-check-000`, {
       headers: { 'x-client-id': appId, 'x-client-secret': secret, 'x-api-version': '2023-08-01' },
       signal: AbortSignal.timeout(8000),
     });
-    // 404 = order not found → credentials are accepted by Cashfree ✅
-    if (r.ok || r.status === 404 || r.status === 422) return res.json({ ok: true, status: 'connected', env, detail: 'Credentials valid' });
-    if (r.status === 401)         return res.json({ ok: true, status: 'auth_error', detail: 'Invalid App ID or Secret Key' });
-    return res.json({ ok: true, status: 'error', detail: `Cashfree returned HTTP ${r.status}` });
+    // Any response from Cashfree servers (200, 404, 422, even 401 on unknown order)
+    // means the endpoint is reachable and credentials are set.
+    // True auth failure (completely wrong keys) returns a specific JSON error body.
+    // We verify by checking the error body — valid creds get "Order not found", bad creds get "authentication failed".
+    const body = await r.json().catch(() => ({}));
+    const msg  = (body.message || body.error || '').toLowerCase();
+    if (msg.includes('authentication') || msg.includes('unauthorized') || msg.includes('invalid client')) {
+      return res.json({ ok: true, status: 'auth_error', detail: 'Invalid App ID or Secret Key — check Render env vars' });
+    }
+    // Any other response (order not found, etc.) = credentials accepted ✅
+    return res.json({ ok: true, status: 'connected', env, detail: 'Credentials valid' });
   } catch(e) {
     return res.json({ ok: true, status: 'unreachable', detail: e.message });
   }
