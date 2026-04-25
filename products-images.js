@@ -17,7 +17,11 @@ const PRODUCT_IMAGES = {
 
   // ─── id: 2 — Apple Cider Vinegar + Moringa – Green Apple Flavour ───
   2: { images: [
-    "https://static.wixstatic.com/media/f0adaf_131d4b0b43f648d89e0904197029b4f3~mv2.jpg/v1/fill/w_1100,h_1100,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/f0adaf_131d4b0b43f648d89e0904197029b4f3~mv2.jpg",
+    "https://static.wixstatic.com/media/f0adaf_1d97e722692a46cbb7e6701d688bdcda~mv2.jpg/v1/fill/w_600,h_600,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/f0adaf_1d97e722692a46cbb7e6701d688bdcda~mv2.jpg",
+    "https://static.wixstatic.com/media/f0adaf_a308af1a323b420d90910c096785fc75~mv2.jpg/v1/fill/w_600,h_600,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/f0adaf_a308af1a323b420d90910c096785fc75~mv2.jpg",
+    "https://static.wixstatic.com/media/f0adaf_0bf6f30975d547b9a7be2475c4bb8e60~mv2.jpg/v1/fill/w_600,h_600,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/f0adaf_0bf6f30975d547b9a7be2475c4bb8e60~mv2.jpg",
+    "https://static.wixstatic.com/media/f0adaf_54343dffc0d84c69972d96ce14c03645~mv2.jpg/v1/fill/w_600,h_600,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/f0adaf_54343dffc0d84c69972d96ce14c03645~mv2.jpg",
+    "https://static.wixstatic.com/media/f0adaf_4f5f2853306542f4959d266a863e53c0~mv2.jpg/v1/fill/w_600,h_600,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/f0adaf_4f5f2853306542f4959d266a863e53c0~mv2.jpg",
   ]},
 
   // ─── id: 3 — L-Carnitine Effervescent – Orange Flavour ───
