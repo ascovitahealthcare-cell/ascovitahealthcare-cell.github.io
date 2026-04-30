@@ -10775,6 +10775,7 @@ async function finalizeOrder(orderId, formData, total, method, codCharge) {
       date: new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'}),
       customer: `${formData.firstName} ${formData.lastName}`,
       email: formData.email, phone: formData.phone,
+      userEmail: (getCurrentUser()?.email || formData.email || '').toLowerCase().trim(),
       address: `${formData.addr1}, ${formData.city}, ${formData.state} - ${formData.pin}`,
       total, method, items: srItems.map(i=>({name:i.name,qty:i.units,price:i.selling_price})),
       status: srStatus,
@@ -13618,7 +13619,12 @@ function trackOrder() {
   if (!orderId) { showToast('Please enter your Order ID', 'error'); return; }
 
   try {
-    const orders = JSON.parse(localStorage.getItem('asc_orders') || '[]');
+    const allOrders = JSON.parse(localStorage.getItem('asc_orders') || '[]');
+    const _cu = getCurrentUser();
+    const _ce = (_cu?.email || '').toLowerCase().trim();
+    const orders = _ce
+      ? allOrders.filter(o => (o.userEmail || o.email || '').toLowerCase().trim() === _ce)
+      : allOrders;
     const order = orders.find(o => o.orderId === orderId || o.orderId.includes(orderId));
     if (order) showToast(`📦 Order ${orderId}: ${order.status}`);
   } catch(e) {}
@@ -13993,7 +13999,12 @@ function loadOrdersList() {
   const container = document.getElementById('ordersList');
   if (!container) return;
   try {
-    const orders = JSON.parse(localStorage.getItem('asc_orders') || '[]');
+    const allOrders = JSON.parse(localStorage.getItem('asc_orders') || '[]');
+    const _cu = getCurrentUser();
+    const _ce = (_cu?.email || '').toLowerCase().trim();
+    const orders = _ce
+      ? allOrders.filter(o => (o.userEmail || o.email || '').toLowerCase().trim() === _ce)
+      : allOrders.filter(o => !o.userEmail);
     if (orders.length === 0) {
       container.innerHTML = `<div class="no-orders"><div class="no-orders-ico">📦</div><h3 style="margin-bottom:8px">No orders yet</h3><p style="color:var(--gray);margin-bottom:20px">Your order history will appear here after your first purchase.</p><button class="btn-primary" onclick="showPage('shop')">Start Shopping →</button></div>`;
       return;
@@ -14024,7 +14035,12 @@ function loadInvoicesList() {
   const container = document.getElementById('invoicesList');
   if (!container) return;
   try {
-    const orders = JSON.parse(localStorage.getItem('asc_orders') || '[]');
+    const allOrders = JSON.parse(localStorage.getItem('asc_orders') || '[]');
+    const _cu = getCurrentUser();
+    const _ce = (_cu?.email || '').toLowerCase().trim();
+    const orders = _ce
+      ? allOrders.filter(o => (o.userEmail || o.email || '').toLowerCase().trim() === _ce)
+      : allOrders.filter(o => !o.userEmail);
     if (orders.length === 0) {
       container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--gray)">No invoices yet. They'll appear here after you place an order.</div>`;
       return;
