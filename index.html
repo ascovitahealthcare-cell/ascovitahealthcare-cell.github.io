@@ -118,8 +118,7 @@
   };
 </script>
 <!-- End Google Analytics -->
-  <meta name="google-signin-client_id" content="6793142938-b9sl3d3lh2svjkmcnina8fsh31nut0bu.apps.googleusercontent.com">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://accounts.google.com/gsi/client" async defer onload="window.onGoogleLibraryLoad && window.onGoogleLibraryLoad()"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ascovita – Empower Your Health | Effervescent Tablets, Spirulina & Multivitamins India</title>
   <meta name="description" content="Ascovita — India's premium effervescent vitamins & supplements. Glutathione, Spirulina, Biotin, Apple Cider Vinegar, Multivitamin. FSSAI Approved. Free shipping above ₹599. Made in Gujarat.">
@@ -13757,6 +13756,12 @@ async function doRegister() {
 
 const GOOGLE_CLIENT_ID = '6793142938-b9sl3d3lh2svjkmcnina8fsh31nut0bu.apps.googleusercontent.com';
 
+// Global callback for when Google Identity Services loads
+window.onGoogleLibraryLoad = function() {
+  console.log('Google Identity Services loaded');
+  initGoogleOneTap();
+};
+
 // ── Parse JWT from Google's credential response ──
 function parseGoogleJWT(token) {
   try {
@@ -13879,20 +13884,24 @@ function initGoogleOneTap() {
   const currentUser = getCurrentUser();
   if (currentUser) return; // already logged in
 
-  google.accounts.id.initialize({
-    client_id:  GOOGLE_CLIENT_ID,
-    callback:   handleGoogleCredential,
-    auto_select: false,
-    cancel_on_tap_outside: true,
-    context: 'signin',
-  });
+  try {
+    google.accounts.id.initialize({
+      client_id:  GOOGLE_CLIENT_ID,
+      callback:   handleGoogleCredential,
+      auto_select: false,
+      cancel_on_tap_outside: true,
+      context: 'signin',
+    });
 
-  // Show One Tap only after 3 seconds, non-intrusively
-  setTimeout(() => {
-    if (!getCurrentUser()) {
-      google.accounts.id.prompt();
-    }
-  }, 3000);
+    // Show One Tap only after 3 seconds, non-intrusively
+    setTimeout(() => {
+      if (!getCurrentUser()) {
+        google.accounts.id.prompt();
+      }
+    }, 3000);
+  } catch(e) {
+    console.error('Google One Tap init error:', e);
+  }
 }
 
 // ── Sign out from Google too ──
@@ -13931,13 +13940,22 @@ function updateAccountNavBtn() {
 
 // ── Auto-fill checkout when user is already logged in ──
 document.addEventListener('DOMContentLoaded', function() {
-  // Init Google One Tap after SDK loads
-  const gsiInterval = setInterval(function() {
+  // Init Google One Tap when SDK is ready
+  function tryInitGoogle() {
     if (typeof google !== 'undefined' && google.accounts) {
-      clearInterval(gsiInterval);
       initGoogleOneTap();
+      return true;
     }
-  }, 300);
+    return false;
+  }
+  
+  // Try immediately
+  if (!tryInitGoogle()) {
+    // If not ready, wait for window load
+    window.addEventListener('load', function() {
+      setTimeout(tryInitGoogle, 500);
+    });
+  }
 
   // Show Google sign-in hint on checkout page if not logged in
   const origShowPage2 = window.showPage;
