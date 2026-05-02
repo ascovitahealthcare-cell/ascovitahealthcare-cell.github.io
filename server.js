@@ -497,6 +497,74 @@ app.post('/api/auth/google', async (req, res) => {
   } catch(err) { res.status(500).json({ error: 'Authentication failed' }); }
 });
 
+// ── Google OAuth2 authorization CODE exchange (mobile/Safari redirect flow) ──
+// Called by frontend after Google redirects back with ?code=xxx
+// Exchanges the code for tokens server-side (keeps client_secret safe)
+app.post('/api/auth/google-code', async (req, res) => {
+  try {
+    const { code, redirect_uri } = req.body;
+    if (!code)         return res.status(400).json({ error: 'Missing code' });
+    if (!redirect_uri) return res.status(400).json({ error: 'Missing redirect_uri' });
+
+    const clientId     = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    if (!clientSecret) return res.status(500).json({ error: 'GOOGLE_CLIENT_SECRET not configured on server' });
+
+    // Step 1: Exchange auth code → access_token + id_token
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id:     clientId,
+        client_secret: clientSecret,
+        redirect_uri,
+        grant_type:    'authorization_code',
+      }),
+    });
+    const tokenData = await tokenRes.json();
+    if (tokenData.error) {
+      console.error('[google-code] Token exchange error:', tokenData);
+      return res.status(401).json({ error: tokenData.error_description || 'Code exchange failed' });
+    }
+
+    // Step 2: Verify the id_token to get user profile
+    const verifyRes  = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${tokenData.id_token}`);
+    const googleData = await verifyRes.json();
+    if (googleData.error || googleData.aud !== clientId) {
+      return res.status(401).json({ error: 'Invalid Google token after code exchange' });
+    }
+
+    const { email, name, picture } = googleData;
+
+    // Step 3: Upsert customer in Supabase (same logic as /api/auth/google)
+    const { data: existing } = await supabase.from('customers').select('*').eq('email', email).single();
+    let customer;
+    if (existing) {
+      const { data: u } = await supabase.from('customers')
+        .update({ name, updated_at: new Date().toISOString() })
+        .eq('email', email).select().single();
+      customer = u || existing;
+    } else {
+      const { data: c, error } = await supabase.from('customers')
+        .insert([{ email, name, created_at: new Date().toISOString() }])
+        .select().single();
+      if (error) throw error;
+      customer = c;
+      await writeAudit({ tableName: 'customers', recordId: customer.id, action: 'INSERT', newValues: { email, name } });
+    }
+
+    res.json({
+      token: signToken({ id: customer.id, email: customer.email, name: customer.name }),
+      user:  { id: customer.id, name: customer.name, email: customer.email, picture: picture || '' },
+    });
+
+  } catch(err) {
+    console.error('[google-code] Error:', err);
+    res.status(500).json({ error: 'Authentication failed' });
+  }
+});
+
 app.post('/api/auth/email-login', async (req, res) => {
   try {
     const { email, password } = req.body;
