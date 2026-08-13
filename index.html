@@ -7038,9 +7038,77 @@ button, [role="button"] {
 @media (prefers-reduced-motion: reduce) { .ozylx-notify-card { animation: none; transform: none; } }
 
 /* ── 5. MIX & MATCH UI ────────────────────────────────────────────── */
-/* The shop-page .mm-shop-banner card was removed (duplicate of the home
-   page Mix & Match section), and its styles with it. What remains below is
-   the live in-cart / on-product progress UI, which shows a real number. */
+/* Two teasers on the shop page — a sidebar card and a strip below the
+   grid. Both are <button>s that route to the home page section, so they
+   are styled as buttons here (no inherited button chrome) and kept to one
+   strip's worth of height: the promo footer they sit in is a footer. */
+.mm-shop-banner {
+  display: flex; align-items: center; gap: 14px; width: 100%;
+  text-align: left; cursor: pointer; font: inherit; border: 0;
+  position: relative; overflow: hidden;
+  background: linear-gradient(120deg, var(--green) 0%, var(--indigo) 115%);
+  border-radius: 14px; padding: 12px 16px; color: #fff;
+  box-shadow: 0 8px 20px -12px rgba(29,35,32,.4);
+  margin-bottom: 10px;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.mm-shop-banner:hover { transform: translateY(-1px); box-shadow: 0 12px 26px -12px rgba(29,35,32,.5); }
+.mm-shop-banner .mm-visual {
+  flex: 0 0 auto; width: 40px; height: 40px; border-radius: 10px;
+  overflow: hidden; position: relative; display: grid; place-items: center;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.24);
+}
+.mm-shop-banner .mm-visual img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mm-shop-banner .mm-visual-ico { font-size: 1.1rem; }
+.mm-shop-banner .mm-copy { flex: 1 1 auto; min-width: 0; }
+.mm-shop-banner .mm-title {
+  display: block; color: #fff;
+  font-family: var(--font-display, 'Jost', sans-serif); font-weight: 600;
+  font-size: clamp(.84rem, 1.6vw, 1rem); line-height: 1.25;
+}
+.mm-shop-banner .mm-sub {
+  display: block; color: rgba(255,255,255,.88);
+  font-size: .72rem; line-height: 1.45; margin-top: 2px;
+}
+.mm-shop-banner .mm-cta {
+  flex: 0 0 auto; white-space: nowrap;
+  background: #fff; color: var(--ink, #1D2320); border-radius: 999px;
+  padding: 7px 14px; font-size: .74rem; font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
+@media (max-width: 820px) {
+  /* The pill would push the copy to three lines on a phone; the whole card
+     is the tap target anyway, so it drops out and the copy gets the width. */
+  .mm-shop-banner { padding: 11px 13px; gap: 11px; }
+  .mm-shop-banner .mm-visual { width: 34px; height: 34px; border-radius: 9px; }
+  .mm-shop-banner .mm-title { font-size: .82rem; }
+  .mm-shop-banner .mm-sub { font-size: .67rem; }
+  .mm-shop-banner .mm-cta { display: none; }
+}
+
+/* Sidebar teaser — same destination, vertical card to suit the column. */
+.mm-side-card {
+  display: block; width: 100%; text-align: center; cursor: pointer;
+  font: inherit; border: 0; margin-top: 18px; padding: 18px 16px;
+  border-radius: var(--r-lg, 18px); color: #fff;
+  background: linear-gradient(135deg, var(--green), var(--indigo));
+  box-shadow: 0 10px 24px -14px rgba(29,35,32,.45);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.mm-side-card:hover { transform: translateY(-2px); box-shadow: 0 14px 30px -14px rgba(29,35,32,.55); }
+.mm-side-ico { display: block; font-size: 1.6rem; margin-bottom: 6px; }
+.mm-side-title {
+  display: block; color: #fff; font-weight: 700; font-size: .88rem; line-height: 1.3;
+}
+.mm-side-sub {
+  display: block; color: rgba(255,255,255,.86);
+  font-size: .72rem; line-height: 1.45; margin: 6px 0 12px;
+}
+.mm-side-cta {
+  display: inline-block; background: #fff; color: var(--ink, #1D2320);
+  border-radius: 999px; padding: 8px 15px; font-size: .76rem; font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2);
+}
 
 /* Product-page Mix & Match progress pill */
 .mm-progress-wrap { display: flex; align-items: center; gap: 9px; margin: 12px 0 0; }
@@ -8603,7 +8671,7 @@ setInterval(function() { syncAppCartBadge(); syncAppWishBadge(); }, 2000);
       if(map['about.hero_background']) document.documentElement.style.setProperty('--about-hero-bg', "url('"+map['about.hero_background']+"')");
       if(map['b2b.hero_background']) document.documentElement.style.setProperty('--b2b-hero-bg', "url('"+map['b2b.hero_background']+"')");
       // Aug 2026: reveal shop banners when their upload exists
-      ['shop.banner.1','shop.banner.2'].forEach(function(k){
+      ['shop.banner.1','shop.banner.2','shop.banner.mix_match'].forEach(function(k){
         if(map[k]){
           var el=document.querySelector('[data-media-key="'+k+'"]');
           if(el){el.style.display='';el.onload=function(){var s=el.closest('[data-no-img]');if(s)s.setAttribute('data-no-img','no');};if(el.complete){var s=el.closest('[data-no-img]');if(s)s.setAttribute('data-no-img','no');}}
@@ -9630,11 +9698,15 @@ var BANNER_SLIDES = [
         <button type="button" class="filter-drawer-apply" onclick="closeShopFilters()">
           Show <span id="filterApplyCount">products</span>
         </button>
-        <!-- The sidebar offer card stood here. Removed: it was a third copy
-             of the Mix & Match pitch on this one page, its numbers did not
-             match the engine ("50% off" vs the cheapest of four free), and
-             its "Shop Now" button linked to the page it was already on. The
-             offer lives on the home page Mix & Match section. -->
+        <!-- Sidebar teaser. Sends the customer to the home page Mix & Match
+             section (the only place the offer can be built) instead of to
+             the page it is already on, which is what it used to do. -->
+        <button type="button" class="mm-side-card" onclick="goMixMatch()">
+          <span class="mm-side-ico" aria-hidden="true">🎁</span>
+          <span class="mm-side-title">Buy Any 3, Get the 4th Free</span>
+          <span class="mm-side-sub">Add any 4 eligible products — the lowest-priced one is free, applied automatically.</span>
+          <span class="mm-side-cta">Build Your Mix &amp; Match →</span>
+        </button>
       </div>
       <!-- PRODUCTS -->
       <div>
@@ -9659,11 +9731,23 @@ var BANNER_SLIDES = [
              deliberately short — these are footers to the grid, not
              destinations. Campaign slots: upload via admin Site Images with
              keys "shop.banner.1" / "shop.banner.2" (wide strips). Until an
-             image is uploaded, text cards are shown (no layout shift).
-             The Mix & Match explainer card stood here. Removed: it repeated
-             the home page Mix & Match section word for word, and its "Build
-             Your Mix & Match" button scrolled to the card containing it. -->
+             image is uploaded, text cards are shown (no layout shift). -->
         <div class="shop-promos">
+        <!-- Mix & Match teaser. The whole card is the click target and it
+             goes to the home page section that actually builds the bundle —
+             its old button scrolled to the card containing it. Kept to one
+             short line of copy: the full rules live at the destination. -->
+        <button type="button" class="mm-shop-banner" id="mmShopBanner" onclick="goMixMatch()">
+          <span class="mm-visual" aria-hidden="true">
+            <img src="" alt="" id="mmShopImg" data-media-key="shop.banner.mix_match" loading="lazy" style="display:none" onerror="this.style.display='none'">
+            <span class="mm-visual-ico">🎁</span>
+          </span>
+          <span class="mm-copy">
+            <span class="mm-title">Buy Any 3 Eligible Products — Get the 4th Free</span>
+            <span class="mm-sub">The lowest-priced of the four comes off your total, calculated on real prices and confirmed at checkout.</span>
+          </span>
+          <span class="mm-cta">Build Your Mix &amp; Match →</span>
+        </button>
         <div class="shop-banner-slot" id="shopBannerSlot1" data-no-img="yes">
           <img src="" alt="" id="shopBannerImg1" data-media-key="shop.banner.1" loading="lazy" style="display:none" onerror="this.style.display='none'">
           <div class="sb-overlay"><div class="sb-copy">
@@ -13186,10 +13270,15 @@ function initShop() { applyFilters();
   try { if (typeof initShopHero === 'function') initShopHero(); } catch (e) {}
 
   // Aug 2026: shop strategy — offer popups staggered (not on first paint —
-  // the customer browses first; value before pressure).
-  // The Mix & Match popup that fired here was removed: it was a fourth copy
-  // of the same offer on this page. The cart and checkout still show the
-  // live Mix & Match line, which is where the number actually matters.
+  // the customer browses first; value before pressure). Tapping the card
+  // opens the home page Mix & Match section; it used to state the offer and
+  // leave the customer with nowhere to act on it.
+  try { setTimeout(function () {
+    if (typeof ozylxNotify === 'undefined') return;
+    // `cta` is required, not decorative: paint() only renders the button
+    // when a label exists, so an onCta passed on its own is unreachable.
+    ozylxNotify.show({ id: 'shop-discovery', msg: '🎁 Mix &amp; Match — add any 4 eligible products and the lowest-priced one is FREE.', icon: '🎁', corner: 'bottom-left', cta: 'Build your bundle', onCta: function () { goMixMatch(); } });
+  }, 9000); } catch (e) {}
   try { setTimeout(function () {
     if (typeof ozylxNotify === 'undefined') return;
     ozylxNotify.show({ id: 'shop-vitapoints', msg: '🪙 Every Ozylix order earns Vita Points — redeem them for real discounts on your next purchase.', icon: '🪙', corner: 'bottom-right', onCta: function () { showPage('home'); setTimeout(function () { document.getElementById('vitapoints-home')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120); } });
@@ -13245,6 +13334,30 @@ function applyFilters() {
   if (cnt) cnt.textContent = `Showing ${prods.length} product${prods.length!==1?'s':''}`;
   syncFilterChrome(prods.length);
 }
+
+// ── MIX & MATCH — one destination, many entry points ────────────────
+// Every Mix & Match teaser on the site (shop sidebar card, shop promo
+// banner, the shop popup) calls this. There is exactly one place the offer
+// can actually be built — the home page section — so a teaser's job is to
+// get the customer there, never to restate the rules and stop.
+//
+// The scroll is deferred and retried because showPage() swaps the page in
+// asynchronously on some paths: scrolling in the same tick lands on a
+// section that is still display:none and does nothing at all.
+function goMixMatch() {
+  try { if (typeof closeShopFilters === 'function') closeShopFilters(); } catch (e) {}
+  try { if (typeof showPage === 'function') showPage('home'); } catch (e) {}
+  var tries = 0;
+  (function seek() {
+    var el = document.getElementById('bundle-builder');
+    if (el && el.offsetParent !== null) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (++tries < 20) setTimeout(seek, 80);
+  })();
+}
+window.goMixMatch = goMixMatch;
 
 // ── SHOP FILTER DRAWER (phones / tablets) ───────────────────────────
 // Below 1024px the filter sidebar is off-canvas. Everything here is inert
