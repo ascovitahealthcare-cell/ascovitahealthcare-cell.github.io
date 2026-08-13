@@ -4536,6 +4536,26 @@ async function apiFetch(path, opts={}) {
   // dozen simultaneous 401s — first reason recorded wins, the rest are
   // no-ops rather than a dozen competing messages.
   if(r.status === 401) {
+    // One bad 401 must not destroy the session on mobile. Two mobile
+    // realities cause transient 401s on a perfectly valid session:
+    //   • the in-memory authToken can go stale ('' after a Safari memory
+    //     purge, or the pre-login page's empty string) while localStorage
+    //     still holds the real token — refreshing the header rescues it;
+    //   • the server's token-version cache can briefly disagree
+    //     (now self-healing server-side, but one retry on top adds
+    //     belt-and-braces).
+    // So: re-read the token from storage, and if it still looks valid,
+    // try the request ONCE more before giving up.
+    var stored = localStorage.getItem('ascovita_token') || '';
+    if (!authToken && stored && !tokenIsExpired(stored)) {
+      authToken = stored;
+      opts.headers = Object.assign({}, opts.headers || {});
+      opts.headers['Authorization'] = 'Bearer ' + authToken;
+      try {
+        var rr = await fetch(`${API}${path}`, { ...opts, signal: AbortSignal.timeout(30000) });
+        if (rr.ok || rr.status !== 401) return rr;
+      } catch (e) { /* fall through to a real logout below */ }
+    }
     try {
       if (!localStorage.getItem('ascovita_logout_reason')) {
         localStorage.setItem('ascovita_logout_reason',
@@ -12558,6 +12578,18 @@ body.role-admin #azRoleBanner{display:block}
   var IDLE_MS  = 60 * 60 * 1000;   // 60 minutes of inactivity
   var WARN_MS  = 2 * 60 * 1000;    // warn for the last 2 minutes
   var lastAct  = Date.now();
+  /* Mobile Safari puts backgrounded tabs to sleep and throttles timers;
+     when the phone wakes, Date.now() has jumped by minutes or hours and
+     a naïve tick() would compute idleLeft <= 0 and sign the admin out
+     instantly on wake-up — the classic "signed in, bounced immediately"
+     loop on phones. The foreground clamp makes sleep time invisible:
+     the idle clock resumes as if the phone had never been put down. */
+  document.addEventListener('visibilitychange', function () {
+    /* Foreground clamp: sleep time is invisible to the idle clock.
+       The tick() below also re-evaluates the absolute (token) clock, so a
+       genuinely expired session is still caught the moment the phone wakes. */
+    if (!document.hidden) { lastAct = Date.now(); tick(); }
+  });
   var warning  = false;
   /* Which clock raised the warning. Activity can dismiss an IDLE warning —
      that's the whole point of it. It must NOT dismiss an ABSOLUTE-expiry
@@ -12671,7 +12703,6 @@ body.role-admin #azRoleBanner{display:block}
      visibility check re-evaluates the moment the tab comes back. */
   window.__azTick = tick;   // so applyRole can refresh the pill immediately
   tickRef = setInterval(tick, 1000);
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
   tick();
 
   /* Signing out in one tab should sign out every tab. */
