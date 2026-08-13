@@ -4594,6 +4594,9 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
   box-shadow: var(--lit-mineral);
 }
 .filter-sidebar { position: sticky; top: 96px; display: flex; flex-direction: column; gap: 16px; }
+/* Desktop: the drawer chrome does not exist. Only the phone layout below
+   turns these on, so a wide screen renders exactly what it always did. */
+.filter-toggle, .filter-scrim, .filter-drawer-bar, .filter-drawer-apply { display: none; }
 .filter-box {
   padding: 20px; border-radius: var(--r-lg);
   background: var(--paper);
@@ -6121,18 +6124,75 @@ textarea.b2b-form-input { min-height: 110px; resize: vertical; font-family: inhe
 
 /* ── ≤1024px ───────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  /* Products first, filters after. The single-column stack put the whole
+  /* Products first, filters on demand. The single-column stack put the whole
      filter panel — price range, sort, stock toggles — above the grid, so
      the first product sat at 1200px on a 727px screen. Nobody arrives at a
      shop wanting to narrow a list they have not seen yet; they want to see
      the goods, and reach for filters only once there are too many.
-     Reordering costs nothing: every filter is still one short scroll away,
-     and the category rail above still does the coarse cut. */
+     So below this width the sidebar stops being part of the flow entirely:
+     it becomes an off-canvas drawer behind the "Filters & Sort" button, and
+     the grid gets the full width. */
   .shop-layout { grid-template-columns: 1fr; }
-  .filter-sidebar { position: static; order: 2; }
-  .shop-layout > :not(.filter-sidebar) { order: 1; }
   .filter-box { display: grid; gap: 0 24px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
   .filter-hdr { grid-column: 1 / -1; }
+
+  .filter-toggle {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin: 0 0 16px; padding: 10px 16px; cursor: pointer;
+    border: none; border-radius: var(--r-pill);
+    background: var(--paper); color: var(--t-hi);
+    font-size: .82rem; font-weight: 700; font-family: inherit;
+    box-shadow: var(--neo-1);
+  }
+  .filter-toggle-count {
+    min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+    background: var(--indigo); color: #fff;
+    font-size: .66rem; line-height: 18px; text-align: center;
+  }
+  .filter-toggle[hidden], .filter-toggle-count[hidden] { display: none; }
+
+  /* Off-canvas panel. Fixed, so it never lengthens the page, and its own
+     scroll container, so a long filter list cannot trap the body scroll. */
+  .filter-sidebar {
+    position: fixed; z-index: 1200; top: 0; bottom: 0; left: 0;
+    width: min(340px, 88vw); margin: 0; gap: 0;
+    padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+    overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    background: var(--bg, #fff);
+    box-shadow: 12px 0 40px -18px rgba(29,35,32,.5);
+    transform: translateX(-102%);
+    transition: transform .3s cubic-bezier(.22,.61,.36,1);
+    visibility: hidden;
+  }
+  .filter-sidebar.is-open { transform: translateX(0); visibility: visible; }
+  .filter-drawer-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 2;
+    margin: 0 -16px 14px; padding: 14px 16px;
+    background: var(--bg, #fff); box-shadow: 0 1px 0 var(--edge);
+    font-family: var(--font-display, 'Jost', sans-serif); font-size: 1.05rem;
+  }
+  .filter-drawer-close {
+    border: 0; background: var(--paper); color: var(--t-hi);
+    width: 32px; height: 32px; border-radius: 50%;
+    font-size: 1.3rem; line-height: 1; cursor: pointer; box-shadow: var(--neo-1);
+  }
+  .filter-drawer-apply {
+    display: block; width: 100%; margin-top: 16px; padding: 13px;
+    border: 0; border-radius: var(--r-pill); cursor: pointer;
+    background: var(--indigo); color: #fff;
+    font-size: .88rem; font-weight: 700; font-family: inherit;
+  }
+  .filter-scrim {
+    display: block; position: fixed; inset: 0; z-index: 1199;
+    background: rgba(20,24,22,.46);
+    opacity: 0; transition: opacity .3s ease;
+  }
+  .filter-scrim[hidden] { display: none; }
+  .filter-scrim.is-open { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .filter-sidebar, .filter-scrim { transition: none; }
+  }
   .cart-layout, .checkout-layout { grid-template-columns: 1fr; }
   .cart-summary-box, .bundle-summary { position: static; }
   .account-layout { grid-template-columns: 1fr; }
@@ -6978,42 +7038,9 @@ button, [role="button"] {
 @media (prefers-reduced-motion: reduce) { .ozylx-notify-card { animation: none; transform: none; } }
 
 /* ── 5. MIX & MATCH UI ────────────────────────────────────────────── */
-/* Compact — keeps the offer prominent without dominating the page. */
-.mm-shop-banner {
-  position: relative; overflow: hidden;
-  background: linear-gradient(120deg, var(--green) 0%, var(--indigo) 115%);
-  border-radius: 16px; padding: 16px 18px 16px 16px; color: #fff;
-  box-shadow: 0 12px 28px -12px rgba(29,35,32,.4);
-  transform: perspective(700px) rotateX(1deg);
-  margin-bottom: 14px;
-}
-.mm-shop-banner .mm-wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.mm-shop-banner .mm-visual {
-  flex: 0 0 auto; width: min(150px, 30vw); aspect-ratio: 1 / 1; border-radius: 12px;
-  overflow: hidden; position: relative; background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.2);
-}
-.mm-shop-banner .mm-visual img { width: 100%; height: 100%; object-fit: cover; }
-.mm-shop-banner h3 {
-  font-family: var(--font-display, 'Jost', sans-serif); font-weight: 600;
-  font-size: clamp(.95rem, 2.2vw, 1.15rem); line-height: 1.3; margin: 0 0 5px;
-}
-.mm-shop-banner p { margin: 0 0 10px; opacity: .92; font-size: .78rem; line-height: 1.5; max-width: 520px; }
-.mm-shop-banner .mm-cta {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: #fff; color: var(--ink, #1D2320); border: 0; border-radius: 999px;
-  padding: 8px 16px; font-size: .78rem; font-weight: 700; cursor: pointer;
-  box-shadow: 0 5px 16px rgba(0,0,0,.22); transition: transform .2s ease;
-}
-.mm-shop-banner .mm-cta:hover { transform: translateY(-1px) scale(1.02); }
-@media (max-width: 820px) {
-  .mm-shop-banner { transform: none; padding: 13px 14px; margin-bottom: 12px; }
-  .mm-shop-banner .mm-wrap { gap: 12px; }
-  .mm-shop-banner .mm-visual { width: min(84px, 26vw); border-radius: 10px; }
-  .mm-shop-banner h3 { font-size: clamp(.84rem, 4.4vw, 1rem); margin: 0 0 3px; }
-  .mm-shop-banner p { font-size: .7rem; margin: 0 0 7px; }
-  .mm-shop-banner .mm-cta { padding: 7px 13px; font-size: .72rem; }
-}
+/* The shop-page .mm-shop-banner card was removed (duplicate of the home
+   page Mix & Match section), and its styles with it. What remains below is
+   the live in-cart / on-product progress UI, which shows a real number. */
 
 /* Product-page Mix & Match progress pill */
 .mm-progress-wrap { display: flex; align-items: center; gap: 9px; margin: 12px 0 0; }
@@ -7084,45 +7111,66 @@ button, [role="button"] {
 }
 @media (max-width: 640px) { .edu-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; } }
 
-/* ── 7. SHOP BANNER SLOTS ─────────────────────────────────────────── */
-/* Compact — short strips between promo rows, never tall panels. */
+/* ── 7. SHOP PROMO FOOTER (banner strips + campaign tiles) ────────────
+   This block sits below the product grid and is a footer, not a feature.
+   It used to run four full-width panels deep — roughly a screen and a half
+   on a phone — so everything here is deliberately short: slim strips on
+   desktop, and side-by-side tiles rather than a stack on mobile, which is
+   what keeps the whole group inside about a third of a phone screen. */
+.shop-promos { margin-top: 18px; }
 .shop-banner-slot {
-  position: relative; overflow: hidden; border-radius: 16px;
+  position: relative; overflow: hidden; border-radius: 14px;
   background: linear-gradient(135deg, var(--indigo), var(--green));
-  box-shadow: 0 10px 24px -12px rgba(29,35,32,.35);
-  aspect-ratio: 6 / 1; min-height: 76px; margin-bottom: 14px;
+  box-shadow: 0 8px 18px -12px rgba(29,35,32,.35);
+  aspect-ratio: 11 / 1; min-height: 54px; margin-bottom: 10px;
 }
 .shop-banner-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .shop-banner-slot .sb-overlay {
   position: absolute; inset: 0;
   background: linear-gradient(90deg, rgba(29,35,32,.58) 0%, rgba(29,35,32,0) 100%);
-  display: flex; align-items: center; padding: 0 22px;
+  display: flex; align-items: center; padding: 0 18px;
 }
-.shop-banner-slot .sb-copy { color: #fff; }
-.shop-banner-slot h3 { font-family: var(--font-display, 'Jost', sans-serif); font-weight: 600; font-size: clamp(.92rem, 2vw, 1.2rem); margin: 0 0 3px; }
-.shop-banner-slot p { margin: 0; font-size: .74rem; opacity: .95; }
+.shop-banner-slot .sb-copy { color: #fff; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+/* The global h3/p colour rules win over inherited white, which left this
+   copy dark-on-dark over the gradient. Stated explicitly, at a specificity
+   that beats them. */
+.shop-banner-slot .sb-copy h3 { font-family: var(--font-display, 'Jost', sans-serif); font-weight: 600; font-size: clamp(.8rem, 1.5vw, .98rem); margin: 0; color: #fff; }
+.shop-banner-slot .sb-copy p { margin: 0; font-size: .7rem; color: rgba(255,255,255,.9); }
 .shop-banner-slot[data-no-img="yes"] .sb-overlay { background: linear-gradient(135deg, rgba(84,113,119,.92), rgba(125,98,89,.92)); align-items: center; justify-content: center; text-align: center; }
-.shop-banner-slot[data-no-img="yes"] .sb-copy { max-width: 640px; padding: 0 14px; }
-@media (max-width: 820px) { .shop-banner-slot { aspect-ratio: auto; min-height: 92px; } }
+.shop-banner-slot[data-no-img="yes"] .sb-copy { max-width: 640px; padding: 0 12px; justify-content: center; }
+@media (max-width: 820px) {
+  .shop-promos { margin-top: 14px; }
+  /* One line of copy, one strip height — the subtitle rides alongside the
+     heading instead of forcing a second row. */
+  .shop-banner-slot { aspect-ratio: auto; min-height: 46px; margin-bottom: 8px; border-radius: 12px; }
+  .shop-banner-slot .sb-overlay { padding: 8px 12px; }
+  .shop-banner-slot h3 { font-size: .82rem; }
+  .shop-banner-slot p { font-size: .66rem; }
+}
 
 /* ── 8. SHOP FEATURED CAMPAIGN (AVC / Glutathione) ────────────────── */
-/* Compact — two slim side-by-side tiles, never tall panels. */
+/* Two slim tiles. They stay side by side at every width — stacking them
+   doubled the height of the promo footer for no gain in legibility. */
 .shop-campaign {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
 }
 .shop-campaign-card {
-  position: relative; border-radius: 14px; overflow: hidden;
+  position: relative; border-radius: 12px; overflow: hidden;
   background: linear-gradient(135deg, var(--green), var(--indigo));
-  box-shadow: 0 8px 20px -10px rgba(29,35,32,.35);
-  cursor: pointer; padding: 13px 15px; color: #fff; min-height: 88px;
+  box-shadow: 0 6px 16px -10px rgba(29,35,32,.35);
+  cursor: pointer; padding: 10px 12px; color: #fff; min-height: 62px;
   display: flex; flex-direction: column; justify-content: space-between;
   transition: transform .22s ease, box-shadow .22s ease;
 }
-.shop-campaign-card:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 12px 26px -10px rgba(29,35,32,.45); }
-.shop-campaign-card .sc-label { font-size: .64rem; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
-.shop-campaign-card h3 { font-family: var(--font-display, 'Jost', sans-serif); font-weight: 600; font-size: clamp(.85rem, 3vw, 1rem); margin: 4px 0 0; line-height: 1.25; }
-.shop-campaign-card .sc-cta { align-self: flex-start; font-size: .68rem; font-weight: 700; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 5px 12px; margin-top: 8px; }
-@media (max-width: 700px) { .shop-campaign { grid-template-columns: 1fr; } }
+.shop-campaign-card:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 10px 22px -10px rgba(29,35,32,.45); }
+.shop-campaign-card .sc-label { font-size: .58rem; letter-spacing: .1em; text-transform: uppercase; opacity: .85; }
+.shop-campaign-card h3 { font-family: var(--font-display, 'Jost', sans-serif); font-weight: 600; font-size: clamp(.76rem, 2.2vw, .92rem); margin: 2px 0 0; line-height: 1.2; color: #fff; }
+.shop-campaign-card .sc-cta { align-self: flex-start; font-size: .62rem; font-weight: 700; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 3px 10px; margin-top: 6px; }
+@media (max-width: 420px) {
+  .shop-campaign { gap: 8px; }
+  .shop-campaign-card { padding: 9px 10px; min-height: 58px; }
+  .shop-campaign-card .sc-cta { padding: 3px 8px; }
+}
 
 /* ── 9. CART / CHECKOUT MM LINE + savings reminder microcopy ──────── */
 .mm-line {
@@ -8555,7 +8603,7 @@ setInterval(function() { syncAppCartBadge(); syncAppWishBadge(); }, 2000);
       if(map['about.hero_background']) document.documentElement.style.setProperty('--about-hero-bg', "url('"+map['about.hero_background']+"')");
       if(map['b2b.hero_background']) document.documentElement.style.setProperty('--b2b-hero-bg', "url('"+map['b2b.hero_background']+"')");
       // Aug 2026: reveal shop banners when their upload exists
-      ['shop.banner.1','shop.banner.2','shop.banner.mix_match'].forEach(function(k){
+      ['shop.banner.1','shop.banner.2'].forEach(function(k){
         if(map[k]){
           var el=document.querySelector('[data-media-key="'+k+'"]');
           if(el){el.style.display='';el.onload=function(){var s=el.closest('[data-no-img]');if(s)s.setAttribute('data-no-img','no');};if(el.complete){var s=el.closest('[data-no-img]');if(s)s.setAttribute('data-no-img','no');}}
@@ -8628,39 +8676,41 @@ setInterval(function() { syncAppCartBadge(); syncAppWishBadge(); }, 2000);
     </div>
   </section>
 
-<!-- ═══════════ BUNDLE BUILDER ═══════════ -->
+<!-- ═══════════ MIX & MATCH ═══════════════════════════════════════════
+     The site's ONE Mix & Match surface. The rule stated here is the rule
+     the server enforces (mixAndMatchDiscount in backend/server.js):
+     units are counted across the cart, and in every group of four the
+     CHEAPEST unit is free. Four items in, the cheapest of those four is
+     free — which is what "buy any 3, the 4th is free" means in practice.
+     Do not describe this as a percentage: the saving depends entirely on
+     which four products the customer picks. ═══════════════════════════ -->
 <section class="bundle-section" id="bundle-builder">
   <div class="container">
     <div style="margin-bottom:28px">
-      <span class="cf-section-label">Build Your Stack</span>
-      <h2 class="cf-section-title">Mix. Match. Save Up to 20%.</h2>
-      <p class="cf-section-sub">Pick 2+ products and unlock automatic bundle savings. The more you add, the more you save.</p>
+      <span class="cf-section-label">Mix &amp; Match</span>
+      <h2 class="cf-section-title">Buy Any 3. Get the 4th Free.</h2>
+      <p class="cf-section-sub">Pick any 4 eligible products and the lowest-priced one of the four is completely free — no code, applied automatically.</p>
     </div>
     <div class="bundle-layout">
       <div>
-        <p style="font-size:.9rem;color:var(--t-mid);margin-bottom:16px;line-height:1.6">Select 2+ products to build your personalised wellness stack. Bundle discount applies automatically at checkout.</p>
+        <p style="font-size:.9rem;color:var(--t-mid);margin-bottom:16px;line-height:1.6">Tick any 4 products below. The cheapest of the four comes off your total — calculated from real prices (your price / pack tier, whichever applies) and re-checked on our server at checkout. Add 8 and two of them are free, and so on.</p>
         <div id="bundleProdList"></div>
       </div>
       <div class="bundle-summary">
-        <div class="bundle-sum-title">Your Stack</div>
-        <div class="bundle-sum-sub">Add 2+ products to unlock savings</div>
+        <div class="bundle-sum-title">Your Mix &amp; Match</div>
+        <div class="bundle-sum-sub">Pick 4 products — the lowest-priced one is free</div>
         <div class="bundle-items-box" id="bundleItemsBox"><div class="bundle-empty-hint">No products selected yet</div></div>
         <hr class="bundle-divider">
         <div class="bundle-row"><span>Subtotal</span><span id="bundleSubtotal">₹0</span></div>
-        <div class="bundle-row" id="bundleDiscountRow" style="color:var(--f-guava);display:none"><span id="bundleDiscountLabel">Bundle discount</span><span id="bundleDiscountVal"></span></div>
+        <div class="bundle-row" id="bundleDiscountRow" style="color:var(--f-guava);display:none"><span id="bundleDiscountLabel">Mix &amp; Match — lowest item free</span><span id="bundleDiscountVal"></span></div>
         <div class="bundle-row total"><span>Total</span><span id="bundleTotal">₹0</span></div>
         <div class="bundle-savings-banner" id="bundleSavingsBanner"></div>
-        <button class="btn-primary" style="width:100%;margin-top:12px;padding:14px" onclick="addBundleToCart()">Add Bundle to Cart →</button>
-        <p style="font-size:.72rem;color:var(--t-low);text-align:center;margin-top:8px">Free delivery on every bundle</p>
+        <button class="btn-primary" style="width:100%;margin-top:12px;padding:14px" onclick="addBundleToCart()">Add to Cart →</button>
+        <p style="font-size:.72rem;color:var(--t-low);text-align:center;margin-top:8px">Free delivery on every order</p>
       </div>
     </div>
   </div>
 </section>
-
-  <!-- The "Mix. Match. Save Up to 20%" banner stood here. Removed on
-       request. The Bundle Builder section directly above it makes the
-       same offer with the actual product picker attached, so this was a
-       second ask for one action, one scroll after the first. -->
 
   <!-- CERTIFICATIONS -->
   <section class="section certs">
@@ -9526,9 +9576,26 @@ var BANNER_SLIDES = [
       <button class="cpill" data-cat="weight" onclick="filterCat('weight',this)">Weight</button>
       <button class="cpill" data-cat="combos" onclick="filterCat('combos',this)">Combos</button>
     </div>
+    <!-- Phone-only handle for the filter sidebar. Below 820px the sidebar
+         becomes an off-canvas drawer (see .filter-sidebar in the stylesheet);
+         above it, this button is display:none and the sidebar is a normal
+         sticky column, so desktop is untouched. -->
+    <button class="filter-toggle" id="filterToggle" type="button"
+            onclick="toggleShopFilters()" aria-expanded="false" aria-controls="shopFilterSidebar">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="14" y2="12"/><line x1="4" y1="17" x2="9" y2="17"/>
+      </svg>
+      <span>Filters &amp; Sort</span>
+      <span class="filter-toggle-count" id="filterToggleCount" hidden>0</span>
+    </button>
+    <div class="filter-scrim" id="filterScrim" onclick="closeShopFilters()" hidden></div>
     <div class="shop-layout">
       <!-- SIDEBAR -->
-      <div class="filter-sidebar">
+      <div class="filter-sidebar" id="shopFilterSidebar">
+        <div class="filter-drawer-bar">
+          <strong>Filters &amp; Sort</strong>
+          <button type="button" class="filter-drawer-close" onclick="closeShopFilters()" aria-label="Close filters">&times;</button>
+        </div>
         <div class="filter-box">
           <div class="filter-hdr"><h3>Filters</h3><button class="filter-clear" onclick="clearFilters()">Clear All</button></div>
           <div class="filter-sec">
@@ -9559,12 +9626,15 @@ var BANNER_SLIDES = [
             <div class="f-opt"><input type="checkbox" id="fBest" onchange="applyFilters()"><label for="fBest">Bestsellers</label></div>
           </div>
         </div>
-        <div style="background:linear-gradient(135deg,var(--green),var(--green-light));border-radius:var(--radius);padding:22px;margin-top:18px;color:var(--t-hi);text-align:center">
-          <div style="font-size:1.8rem;margin-bottom:8px">🌿</div>
-          <div style="font-weight:700;font-size:.88rem;margin-bottom:5px">Buy 4 Get 50% OFF</div>
-          <div style="font-size:.75rem;opacity:.85;margin-bottom:14px">Add 4 units to your cart and the discount applies automatically!</div>
-          <button class="btn-gold" style="width:100%;justify-content:center;font-size:.82rem" onclick="showPage('shop')">Shop Now</button>
-        </div>
+        <!-- Drawer footer: the phone needs a way out that is not the scrim. -->
+        <button type="button" class="filter-drawer-apply" onclick="closeShopFilters()">
+          Show <span id="filterApplyCount">products</span>
+        </button>
+        <!-- The sidebar offer card stood here. Removed: it was a third copy
+             of the Mix & Match pitch on this one page, its numbers did not
+             match the engine ("50% off" vs the cheapest of four free), and
+             its "Shop Now" button linked to the page it was already on. The
+             offer lives on the home page Mix & Match section. -->
       </div>
       <!-- PRODUCTS -->
       <div>
@@ -9585,24 +9655,15 @@ var BANNER_SLIDES = [
           <button class="btn-primary" onclick="clearFilters()">Clear Filters</button>
         </div>
         <!-- Aug 2026: promotion blocks sit AFTER the product grid so the
-             customer browses products first, then meets the offers.
-             Mix & Match banner + campaign slots: upload via admin Site
-             Images with keys "shop.banner.1" / "shop.banner.2" (3:1) and
-             "shop.banner.mix_match" (1:1). Until an image is uploaded,
-             tasteful text cards are shown (no layout shift). -->
-        <div style="margin-top:26px">
-        <div class="mm-shop-banner" id="mmShopBanner">
-          <div class="mm-wrap">
-            <div class="mm-visual">
-              <img src="" alt="Buy Any 3, Get 1 Free — Mix &amp; Match" id="mmShopImg" data-media-key="shop.banner.mix_match" loading="lazy" style="display:none" onerror="this.style.display='none'">
-            </div>
-            <div>
-              <h3>&#127873; Buy Any 3 Eligible Products &amp; Get the Lowest-Priced One FREE</h3>
-              <p>Mix &amp; Match — choose any 3 eligible products (Apple Cider Vinegar, Glutathione, Moringa, Spirulina and more) and the 4th — the lowest-priced one — is completely FREE. The free amount is calculated from the real price of each item (MRP / your price, pack tiers included) and validated securely on our server at every cart change and at checkout. Never stacks with other promotions.</p>
-              <button class="mm-cta" onclick="document.getElementById('mmShopBanner')?.scrollIntoView({behavior:'smooth',block:'center'})">&#128722; Build Your Mix &amp; Match</button>
-            </div>
-          </div>
-        </div>
+             customer browses products first, then meets the offers. Kept
+             deliberately short — these are footers to the grid, not
+             destinations. Campaign slots: upload via admin Site Images with
+             keys "shop.banner.1" / "shop.banner.2" (wide strips). Until an
+             image is uploaded, text cards are shown (no layout shift).
+             The Mix & Match explainer card stood here. Removed: it repeated
+             the home page Mix & Match section word for word, and its "Build
+             Your Mix & Match" button scrolled to the card containing it. -->
+        <div class="shop-promos">
         <div class="shop-banner-slot" id="shopBannerSlot1" data-no-img="yes">
           <img src="" alt="" id="shopBannerImg1" data-media-key="shop.banner.1" loading="lazy" style="display:none" onerror="this.style.display='none'">
           <div class="sb-overlay"><div class="sb-copy">
@@ -12786,13 +12847,18 @@ var SCROLL_LOCK_LAYERS = [
   'sideCart', 'sideCartOverlay',
   'appMoreDrawer', 'appMoreOverlay',
   'appMenuDrawer', 'appMenuOverlay', 'appHamburgerBtn',
-  'authOverlay'
+  'authOverlay',
+  'shopFilterSidebar'   // phone filter drawer — marks itself with .is-open
 ];
 
+// Two open-markers exist in this document: the older drawers use `.open`,
+// the shop filter drawer uses `.is-open`. Both count. Miss the second one
+// and the watchdog below tears the filter drawer's scroll lock off within
+// a second of it being set, letting the page scroll behind an open drawer.
 function anyOverlayOpen() {
   for (var i = 0; i < SCROLL_LOCK_LAYERS.length; i++) {
     var n = document.getElementById(SCROLL_LOCK_LAYERS[i]);
-    if (n && n.classList.contains('open')) return true;
+    if (n && (n.classList.contains('open') || n.classList.contains('is-open'))) return true;
   }
   return false;
 }
@@ -12848,6 +12914,7 @@ function showPage(pg) {
   // to stay open across a navigation, so closing everything is always
   // right and is the net that makes a stuck overlay impossible.
   closeAllOverlays();
+  try { closeShopFilters(); } catch (e) {}   // shop filter drawer, same rule
   document.getElementById('codOverlay')?.remove();
   // Update URL to clean path (e.g. ozylix.com/about) — no hash
   try {
@@ -13119,11 +13186,10 @@ function initShop() { applyFilters();
   try { if (typeof initShopHero === 'function') initShopHero(); } catch (e) {}
 
   // Aug 2026: shop strategy — offer popups staggered (not on first paint —
-  // the customer browses first; value before pressure)
-  try { setTimeout(function () {
-    if (typeof ozylxNotify === 'undefined') return;
-    ozylxNotify.show({ id: 'shop-discovery', msg: '🎁 Mix &amp; Match is available on eligible products — choose any 3 and the lowest-priced 4th is FREE.', icon: '🎁', corner: 'bottom-left' });
-  }, 9000); } catch (e) {}
+  // the customer browses first; value before pressure).
+  // The Mix & Match popup that fired here was removed: it was a fourth copy
+  // of the same offer on this page. The cart and checkout still show the
+  // live Mix & Match line, which is where the number actually matters.
   try { setTimeout(function () {
     if (typeof ozylxNotify === 'undefined') return;
     ozylxNotify.show({ id: 'shop-vitapoints', msg: '🪙 Every Ozylix order earns Vita Points — redeem them for real discounts on your next purchase.', icon: '🪙', corner: 'bottom-right', onCta: function () { showPage('home'); setTimeout(function () { document.getElementById('vitapoints-home')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 120); } });
@@ -13177,7 +13243,68 @@ function applyFilters() {
   grid.innerHTML = prods.length ? prods.map(p => renderProductCard(p)).join('') : '';
   if (empty) empty.style.display = prods.length ? 'none' : 'block';
   if (cnt) cnt.textContent = `Showing ${prods.length} product${prods.length!==1?'s':''}`;
+  syncFilterChrome(prods.length);
 }
+
+// ── SHOP FILTER DRAWER (phones / tablets) ───────────────────────────
+// Below 1024px the filter sidebar is off-canvas. Everything here is inert
+// on desktop: the chrome it touches is display:none there, and the drawer
+// classes have no styles outside the media query.
+function syncFilterChrome(resultCount) {
+  // Badge = how many filters are actually narrowing the list, so a customer
+  // who left something ticked and scrolled away can see it from the button.
+  var active = 0;
+  document.querySelectorAll('[id^=fr]:checked, #fSale:checked, #fNew:checked, #fBest:checked').forEach(function () { active++; });
+  if (typeof priceMax === 'number' && priceMax < 2000) active++;
+  var sortSel = document.getElementById('sortSel');
+  if (sortSel && sortSel.value !== 'def') active++;
+  var badge = document.getElementById('filterToggleCount');
+  if (badge) { badge.textContent = active; badge.hidden = active === 0; }
+  var apply = document.getElementById('filterApplyCount');
+  if (apply && typeof resultCount === 'number') {
+    apply.textContent = resultCount + ' product' + (resultCount !== 1 ? 's' : '');
+  }
+}
+function openShopFilters() {
+  var bar = document.getElementById('shopFilterSidebar');
+  var scrim = document.getElementById('filterScrim');
+  var btn = document.getElementById('filterToggle');
+  if (!bar) return;
+  if (scrim) { scrim.hidden = false; requestAnimationFrame(function () { scrim.classList.add('is-open'); }); }
+  bar.classList.add('is-open');
+  if (btn) btn.setAttribute('aria-expanded', 'true');
+  document.body.style.overflow = 'hidden';   // the drawer scrolls, the page does not
+  syncFilterChrome();
+}
+function closeShopFilters() {
+  var bar = document.getElementById('shopFilterSidebar');
+  var scrim = document.getElementById('filterScrim');
+  var btn = document.getElementById('filterToggle');
+  if (bar) bar.classList.remove('is-open');
+  if (scrim) {
+    scrim.classList.remove('is-open');
+    // Wait out the fade before hiding, or the scrim vanishes mid-transition.
+    setTimeout(function () { if (!scrim.classList.contains('is-open')) scrim.hidden = true; }, 320);
+  }
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+  document.body.style.overflow = '';
+}
+function toggleShopFilters() {
+  var bar = document.getElementById('shopFilterSidebar');
+  if (bar && bar.classList.contains('is-open')) closeShopFilters();
+  else openShopFilters();
+}
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') closeShopFilters();
+});
+// Rotating to a wide screen turns the drawer back into a plain column; the
+// leftover body lock would then freeze a page with no visible drawer.
+window.addEventListener('resize', function () {
+  clearTimeout(window.__fdRz);
+  window.__fdRz = setTimeout(function () {
+    if (window.innerWidth > 1024) closeShopFilters();
+  }, 150);
+});
 
 function updatePrice(v) {
   priceMax = +v;
@@ -18886,7 +19013,50 @@ let selectedBundleIds=new Set();
 // matter who calls this or when.
 function renderBundleBuilder(){const list=document.getElementById('bundleProdList');if(!list||!PRODUCTS)return;list.innerHTML=PRODUCTS.filter(p=>p.price||p.salePrice).map(p=>{const img=typeof getProductImg==='function'?getProductImg(p):(p.image||PRODUCT_FALLBACKS&&PRODUCT_FALLBACKS.default||'');return'<div class="b-prod-row" id="brow-'+p.id+'" onclick="toggleBundle('+p.id+')"><div class="b-prod-cb" id="bcb-'+p.id+'">✓</div><div class="b-prod-img"><img src="'+esc(img)+'" alt="Ozylix product image" style="width:54px;height:54px;object-fit:cover;border-radius:10px" onerror="this.style.opacity=0" decoding="async"></div><div class="b-prod-info"><div class="b-prod-name">'+esc(p.name)+'</div><div class="b-prod-cat">'+esc(p.category||'supplement')+'</div>'+(p.badge?'<div class="b-prod-badge">'+esc(p.badge)+'</div>':'')+'</div><div class="b-prod-price">₹'+(p.salePrice||p.price)+'</div></div>';}).join('');try{selectedBundleIds.forEach(function(id){document.getElementById('brow-'+id)?.classList.add('sel');});}catch(e){}}
 function toggleBundle(id){if(selectedBundleIds.has(id)){selectedBundleIds.delete(id);document.getElementById('brow-'+id)?.classList.remove('sel');}else{selectedBundleIds.add(id);document.getElementById('brow-'+id)?.classList.add('sel');}updateBundleSummary();}
-function updateBundleSummary(){const sel=[...selectedBundleIds].map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean),n=sel.length,sub=sel.reduce((s,p)=>s+(p.salePrice||p.price),0),sav=(n>=4?Math.min(...sel.map(x=>x.salePrice||x.price)):0),tot=sub-sav;const box=document.getElementById('bundleItemsBox');if(box)box.innerHTML=n===0?'<div class="bundle-empty-hint">No products selected yet<\/div>':sel.map(p=>'<div class="b-item-chip"><span class="b-item-name">'+esc(p.name)+'<\/span><span class="b-item-price">₹'+(p.salePrice||p.price)+'<\/span><\/div>').join('');const s=document.getElementById('bundleSubtotal'),t=document.getElementById('bundleTotal'),dr=document.getElementById('bundleDiscountRow'),dl=document.getElementById('bundleDiscountLabel'),dv=document.getElementById('bundleDiscountVal'),sb=document.getElementById('bundleSavingsBanner');if(s)s.textContent='₹'+sub;if(t)t.textContent='₹'+tot;if(sav>0){if(dr)dr.style.display='flex';if(dl)dl.textContent='Mix & Match \u2014 lowest item free';if(dv)dv.textContent='−₹'+sav;if(sb){sb.style.display='block';sb.textContent='🎉 Mix & Match unlocked \u2014 your ₹'+sav+' item is FREE';}}else{if(dr)dr.style.display='none';if(sb)sb.style.display='none';}}
+// Mix & Match preview. Mirrors mixAndMatchDiscount() in backend/server.js:
+// units sorted ascending, then index 0, 4, 8... is free — the cheapest of
+// each group of four. Eight products picked means two free, not one, which
+// is why this counts groups instead of taking a single Math.min. The server
+// still prices the real cart; this only shows the saving before checkout.
+const MM_GROUP = 4;
+function mmPreview(prices){
+  const units=[...prices].sort((x,y)=>x-y);
+  const groups=Math.floor(units.length/MM_GROUP);
+  let saving=0;
+  for(let g=0;g<groups;g++) saving+=units[g*MM_GROUP]||0;
+  return { saving, groups, need: groups>0 ? 0 : MM_GROUP-(units.length%MM_GROUP||0) };
+}
+function updateBundleSummary(){
+  const sel=[...selectedBundleIds].map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);
+  const n=sel.length;
+  const prices=sel.map(p=>p.salePrice||p.price);
+  const sub=prices.reduce((s,v)=>s+v,0);
+  const mm=mmPreview(prices);
+  const sav=Math.min(mm.saving,sub);
+  const tot=sub-sav;
+  const box=document.getElementById('bundleItemsBox');
+  if(box)box.innerHTML=n===0
+    ?'<div class="bundle-empty-hint">No products selected yet<\/div>'
+    :sel.map(p=>'<div class="b-item-chip"><span class="b-item-name">'+esc(p.name)+'<\/span><span class="b-item-price">₹'+(p.salePrice||p.price)+'<\/span><\/div>').join('');
+  const s_=document.getElementById('bundleSubtotal'),t=document.getElementById('bundleTotal'),
+        dr=document.getElementById('bundleDiscountRow'),dl=document.getElementById('bundleDiscountLabel'),
+        dv=document.getElementById('bundleDiscountVal'),sb=document.getElementById('bundleSavingsBanner');
+  if(s_)s_.textContent='₹'+sub;
+  if(t)t.textContent='₹'+tot;
+  if(sav>0){
+    if(dr)dr.style.display='flex';
+    if(dl)dl.textContent=mm.groups>1?('Mix & Match — '+mm.groups+' lowest items free'):'Mix & Match — lowest item free';
+    if(dv)dv.textContent='−₹'+sav;
+    if(sb){sb.style.display='block';sb.textContent='🎉 Mix & Match unlocked — ₹'+sav+' off, your '+(mm.groups>1?'cheapest '+mm.groups+' items are':'cheapest item is')+' FREE';}
+  }else{
+    if(dr)dr.style.display='none';
+    // Progress, not silence: a customer one product short should be told so.
+    if(sb){
+      if(n>0){sb.style.display='block';sb.textContent='🎁 Add '+mm.need+' more '+(mm.need===1?'product':'products')+' — your lowest-priced one becomes FREE';}
+      else sb.style.display='none';
+    }
+  }
+}
 function addBundleToCart(){const sel=[...selectedBundleIds].map(id=>PRODUCTS.find(p=>p.id===id)).filter(Boolean);if(!sel.length){showToast('Select at least one product 🌿','error');return;}sel.forEach(p=>STORE.addToCart(p.id,1));openSideCart();showPtsToast('+'+sel.length*10+' VitaPoints!');}
 
 let stickyQty=1,stickyProdId=null;
