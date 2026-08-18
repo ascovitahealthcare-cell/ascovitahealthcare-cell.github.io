@@ -12519,8 +12519,10 @@ const INTEGRATIONS = [
     desc: 'Second payment gateway alongside GoKwik — UPI, cards, net banking, wallets',
     docsUrl: 'https://docs.cashfree.com/reference/pg-new-apis-endpoint',
     envVars: ['CASHFREE_APP_ID', 'CASHFREE_SECRET_KEY', 'CASHFREE_ENV'],
+    // 2026-08-19 (Manus audit F1): /api/health/* routes now require an admin token,
+    // so this card must send its Bearer token where it used to send nothing.
     checkUrl: '/api/health/cashfree-env',
-    checkAuth: false,
+    checkAuth: true,
     setupSteps: [
       'Sign up at cashfree.com and complete KYC',
       'Dashboard → Developers → API Keys, copy App ID and Secret Key',
