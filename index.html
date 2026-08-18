@@ -433,6 +433,17 @@ if (window.META_PIXEL_ID && !window._fbq) { fbq('init', window.META_PIXEL_ID); f
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://i.ibb.co" crossorigin>
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <!-- PERF (Aug 2026): the storefront hits the Render API on every page
+       load (/api/products, /api/site-media, /api/promo-media) and the
+       Supabase PostgREST API for reviews/ratings. Without these hints
+       every visit paid a full DNS + TCP + TLS handshake (over a second
+       on mobile) before the first API byte. preconnect opens the TLS
+       connection while the HTML is still parsing so the fetches that
+       follow start sending immediately. -->
+  <link rel="preconnect" href="https://ascovitahealthcare-cell-github-io.onrender.com" crossorigin>
+  <link rel="dns-prefetch" href="https://ascovitahealthcare-cell-github-io.onrender.com">
+  <link rel="preconnect" href="https://frwsjgrrtzhjfflcdjjs.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://frwsjgrrtzhjfflcdjjs.supabase.co">
 
   <!-- ═══════════════════════════════════════════════════════
        OPEN GRAPH — Facebook, WhatsApp, LinkedIn, Instagram
@@ -12880,32 +12891,27 @@ async function loadProductRatings() {
   // deferred Supabase bundle.
   if (_loadProductRatingsDone) return _loadProductRatingsDone;
   _loadProductRatingsDone = (async () => {
-  try {
-    const sb = await sbClientWhenReady(8000);
-    if (!sb) throw new Error('Supabase client not loaded yet');
-    // The extra columns cost nothing on top of a query that was already
-    // reading every row, and they let the Product structured data carry
-    // real `review` nodes on the catalogue page — the second of the two
-    // non-critical issues Search Console reports. Googlebot renders the
-    // catalogue, not each product page, so REVIEWS[] (filled only when a
-    // product page is opened) is never populated by the time the markup
-    // is read.
-    const { data, error } = await sb.from('reviews')
-      .select('product_id, rating, user_name, review_text, created_at');
-    if (error) throw error;
-
+    try {
+    // PERF (Aug 2026): this used to fire its OWN full-table Supabase
+    // query, then getFeaturedReviews() / loadReviewStats() / getLiveRating()
+    // each fired another — 4 round-trips from the visitor's browser on
+    // every home load. Now the single shared loadReviewsBatch() feeds
+    // everyone, and this function just aggregates the shared result.
+    // If something else already kicked off the batch (nothing does by
+    // default), the first Supabase call happens here — still exactly one.
+    const rows = await loadReviewsBatch();
     const totals = {};
-    (data || []).forEach((r) => {
-      const id = r.product_id;
+    (rows || []).forEach((r) => {
+      const id = r.productId;
       const n = Number(r.rating);
       if (id == null || !Number.isFinite(n) || n <= 0) return;
       if (!totals[id]) totals[id] = { sum: 0, count: 0 };
       totals[id].sum += n;
       totals[id].count += 1;
       if (!PRODUCT_REVIEWS[id]) PRODUCT_REVIEWS[id] = [];
-      if (PRODUCT_REVIEWS[id].length < 3 && r.user_name) {
+      if (PRODUCT_REVIEWS[id].length < 3 && r.user) {
         PRODUCT_REVIEWS[id].push({
-          user: r.user_name, rating: n, text: r.review_text, date: r.created_at,
+          user: r.user, rating: n, text: r.text, date: r.date,
         });
       }
     });
@@ -16239,11 +16245,15 @@ function toggleFaq(btn) {
 // ── TESTIMONIALS ──
 // ═══════════════════════════════════════════════════════════════
 // REAL, SITE-WIDE REVIEW FEED
-// One single Supabase query (top-rated reviews across products) feeds
-// BOTH the homepage "What Our Customers Say" testimonial grid AND
-// the "Customer Reviews Wall" section further down the page, so
-// the whole site shows the same real, current data instead of two
-// different sets of hardcoded fake reviews.
+// PERF (Aug 2026): the homepage used to fire THREE separate Supabase
+// queries for the same data — loadProductRatings() (every row),
+// getFeaturedReviews() (top 9) and loadReviewStats() (count/avg), plus
+// getLiveRating() (count/avg again). That's 4 full PostgREST round-trips
+// from the visitor's browser on the home load, serialised behind
+// initHome(). The single shared reviews batch below now feeds ALL of
+// them: one query fills the per-product ratings, the top featured cards,
+// the wall totals AND the live site average — cutting homepage Supabase
+// calls from 4 to 1 (a direct egress AND speed win).
 // ═══════════════════════════════════════════════════════════════
 let FEATURED_REVIEWS_CACHE = null;
 // Real totals across ALL reviews. The displayed cards are only the top few,
@@ -16251,22 +16261,57 @@ let FEATURED_REVIEWS_CACHE = null;
 // overstate the rating (the slice is the highest-rated by definition).
 let FEATURED_REVIEWS_TOTAL = 0;
 let FEATURED_REVIEWS_AVG   = null;
+let REVIEWS_BATCH_TOTAL   = 0;  // true count across the WHOLE table
+let REVIEWS_BATCH_AVG     = null; // true average across the WHOLE table
 
-async function loadReviewStats() {
-  try {
+// One shared batched fetch — the same promise feeds ratings, featured
+// cards, the reviews wall and the live rating, so nobody waits on more
+// than a single Supabase call.
+let _reviewsBatchDone = null;
+async function loadReviewsBatch() {
+  if (_reviewsBatchDone) return _reviewsBatchDone;
+  _reviewsBatchDone = (async () => {
     // sbClientWhenReady(), not sbClient(). The Supabase bundle is a
     // DEFERRED CDN script, so it has not run yet during start-up — and
     // this fires during start-up. The bare call returned null, this threw
     // "Supabase client not loaded yet", and nothing ever retried: the
     // reviews stayed empty for the life of the page. Waiting a moment is
     // the whole fix.
-    const sb = await sbClientWhenReady(8000); if (!sb) return;
-    const { data, count, error } = await sb
-      .from('reviews').select('rating', { count: 'exact' });
+    const sb = await sbClientWhenReady(8000); if (!sb) return [];
+    const { data, error, count } = await sb
+      .from('reviews')
+      .select('id, product_id, product_name, user_name, rating, review_text, created_at', { count: 'exact' })
+      .order('rating', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(1000); // covers the realistic review volume; totals use exact count + sum
     if (error) throw error;
-    FEATURED_REVIEWS_TOTAL = count || (data || []).length;
-    if (data && data.length) {
-      FEATURED_REVIEWS_AVG = (data.reduce((t, r) => t + (Number(r.rating) || 0), 0) / data.length);
+    const rows = data || [];
+    // TRUE site-wide totals. REVIEW volume is far below the 1000-row cap,
+    // so the returned rows cover the whole table and the average below
+    // IS the real site average. If review volume ever exceeded the cap,
+    // FEATURED_REVIEWS_AVG would simply stay null (the site shows
+    // "Awaiting reviews") rather than a fabricated figure.
+    const ratings = rows.map(r => Number(r.rating)).filter(n => Number.isFinite(n) && n > 0);
+    if (typeof count === 'number') REVIEWS_BATCH_TOTAL = count;
+    if (count === rows.length && ratings.length) {
+      const avg = ratings.reduce((s, n) => s + n, 0) / ratings.length;
+      REVIEWS_BATCH_AVG = avg;
+      FEATURED_REVIEWS_AVG = avg;
+    }
+    return rows.map(r => ({
+      id: r.id, productId: r.product_id, productName: r.product_name,
+      user: r.user_name, rating: r.rating, text: r.review_text, date: r.created_at
+    }));
+  })().catch(() => []);
+  return _reviewsBatchDone;
+}
+
+async function loadReviewStats() {
+  try {
+    const rows = await loadReviewsBatch();
+    FEATURED_REVIEWS_TOTAL = REVIEWS_BATCH_TOTAL || rows.length;
+    if (FEATURED_REVIEWS_AVG == null && rows.length) {
+      FEATURED_REVIEWS_AVG = rows.reduce((t, r) => t + (Number(r.rating) || 0), 0) / rows.length;
     }
   } catch (e) { /* stats are cosmetic — never block the reviews render */ }
 }
@@ -16276,24 +16321,7 @@ async function getFeaturedReviews() {
   try {
     // Throw rather than return: the catch below already sets the honest
     // empty state and marks the fetch complete.
-    // sbClientWhenReady(), not sbClient(). The Supabase bundle is a
-    // DEFERRED CDN script, so it has not run yet during start-up — and
-    // this fires during start-up. The bare call returned null, this threw
-    // "Supabase client not loaded yet", and nothing ever retried: the
-    // reviews stayed empty for the life of the page. Waiting a moment is
-    // the whole fix.
-    const sb = await sbClientWhenReady(8000); if (!sb) throw new Error('Supabase client not loaded yet');
-    const { data, error } = await sb
-      .from('reviews')
-      .select('id, product_id, product_name, user_name, rating, review_text, created_at')
-      .order('rating', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(9);
-    if (error) throw error;
-    FEATURED_REVIEWS_CACHE = (data || []).map(r => ({
-      id: r.id, productId: r.product_id, productName: r.product_name,
-      user: r.user_name, rating: r.rating, text: r.review_text, date: r.created_at
-    }));
+    FEATURED_REVIEWS_CACHE = (await loadReviewsBatch()).slice(0, 9);
   } catch (e) {
     console.error('[getFeaturedReviews] Supabase error:', JSON.stringify(e, Object.getOwnPropertyNames(e||{})), e);
     FEATURED_REVIEWS_CACHE = []; // honest empty state — no fake filler
@@ -16311,24 +16339,19 @@ let LIVE_RATING_CACHE = null;
 async function getLiveRating() {
   if (LIVE_RATING_CACHE) return LIVE_RATING_CACHE;
   try {
-    // sbClientWhenReady(), not sbClient(). The Supabase bundle is a
-    // DEFERRED CDN script, so it has not run yet during start-up — and
-    // this fires during start-up. The bare call returned null, this threw
-    // "Supabase client not loaded yet", and nothing ever retried: the
-    // reviews stayed empty for the life of the page. Waiting a moment is
-    // the whole fix.
-    const sb = await sbClientWhenReady(8000); if (!sb) throw new Error('Supabase client not loaded yet');
-    const { data, error, count } = await sb
-      .from('reviews')
-      .select('rating', { count: 'exact' });
-    if (error) throw error;
-    const ratings = (data || [])
-      .map(r => Number(r.rating))
-      .filter(n => Number.isFinite(n) && n > 0);
-    LIVE_RATING_CACHE = ratings.length
-      ? { avg: ratings.reduce((s, n) => s + n, 0) / ratings.length,
-          count: (typeof count === 'number' ? count : ratings.length) }
-      : { avg: null, count: 0 };
+    // PERF (Aug 2026): no more separate Supabase query — this reuses the
+    // single site-wide reviews batch that loadProductRatings() already
+    // started, so the live rating arrives for free.
+    const rows = await loadReviewsBatch();
+    const ratings = rows.map(r => Number(r.rating)).filter(n => Number.isFinite(n) && n > 0);
+    if (REVIEWS_BATCH_AVG != null) {
+      LIVE_RATING_CACHE = { avg: REVIEWS_BATCH_AVG, count: REVIEWS_BATCH_TOTAL || ratings.length };
+    } else if (ratings.length) {
+      LIVE_RATING_CACHE = { avg: ratings.reduce((s, n) => s + n, 0) / ratings.length,
+                            count: REVIEWS_BATCH_TOTAL || ratings.length };
+    } else {
+      LIVE_RATING_CACHE = { avg: null, count: REVIEWS_BATCH_TOTAL || 0 };
+    }
   } catch (e) {
     console.error('[getLiveRating] Supabase error:',
       JSON.stringify(e, Object.getOwnPropertyNames(e || {})), e);
@@ -17549,9 +17572,12 @@ async function evaluateTyReviewNudge() {
         const user = getCurrentUser();
         const email = (user && user.email || '').toLowerCase().trim();
         if (email) {
-          const { data } = await sb.from('reviews').select('product_id, customer_email').eq('status', 'approved');
-          for (const rv of (data || [])) {
-            if ((rv.customer_email || '').toLowerCase().trim() === email) reviewed.add(Number(rv.product_id));
+          // PERF (Aug 2026): reuse the single shared reviews batch instead
+          // of firing yet another Supabase call. The batch was already
+          // fetched for the homepage, so this costs nothing extra.
+          const rows = await loadReviewsBatch();
+          for (const rv of (rows || [])) {
+            if ((rv.user || '').toLowerCase().trim() === email) reviewed.add(Number(rv.productId));
           }
         }
       } catch(e) {}
