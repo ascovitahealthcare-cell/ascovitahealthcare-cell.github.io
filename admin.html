@@ -2130,8 +2130,23 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
                   onclick="azTogglePw()">👁</button>
         </div>
       </div>
+      <!-- Email OTP step: after the password matches, the server emails a
+           6-digit code to the owner's mailbox and the login completes only
+           after it is entered here. Hidden until step 2. -->
+      <div id="otpStep" style="display:none;margin-top:18px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="field-label" for="loginOtp">Login code</label>
+          <div style="display:flex;gap:10px">
+            <input type="text" id="loginOtp" class="field-input" placeholder="Enter the 6-digit code from email"
+                   inputmode="numeric" autocomplete="one-time-code" autocapitalize="none" autocorrect="off" spellcheck="false"
+                   style="flex:1;letter-spacing:6px;font-weight:700;text-align:center;font-size:1.1rem;">
+            <button type="button" class="btn-login" id="otpResendBtn" style="margin:0;padding:10px 14px;background:var(--ink);font-size:0.8rem;white-space:nowrap" onclick="otpResend()">📩 Resend</button>
+          </div>
+          <div id="otpHint" style="font-size:0.75rem;color:#9aa;margin-top:6px;display:none"></div>
+        </div>
+      </div>
       <div class="login-error" id="loginError">Invalid credentials. Please try again.</div>
-      <button class="btn-login" type="submit" style="margin-top:20px">Sign In →</button>
+      <button class="btn-login" type="submit" id="loginSubmitBtn" style="margin-top:20px">Sign In →</button>
     </form>
   </div>
 </div>
@@ -5037,9 +5052,9 @@ async function loadAutomation() {
     // Reconciliation
     const re = document.getElementById('autReconTable');
     const hist = rc.data || [];
-    if (!hist.length) { re.innerHTML = '<div>History starts after the first scheduled reconciliation run (every 6 hours) or press "Reconcile now".</div>' + (rc.note ? `<div style="color:var(--text3);font-size:0.75rem;margin-top:4px;">${rc.note}</div>` : ''); }
+    if (!hist.length) { re.innerHTML = '<div>History starts after the first scheduled reconciliation run (every 6 hours) or press "Reconcile now".</div>' + (rc.note ? `<div style="color:var(--text3);font-size:0.75rem;margin-top:4px;">${esc(rc.note)}</div>` : ''); }
     else {
-      const hrows = hist.map(h => `<tr><td style="padding:6px 8px;border-top:1px solid var(--border);">${h.period}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">₹${Number(h.online_paid||0).toFixed(0)}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">₹${Number(h.gateway_gross||0).toFixed(0)}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">₹${Number(h.cod_collected||0).toFixed(0)}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">${(h.warnings||'—').slice(0,100)}</td></tr>`).join('');
+      const hrows = hist.map(h => `<tr><td style="padding:6px 8px;border-top:1px solid var(--border);">${h.period}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">₹${Number(h.online_paid||0).toFixed(0)}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">₹${Number(h.gateway_gross||0).toFixed(0)}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">₹${Number(h.cod_collected||0).toFixed(0)}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">${esc((h.warnings||'—').slice(0,100))}</td></tr>`).join('');
       re.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><tr style="text-align:left;font-size:0.72rem;color:var(--text3);"><th style="padding:6px 8px;">Day</th><th style="padding:6px 8px;">Online paid</th><th style="padding:6px 8px;">Gateway gross</th><th style="padding:6px 8px;">COD collected</th><th style="padding:6px 8px;">Warnings</th></tr>${hrows}</table></div>`;
     }
     if (rc.lastRun) {
@@ -5596,7 +5611,45 @@ async function doLogin() {
   const user = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value.trim();
   const err  = document.getElementById('loginError');
-  const btn  = document.querySelector('.btn-login');
+  const btn  = document.getElementById('loginSubmitBtn');
+
+  // ── Step 2: password already matched; the server emailed a 6-digit code
+  //    and is waiting for { nonce, code } to complete the sign-in.
+  if (_otpNonce && document.getElementById('otpStep').style.display !== 'none') {
+    const code = document.getElementById('loginOtp').value.replace(/\D/g, '').trim();
+    if (!code) { err.textContent = 'Enter the 6-digit code from your email.'; err.style.display='block'; return; }
+    err.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Verifying…';
+    try {
+      const r = await fetch(`${API}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass, nonce: _otpNonce, code }),
+      });
+      const d = await r.json();
+      if (!r.ok || !d.token) {
+        err.style.background = '';
+        err.style.color = '';
+        err.textContent = d.error || 'That code did not match — check your inbox.';
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Verify code →';
+        return;
+      }
+      clearOtpStep();
+      authToken = d.token; // put the fresh token in memory before the shared finish
+      __loginSuccess(d);
+      return;
+    } catch(e) {
+      err.textContent = 'Cannot reach server — check your connection.';
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Verify code →';
+      return;
+    }
+  }
+
   if (!user || !pass) { err.textContent = 'Enter username and password.'; err.style.display='block'; return; }
 
   err.style.display = 'none';
@@ -5624,6 +5677,26 @@ async function doLogin() {
       });
 
       const d = await r.json();
+      if (d && d.pending_otp) {
+        // ── Step 1 done: password matched — a code was emailed. Reveal the
+        //    OTP field; signing in now finishes by entering it.
+        _otpNonce = d.nonce;
+        _otpUser = user; _otpPass = pass;
+        document.getElementById('otpStep').style.display = 'block';
+        btn.style.marginTop = '14px';
+        btn.textContent = 'Verify code →';
+        btn.disabled = false;
+        err.style.display = 'none';
+        const hint = document.getElementById('otpHint');
+        hint.style.display = 'block';
+        hint.textContent = `A 6-digit code was sent to ${d.otpTo || 'your mailbox'} · valid for 5 minutes`;
+        const otpField = document.getElementById('loginOtp');
+        otpField.value = '';
+        otpField.focus();
+        document.getElementById('loginPass').readOnly = true;
+        document.getElementById('loginUser').readOnly = true;
+        return;
+      }
       if (!r.ok || !d.token) {
         err.style.background = '';
         err.style.color = '';
@@ -5659,6 +5732,49 @@ async function doLogin() {
     }
   }
 }
+
+// ── Email OTP step state ────────────────────────────────────────────
+// The password stays in memory only while the OTP step is active, so a
+// stale page refresh or a second tab cannot reuse it.
+let _otpNonce = null, _otpUser = '', _otpPass = '';
+function clearOtpStep() {
+  _otpNonce = null; _otpUser = ''; _otpPass = '';
+  document.getElementById('otpStep').style.display = 'none';
+  document.getElementById('loginPass').readOnly = false;
+  document.getElementById('loginUser').readOnly = false;
+  const btn = document.getElementById('loginSubmitBtn');
+  btn.textContent = 'Sign In →';
+  btn.style.marginTop = '20px';
+}
+async function otpResend() {
+  if (!_otpUser || !_otpPass || !_otpNonce) return;
+  const hint = document.getElementById('otpHint');
+  const btn = document.getElementById('otpResendBtn');
+  btn.disabled = true;
+  btn.textContent = '📩 Sending…';
+  try {
+    // Re-post step 1 with the same credentials — the server always mints
+    // a fresh code for a new attempt and abandons the old one.
+    const r = await fetch(`${API}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: _otpUser, password: _otpPass }),
+    });
+    const d = await r.json();
+    if (d && d.pending_otp && d.nonce) {
+      _otpNonce = d.nonce;
+      hint.textContent = `A fresh 6-digit code was sent to ${d.otpTo || 'your mailbox'} · valid for 5 minutes`;
+      document.getElementById('loginOtp').value = '';
+      document.getElementById('loginOtp').focus();
+    } else {
+      hint.textContent = d.error || 'Could not send a new code — try signing in again.';
+    }
+  } catch(e) {
+    hint.textContent = 'Cannot reach server — check your connection.';
+  }
+  btn.disabled = false;
+  btn.textContent = '📩 Resend';
+}
 // The Enter-to-submit listener that used to live here is gone: the login
 // card is a real <form> now, so Enter already submits it — from either
 // field, not just the password one. Leaving both in place fired doLogin()
@@ -5679,7 +5795,8 @@ function __loginSuccess(d) {
   }).catch(() => {}); } catch(e) {}
   try { localStorage.removeItem('ascovita_logout_reason'); } catch(e) {}
   document.getElementById('loginError').style.display = 'none';
-  document.querySelector('.btn-login').textContent = '✅ Logged in!';
+  const submitBtn = document.getElementById('loginSubmitBtn');
+  if (submitBtn) submitBtn.textContent = '✅ Logged in!';
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   applyRole(d.role);
@@ -6247,7 +6364,7 @@ function toast(msg, type='success') {
   const tc = document.getElementById('toastContainer');
   const t = document.createElement('div');
   t.className = `toast ${type}`;
-  t.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'⚠️'}</span><span>${msg}</span>`;
+  t.innerHTML = `<span>${type==='success'?'✅':type==='error'?'❌':'⚠️'}</span><span>${esc(msg)}</span>`;
   tc.appendChild(t);
   /* Mobile app rule: never let status pills drown the dashboard. */
   refreshMobileToasts();
@@ -6628,7 +6745,7 @@ function renderIndiaMap(cityData) {
 function showMapTip(e, name, orders) {
   const tip = document.getElementById('mapTooltip');
   if(!tip) return;
-  tip.innerHTML = `<strong style="color:var(--green-text)">${name}</strong><br>${orders} orders`;
+  tip.innerHTML = `<strong style="color:var(--green-text)">${esc(name)}</strong><br>${orders} orders`;
   tip.style.display = 'block';
   const wrap = document.getElementById('indiaMapWrap');
   const rect = wrap.getBoundingClientRect();
@@ -9309,7 +9426,7 @@ async function syncProducts() {
       <div class="stat-tick"><span class="stat-tick-ico">${ico}</span><div><div class="stat-tick-val">${val}</div><div class="stat-tick-lbl">${label}</div></div></div>`;
 
     body.innerHTML = `
-      <div style="font-size:0.85rem;color:var(--text2);margin-bottom:14px;">${d.message || 'Sync completed.'}</div>
+      <div style="font-size:0.85rem;color:var(--text2);margin-bottom:14px;">${esc(d.message || 'Sync completed.')}</div>
       <div class="stat-row" style="flex-wrap:wrap;margin-bottom:${errors.length?14:0}px;">
         ${stat('Synced', synced, '🔄')}
         ${stat('Created', created, '✨')}
@@ -9320,7 +9437,7 @@ async function syncProducts() {
       ${errors.length ? `
         <div style="font-size:0.75rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Errors</div>
         <div style="max-height:180px;overflow-y:auto;background:var(--bg2);border-radius:8px;padding:10px 12px;">
-          ${errors.map(e => `<div style="font-size:0.78rem;color:#E53535;padding:3px 0;">• ${typeof e==='string'?e:(e.message||JSON.stringify(e))}</div>`).join('')}
+          ${errors.map(e => `<div style="font-size:0.78rem;color:#E53535;padding:3px 0;">• ${esc(typeof e==='string'?e:(e.message||JSON.stringify(e)))}</div>`).join('')}
         </div>` : ''}
       ${(synced==null && created==null && updated==null) ? `
         <pre style="font-size:0.72rem;background:var(--bg2);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre-wrap;">${JSON.stringify(d,null,2)}</pre>` : ''}
@@ -9328,8 +9445,8 @@ async function syncProducts() {
     toast(`Products synced ✅${synced!=null?` (${synced})`:''}`);
     loadProducts();
   } catch(e) {
-    body.innerHTML = `<div class="empty-state"><div class="empty-ico">⚠️</div><div class="empty-msg">${e.message}</div></div>`;
-    toast('Sync failed: '+e.message, 'error');
+    body.innerHTML = `<div class="empty-state"><div class="empty-ico">⚠️</div><div class="empty-msg">${esc(e.message)}</div></div>`;
+    toast('Sync failed: '+e.message, 'error'); // esc() happens inside toast()
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🔄 Sync Products'; }
   }
@@ -12862,6 +12979,11 @@ async function saveSettingsCore() {
         var ld = await lr.json().catch(() => ({}));
         if (lr.ok && ld.token) {
           __loginSuccess(ld);
+        } else if (ld && ld.pending_otp) {
+          // Email OTP 2FA is active: the server needs the owner's mailbox
+          // before issuing a token, which cannot be done silently. Warn
+          // instead of bouncing — the password change itself succeeded.
+          toast('Password changed ✅ For full security, sign in again (a code will be emailed to you).', 'warning');
         } else {
           // Auto re-login failed (e.g. Render env still holds the old
           // password for a built-in account) — warn instead of bouncing.
@@ -17142,7 +17264,7 @@ if (typeof renderCombos === 'function' )   { try { renderCombos(); } catch(_) {}
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') storeEdCloseGallery(); });
   // small helpers
   function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
-  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 })();
 </script>
 </body>
