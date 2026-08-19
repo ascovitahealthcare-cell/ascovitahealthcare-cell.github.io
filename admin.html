@@ -4879,6 +4879,20 @@ body.role-admin #azRoleBanner{display:block}
   .main  height: calc(100dvh - 46px) !important; 
 }</style>
 
+<!-- Legacy mobile menu compatibility: preserves the original admin navigation proportions after modular CSS extraction. -->
+<style id="legacy-mobile-menu-compat">
+@media (max-width:600px){
+  .admin-bnav{height:clamp(58px,10vw,66px) !important;padding:0 2px clamp(6px,2vw,10px) !important;}
+  .abn-btn span:first-child{font-size:clamp(18px,5.5vw,22px) !important;}
+  .abn-btn span:last-child{font-size:clamp(7.5px,2.2vw,9px) !important;}
+}
+@media (max-width:380px){
+  .abn-btn span:first-child{font-size:17px !important;}
+  .abn-btn span:last-child{font-size:7px !important;letter-spacing:0 !important;}
+  .admin-bnav{height:56px !important;}
+}
+</style>
+
 <div id="azIdleModal" role="alertdialog" aria-live="assertive">
   <div id="azIdleCard">
     <div style="font-size:2rem">⏳</div>
