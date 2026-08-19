@@ -123,7 +123,13 @@ async function confirmCriticalAction(promptText, actionFn){
           const actionResult = await actionFn(d.proof);
           closeModal('azProofModal');
           resolve(actionResult);
-        } catch (e) { msg.textContent = e.message; msg.style.display = 'block'; }
+        } catch (e) {
+          const networkFailure = e && (e.name === 'TypeError' || e.name === 'AbortError' || /failed to fetch|network/i.test(String(e.message || '')));
+          msg.textContent = networkFailure
+            ? 'Admin server is temporarily unreachable. Please wait a few seconds and try again.'
+            : (e.message || 'Confirmation failed — please try again');
+          msg.style.display = 'block';
+        }
       }},
       { label: 'Cancel', cls: 'btn-secondary', action: function(){ closeModal('azProofModal'); reject(new Error('cancelled')); } },
     ]);

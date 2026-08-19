@@ -319,10 +319,24 @@ async function apiFetch(path, opts={}) {
     });
   }
   const headers = {'Content-Type':'application/json', 'Authorization':`Bearer ${authToken}`, ...(opts.headers||{})};
-  const signal = opts.signal || AbortSignal.timeout(30000); // 30s timeout on all API calls
   const requestOpts = {...opts};
   delete requestOpts.__skipPasswordGate;
-  const r = await fetch(`${API}${path}`, {...requestOpts, headers, signal});
+  // Render may need a moment to wake after inactivity, and mobile networks
+  // can drop one request during a handover. Retry only transport failures;
+  // never retry an HTTP response or a protected action with a second proof.
+  async function fetchAdminOnce() {
+    const callOpts = {...requestOpts, headers};
+    callOpts.signal = opts.signal || AbortSignal.timeout(30000);
+    return fetch(`${API}${path}`, callOpts);
+  }
+  let r;
+  try {
+    r = await fetchAdminOnce();
+  } catch (networkError) {
+    if (opts.signal) throw networkError;
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    r = await fetchAdminOnce();
+  }
   // A 401 used to call doLogout() and nothing else. The login screen then
   // appeared with whatever text happened to be sitting in #loginError —
   // in practice "Invalid credentials. Please try again.", which sends the
