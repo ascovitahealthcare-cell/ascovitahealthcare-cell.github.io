@@ -298,9 +298,31 @@ function tokenIsExpired(t) {
 }
 
 async function apiFetch(path, opts={}) {
+  const method = String(opts.method || 'GET').toUpperCase();
+  const writeMethod = /^(POST|PUT|PATCH|DELETE)$/.test(method);
+  const pathText = String(path || '');
+  const exemptAiWrite = /^\/api\/owner\/ai\/(ask|propose-action)$/.test(pathText);
+  const protectedPath = !exemptAiWrite && (/^\/api\/(admin|owner)\//.test(pathText) || pathText === '/api/settings' || pathText === '/api/create-delhivery-order' || /^\/api\/(marketing|delhivery)\//.test(pathText) || /^\/api\/public\/(theme|content)$/.test(pathText));
+  const exemptPath = /\/confirm-password$|\/login$/.test(String(path || ''));
+  const suppliedHeaders = opts.headers || {};
+  const proof = suppliedHeaders['X-Password-Proof'] || suppliedHeaders['x-password-proof'] || (typeof suppliedHeaders.get === 'function' ? suppliedHeaders.get('X-Password-Proof') : '');
+  // Central fail-closed client guard: individual screens may still call
+  // confirmCriticalAction for a better human prompt, but a newly added Save
+  // or approval button cannot accidentally bypass the gate anymore.
+  if (writeMethod && protectedPath && !exemptPath && !proof && !opts.__skipPasswordGate) {
+    if (typeof confirmCriticalAction !== 'function') throw new Error('Save-password confirmation is unavailable — reload the admin panel');
+    const actionName = `${method} ${String(path).split('?')[0]}`;
+    return confirmCriticalAction(`Authorize ${actionName}? This change requires your separate save password.`, async function(confirmedProof){
+      const nextOpts = { ...opts, __skipPasswordGate: true, headers: { ...suppliedHeaders, 'X-Password-Proof': confirmedProof } };
+      delete nextOpts.__skipPasswordGate;
+      return apiFetch(path, nextOpts);
+    });
+  }
   const headers = {'Content-Type':'application/json', 'Authorization':`Bearer ${authToken}`, ...(opts.headers||{})};
   const signal = opts.signal || AbortSignal.timeout(30000); // 30s timeout on all API calls
-  const r = await fetch(`${API}${path}`, {...opts, headers, signal});
+  const requestOpts = {...opts};
+  delete requestOpts.__skipPasswordGate;
+  const r = await fetch(`${API}${path}`, {...requestOpts, headers, signal});
   // A 401 used to call doLogout() and nothing else. The login screen then
   // appeared with whatever text happened to be sitting in #loginError —
   // in practice "Invalid credentials. Please try again.", which sends the
@@ -346,8 +368,9 @@ async function apiFetch(path, opts={}) {
       authToken = stored;
       opts.headers = Object.assign({}, opts.headers || {});
       opts.headers['Authorization'] = 'Bearer ' + authToken;
+      headers.Authorization = 'Bearer ' + authToken;
       try {
-        var rr = await fetch(`${API}${path}`, { ...opts, signal: AbortSignal.timeout(30000) });
+        var rr = await fetch(`${API}${path}`, { ...requestOpts, headers, signal: AbortSignal.timeout(30000) });
         if (rr.ok || rr.status !== 401) return rr;
       } catch (e) { /* fall through to a real logout below */ }
     }
@@ -368,7 +391,7 @@ async function apiFetch(path, opts={}) {
       window.__freshTokenRetryDone = true;   // bound to once per session
       try {
         await new Promise(res => setTimeout(res, 1500));
-        var retry = await fetch(`${API}${path}`, { ...opts, signal: AbortSignal.timeout(30000) });
+        var retry = await fetch(`${API}${path}`, { ...requestOpts, headers, signal: AbortSignal.timeout(30000) });
         if (retry.ok || retry.status !== 401) { delete window.__freshTokenRetryDone; return retry; }
       } catch (e) { /* fall through to a real logout below */ }
       delete window.__freshTokenRetryDone;
@@ -394,6 +417,20 @@ async function apiFetch(path, opts={}) {
     }
   }
   return r;
+}
+
+// Multipart admin writes cannot use apiFetch because the browser must set the
+// FormData boundary itself. They still use the same fresh save-password proof.
+async function adminProofUpload(path, formData, promptText) {
+  if (typeof confirmCriticalAction !== 'function') throw new Error('Save-password confirmation is unavailable — reload the admin panel');
+  return confirmCriticalAction(promptText || 'Authorize this design upload?', async function(proof) {
+    const token = authToken || localStorage.getItem('ascovita_token') || '';
+    return fetch(`${API}${path}`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'X-Password-Proof': proof },
+      body: formData,
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════
@@ -3582,7 +3619,7 @@ async function handleImgSlotFileChosen(input) {
   }
   const fd = new FormData(); fd.append('image', file);
   try {
-    const r = await fetch(`${API}/api/upload/image`, {method:'POST', headers:{'Authorization':`Bearer ${authToken}`}, body: fd});
+    const r = await adminProofUpload('/api/upload/image', fd, 'Authorize this product image upload?');
     const d = await r.json();
     if (!r.ok) {
       const msg = (d.error||'').toLowerCase();
@@ -5270,7 +5307,7 @@ async function uploadBanner(input) {
   if (file.type.startsWith('video/')) toast('⏳ Uploading video — the server is compressing it to web size, this can take up to a minute…');
   const fd = new FormData(); fd.append('image', file);
   try {
-    const r = await fetch(`${API}/api/upload/image`, {method:'POST', headers:{'Authorization':`Bearer ${authToken}`}, body:fd});
+    const r = await adminProofUpload('/api/upload/image', fd, 'Authorize this banner upload?');
     const d = await r.json();
     if(!r.ok) throw new Error(d.error||'Upload failed');
     await apiFetch('/api/admin/promo-media', {
@@ -5486,7 +5523,7 @@ async function uploadPhotos(fileList) {
       // the backend re-encodes them to H.264/MP4 automatically.
       const file = rawFile.type.startsWith('video/') ? rawFile : await _mediaMaybeConvertToWebP(rawFile);
       const fd = new FormData(); fd.append('image', file);
-      const r = await fetch(`${API}/api/upload/image`, {method:'POST', headers:{'Authorization':`Bearer ${authToken}`}, body:fd});
+      const r = await adminProofUpload('/api/upload/image', fd, 'Authorize this photo-library upload?');
       const d = await r.json();
       if(!r.ok) throw new Error(d.error||'Upload failed');
     } catch(e) { toast(`${rawFile.name}: ${e.message}`, 'error'); }
@@ -5768,7 +5805,7 @@ async function uploadSiteImage(input, key) {
     // attempts, so a transient network hiccup can never look like a bug.
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        r = await fetch(`${API}/api/upload/image`, {method:'POST', headers:{'Authorization':`Bearer ${authToken}`}, body:fd});
+        r = await adminProofUpload('/api/upload/image', fd, 'Authorize this site-image upload?');
         d = await r.json();
         if (r.ok) break;
       } catch (e) {
@@ -5813,7 +5850,7 @@ async function uploadEduCreative(input, key) {
   const file = input.files[0]; if(!file) return;
   const fd = new FormData(); fd.append('image', file);
   try {
-    const r = await fetch(`${API}/api/upload/image`, {method:'POST', headers:{'Authorization':`Bearer ${authToken}`}, body:fd});
+    const r = await adminProofUpload('/api/upload/image', fd, 'Authorize this product-education creative upload?');
     const d = await r.json();
     if(!r.ok) { toast(d.error || 'Upload failed', 'error'); return; }
     const url = d.url || d.public_url || '';
@@ -5937,7 +5974,7 @@ async function uploadBannerImage(prefix, n, input) {
   const key = prefix + '.' + n;
   const fd = new FormData(); fd.append('image', file);
   try {
-    const r = await fetch(`${API}/api/upload/image`, { method: 'POST', headers: { 'Authorization': `Bearer ${authToken}` }, body: fd });
+    const r = await adminProofUpload('/api/upload/image', fd, 'Authorize this promo-card media upload?');
     const d = await r.json();
     if (!r.ok) { toast(d.error || 'Upload failed', 'error'); return; }
     const url = d.url || d.public_url || '';
@@ -6022,7 +6059,7 @@ async function uploadFallbackImage(cat, input) {
   if (file.type.startsWith('video/')) toast('⏳ Uploading video — the server is compressing it to web size, this can take up to a minute…');
   const fd = new FormData(); fd.append('image', file);
   try {
-    const r = await fetch(`${API}/api/upload/image`, { method: 'POST', headers: { 'Authorization': `Bearer ${authToken}` }, body: fd });
+    const r = await adminProofUpload('/api/upload/image', fd, 'Authorize this promo-card media upload?');
     const d = await r.json();
     if (!r.ok) { toast(d.error || 'Upload failed', 'error'); return; }
     const url = d.url || d.public_url || '';
@@ -6107,7 +6144,7 @@ async function uploadPromoCardImage(n, input) {
   const key = 'promo.card.' + n;
   const fd = new FormData(); fd.append('image', file);
   try {
-    const r = await fetch(`${API}/api/upload/image`, { method: 'POST', headers: { 'Authorization': `Bearer ${authToken}` }, body: fd });
+    const r = await adminProofUpload('/api/upload/image', fd, 'Authorize this promo-card media upload?');
     const d = await r.json();
     if (!r.ok) { toast(d.error || 'Upload failed', 'error'); return; }
     const url = d.url || d.public_url || '';
@@ -6211,7 +6248,7 @@ async function createPromoStripCard(file) {
   if (!file) return;
   const fd = new FormData(); fd.append('image', file);
   try {
-    const r = await fetch(`${API}/api/upload/image`, { method: 'POST', headers: { 'Authorization': `Bearer ${authToken}` }, body: fd });
+    const r = await adminProofUpload('/api/upload/image', fd, 'Authorize this promo-card media upload?');
     const d = await r.json();
     if (!r.ok) { toast(d.error || 'Upload failed', 'error'); return; }
     const url = d.url || d.public_url || '';
@@ -6227,7 +6264,7 @@ async function uploadPromoStripCard(id, input) {
   const file = input.files[0]; if (!file) return;
   const fd = new FormData(); fd.append('image', file);
   try {
-    const r = await fetch(`${API}/api/upload/image`, { method: 'POST', headers: { 'Authorization': `Bearer ${authToken}` }, body: fd });
+    const r = await adminProofUpload('/api/upload/image', fd, 'Authorize this promo-card media upload?');
     const d = await r.json();
     if (!r.ok) { toast(d.error || 'Upload failed', 'error'); return; }
     const url = d.url || d.public_url || '';
@@ -6732,7 +6769,7 @@ async function loadPendingActions() {
 
 async function decideAction(id, decision) {
   try {
-    const r = await fetch(`${API}/api/owner/ai/actions/${id}/${decision}`, { method:'POST', headers:{'Authorization':'Bearer '+authToken} });
+    const r = await apiFetch(`/api/owner/ai/actions/${id}/${decision}`, { method:'POST' });
     const d = await r.json();
     if (d.error) toast('⚠️ '+d.error); else toast(decision==='approve' ? '✅ Action executed' : 'Action rejected');
     loadPendingActions();

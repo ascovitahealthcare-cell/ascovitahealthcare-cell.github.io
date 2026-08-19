@@ -1123,7 +1123,7 @@ async function azLoadPerms() {
   };
   window.storeEdPickGallery = async function(url){
     try {
-      const r = await fetch(API + '/api/admin/site-media/' + encodeURIComponent(_seGalKey), { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }, body: JSON.stringify({ url: url }) });
+      const r = await apiFetch('/api/admin/site-media/' + encodeURIComponent(_seGalKey), { method: 'PUT', body: JSON.stringify({ url: url }) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       toast('✅ Image set — live on the site now');
       storeEdCloseGallery();

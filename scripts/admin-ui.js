@@ -545,9 +545,8 @@ async function storeEdSave() {
   const prev = btn ? btn.textContent : '';
   if (btn) btn.textContent = 'Saving…';
   try {
-    const res = await fetch(STORE_ED_THEME_API, {
+    const res = await apiFetch('/api/public/theme', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
       body: JSON.stringify({ key: 'ozylix', theme: storeEdDraft })
     });
     const d = await res.json();
@@ -884,9 +883,8 @@ async function storeEdSaveContent() {
   btn.disabled = true;
   if (st) st.textContent = 'Publishing content…';
   try {
-    const res = await fetch(STORE_ED_CONTENT_API, {
+    const res = await apiFetch('/api/public/content', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('ascovita_token') || '') },
       body: JSON.stringify({ key: STORE_ED_CONTENT_STORE, content: storeEdGetContent() })
     });
     const d = await res.json();

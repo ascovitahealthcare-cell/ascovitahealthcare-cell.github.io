@@ -27,7 +27,7 @@ function escHtml(str){ return retEsc(str); }
 
 /* Generic modal builder — title + HTML body + buttons. Creates the overlay
    markup on first call and reuses it afterwards. */
-const AZ_MODAL_TPL2 = '<div class="modal-overlay" id="{id}"><div class="modal" style="max-width:640px"><div class="modal-hdr"><div class="modal-title">{title}</div><button class="modal-close" onclick="closeModal(\'{id}\')">✕</button></div><div class="modal-body">{body}</div>{btns}</div></div>';
+const AZ_MODAL_TPL2 = '<div class="modal" style="max-width:640px"><div class="modal-hdr"><div class="modal-title">{title}</div><button type="button" class="modal-close" onclick="closeModal(\'{id}\')">✕</button></div><div class="modal-body">{body}</div>{btns}</div>';
 function azBuildModal2(id, title, body, buttons){
   let el = document.getElementById(id);
   if (!el) {
@@ -41,7 +41,7 @@ function azBuildModal2(id, title, body, buttons){
   el.setAttribute('aria-modal', 'true');
   el.style.zIndex = '4000';
   const btnsHtml = (buttons || []).map((b,i) =>
-    `<button class="btn ${b.cls||''}" data-azmodal-idx="${i}">${escHtml(b.label)}</button>`).join('');
+    `<button type="button" class="btn ${b.cls||''}" data-azmodal-idx="${i}">${escHtml(b.label)}</button>`).join('');
   el.innerHTML = AZ_MODAL_TPL2.replace('{id}', id).replace('{title}', escHtml(title))
     .replace('{body}', body).replace('{btns}', btnsHtml
       ? '<div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">' + btnsHtml + '</div>' : '');
@@ -54,6 +54,7 @@ function azBuildModal2(id, title, body, buttons){
     });
   });
   el.classList.add('open');
+  if (id === 'azProofModal') setTimeout(() => document.getElementById('azProofPw')?.focus(), 0);
 }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
@@ -69,25 +70,28 @@ function azSessionUser(){ try{ return JSON.parse(localStorage.getItem('ascovita_
 // critical actions require that separate save/transaction password — never
 // the login password — so a leaked login password can't approve changes.
 // The flag arrives via /api/admin/me and is cached on the session object.
-function azSavePwRequired(){ return !!azSessionUser().security?.save_pw_required; }
+function azSavePwRequired(){ return true; }
 async function azSavePwRequiredFresh(){
   const cached = azSessionUser();
-  if (cached.security && Object.prototype.hasOwnProperty.call(cached.security, 'save_pw_required')) return !!cached.security.save_pw_required;
+  if (cached.security && cached.security.save_pw_required === true) return true;
   try {
     const r = await apiFetch('/api/admin/me');
     if (r && !r.error) {
       const next = { ...cached, username:r.username, role:r.role, is_owner:!!r.is_owner, permissions:r.permissions, denied:r.denied, security:r.security || null };
       localStorage.setItem('ascovita_session', JSON.stringify(next));
-      return !!r.security?.save_pw_required;
+      // Fail closed: a missing, stale, or false flag must never downgrade a critical action to the login password.
+      return true;
     }
   } catch (_) {}
-  return false;
+  return true;
 }
 async function confirmCriticalAction(promptText, actionFn){
-  const sess = azSessionUser();
-  const reuses = __proof && Date.now() < __proofExp;
-  if (reuses) return actionFn(__proof);
+  // Refresh the save-password requirement first; then read the session identity
+  // so a stale mobile/localStorage session cannot issue a proof for an old user.
   const saveRequired = await azSavePwRequiredFresh();
+  const sess = azSessionUser();
+  // Proofs are one-use on the server. Never cache or replay one after a
+  // successful action; every save/approval gets a fresh confirmation.
   const modalTitle = saveRequired ? 'Confirm with your save password' : 'Confirm with your password';
   const fieldLabel = saveRequired ? 'Save (transaction) password' : 'Password';
   const emptyMsg = saveRequired ? 'Enter your save password.' : 'Enter your password.';
@@ -113,9 +117,9 @@ async function confirmCriticalAction(promptText, actionFn){
           });
           const d = await r.json();
           if (!r.ok || !d.proof) throw new Error(d.error || 'Password did not match');
-          __proof = d.proof; __proofExp = Date.now() + 4 * 60 * 1000;
+          __proof = null; __proofExp = 0;
           closeModal('azProofModal');
-          resolve(await actionFn(__proof));
+          resolve(await actionFn(d.proof));
         } catch (e) { msg.textContent = e.message; msg.style.display = 'block'; }
       }},
       { label: 'Cancel', cls: 'btn-secondary', action: function(){ closeModal('azProofModal'); reject(new Error('cancelled')); } },
@@ -298,6 +302,10 @@ async function azStaffEditPerms(username, currentPerms, _unused){
 /* ══ block 5 (origin 308996-314789, 5776 B) ══ */
 /* ── Automation page ─────────────────────────────────── */
 async function autFetch(url, opts) {
+  if (String(url || '').startsWith('/api/')) {
+    const r = await apiFetch(url, opts || {});
+    return r.json().catch(() => ({}));
+  }
   const r = await fetch(url, Object.assign({ headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('ascovita_token') || '') } }, opts || {}));
   return r.json().catch(() => ({}));
 }
@@ -930,16 +938,23 @@ if (typeof _mktOrigShowPage === 'function') {
   window.__mktAuthShim = true;
   var _fetch = window.fetch;
   window.fetch = function (input, init) {
-    try {
-      var url = (typeof input === 'string') ? input : (input && input.url) || '';
-      if (url.indexOf('/api/marketing') !== -1 && typeof authToken !== 'undefined' && authToken) {
-        init = init || {};
-        var h = new Headers(init.headers || {});
-        if (!h.has('Authorization')) h.set('Authorization', 'Bearer ' + authToken);
-        if (!h.has('Content-Type') && init.body) h.set('Content-Type', 'application/json');
-        init.headers = h;
+    var url = (typeof input === 'string') ? input : (input && input.url) || '';
+    init = init || {};
+    var method = String(init.method || 'GET').toUpperCase();
+    var isWrite = /^(POST|PUT|PATCH|DELETE)$/.test(method);
+    if (url.indexOf('/api/marketing') !== -1 && typeof authToken !== 'undefined' && authToken) {
+      var h = new Headers(init.headers || {});
+      if (!h.has('Authorization')) h.set('Authorization', 'Bearer ' + authToken);
+      if (!h.has('Content-Type') && init.body) h.set('Content-Type', 'application/json');
+      if (isWrite && !h.has('X-Password-Proof') && typeof confirmCriticalAction === 'function') {
+        return confirmCriticalAction('Authorize this marketing change? This action requires your separate save password.', function(proof){
+          h.set('X-Password-Proof', proof);
+          init.headers = h;
+          return _fetch.call(this, input, init);
+        }.bind(this));
       }
-    } catch (e) { /* never let the shim break a request */ }
+      init.headers = h;
+    }
     return _fetch.call(this, input, init);
   };
 })();
