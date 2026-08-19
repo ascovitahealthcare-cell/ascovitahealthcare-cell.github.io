@@ -134,14 +134,34 @@ function applyDeliveryPolicy(policy) {
   document.dispatchEvent(new CustomEvent('ozylix:delivery-policy-updated'));
   try { updateCodBtnNote(); } catch (_) {}
 }
-function loadDeliveryPolicy() {
+function loadDeliveryPolicy(options) {
+  options = options || {};
+  var force = options.force === true;
   var base = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://ascovitahealthcare-cell-github-io.onrender.com';
-  fetch(base + '/api/public/delivery-policy', { headers: { 'Accept': 'application/json' } })
-    .then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(d){ if (d && d.data) applyDeliveryPolicy(d.data); })
-    .catch(function(){ /* safe defaults keep checkout usable */ });
+  fetch(base + '/api/public/delivery-policy', {
+    cache: 'no-store',
+    headers: { 'Accept': 'application/json' },
+  })
+    .then(function(r){
+      if (!r.ok) throw new Error('policy http ' + r.status);
+      return r.json();
+    })
+    .then(function(d){
+      if (d && d.data) applyDeliveryPolicy(d.data);
+      else if (force) applyDeliveryPolicy({ cod_enabled: false });
+    })
+    .catch(function(err){
+      console.warn('[checkout] delivery policy refresh failed:', err && err.message);
+      // A failed forced refresh must not leave an old enabled COD state alive.
+      if (force) applyDeliveryPolicy({ cod_enabled: false });
+    });
 }
 loadDeliveryPolicy();
+// Admin policy changes should reach already-open mobile checkout sessions.
+window.setInterval(function(){ loadDeliveryPolicy({ force: true }); }, 30000);
+document.addEventListener('visibilitychange', function(){
+  if (!document.hidden) loadDeliveryPolicy({ force: true });
+});
 
 // NOTE: this function is ALSO declared further down, in a later <script>
 // block. It looks like dead duplication and I removed it on that reading —

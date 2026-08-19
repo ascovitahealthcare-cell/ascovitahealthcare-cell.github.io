@@ -7402,14 +7402,25 @@ async function loadSettings() {
     if(!r.ok) return; // silently skip if endpoint doesn't exist yet
     const raw = await r.json();
     const d = raw.data || raw;
-    if(d.store_online !== undefined) document.getElementById('storeOnline').checked = d.store_online === 'true' || d.store_online === true;
-    if(d.shipping_mode) { const sm = document.getElementById('shippingMode'); if (sm) sm.value = d.shipping_mode; }
-    if(d.shipping_fee !== undefined) { const sf = document.getElementById('shippingFee'); if (sf) sf.value = d.shipping_fee; }
-    if(d.cod_available !== undefined) document.getElementById('codAvailable').checked = d.cod_available === 'true' || d.cod_available === true;
-    if(d.cod_min_order !== undefined) { const cm = document.getElementById('codMinOrder'); if (cm) cm.value = d.cod_min_order; }
-    if(d.cod_max_order !== undefined) { const cx = document.getElementById('codMaxOrder'); if (cx) cx.value = d.cod_max_order; }
-    if(d.cod_allowed_all_orders !== undefined) document.getElementById('codAllowedAllOrders').checked = d.cod_allowed_all_orders === 'true' || d.cod_allowed_all_orders === true;
-    if(d.free_shipping?.threshold) document.getElementById('freeShippingThreshold').value = d.free_shipping.threshold;
+    const asObj = (value) => {
+      if (value && typeof value === 'object') return value;
+      if (typeof value === 'string') { try { const parsed = JSON.parse(value); return parsed && typeof parsed === 'object' ? parsed : {}; } catch (_) {} }
+      return {};
+    };
+    const policy = asObj(d.delivery_policy);
+    const freeShipping = asObj(d.free_shipping);
+    const boolValue = (value, fallback) => value === undefined ? fallback : (value === true || value === 'true');
+    if(d.store_online !== undefined || policy.store_online !== undefined) document.getElementById('storeOnline').checked = boolValue(d.store_online ?? policy.store_online, true);
+    if(d.shipping_mode !== undefined || policy.shipping_mode !== undefined) { const sm = document.getElementById('shippingMode'); if (sm) sm.value = d.shipping_mode ?? policy.shipping_mode; }
+    if(d.shipping_fee !== undefined || policy.shipping_fee !== undefined) { const sf = document.getElementById('shippingFee'); if (sf) sf.value = d.shipping_fee ?? policy.shipping_fee; }
+    const codEnabled = d.cod_available ?? d.cod_enabled ?? policy.cod_enabled;
+    if(codEnabled !== undefined) document.getElementById('codAvailable').checked = boolValue(codEnabled, false);
+    if(d.cod_min_order !== undefined || policy.cod_min_order !== undefined) { const cm = document.getElementById('codMinOrder'); if (cm) cm.value = d.cod_min_order ?? policy.cod_min_order; }
+    if(d.cod_max_order !== undefined || policy.cod_max_order !== undefined) { const cx = document.getElementById('codMaxOrder'); if (cx) cx.value = d.cod_max_order ?? policy.cod_max_order; }
+    const codAll = d.cod_allowed_all_orders ?? policy.cod_allowed_all_orders;
+    if(codAll !== undefined) document.getElementById('codAllowedAllOrders').checked = boolValue(codAll, true);
+    const freeThreshold = d.free_shipping_threshold ?? policy.free_shipping_threshold ?? freeShipping.threshold;
+    if(freeThreshold !== undefined) document.getElementById('freeShippingThreshold').value = freeThreshold;
     if(d.whatsapp_number) document.getElementById('whatsappNumber').value = d.whatsapp_number;
     if(d.gst_rate) { document.getElementById('cgstRate').value = d.gst_rate.cgst||2.5; document.getElementById('sgstRate').value = d.gst_rate.sgst||2.5; }
     if(d.razorpay_mode) document.getElementById('pgMode').value = d.razorpay_mode;
