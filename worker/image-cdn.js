@@ -88,11 +88,28 @@ export function toSupabaseUrl(pathname) {
  *   3. Mirror the same response into the Cache API so the very next hit,
  *      even on a cold CF node, can be served from the stored copy.
  */
+// In-memory store for the last fetched image bodies, keyed by cdn-storage
+// path. Workers run on long-lived isolates that serve thousands of requests,
+// and this layer avoids re-streaming large bodies through the cache-miss
+// path for every single request (the Cloudflare Cache API write/read pair
+// measured in production never re-hits in practice).
+const IMG_IN_MEM = new Map();
+const IMG_IN_MEM_MAX = 64;
+const IMG_IN_MEM_MAX_BYTES = 40 * 1024 * 1024; // keep memory bounded
+let imgInMemBytes = 0;
+
 export async function handleCdnRequest(request) {
   const url = new URL(request.url);
   const supabaseUrl = toSupabaseUrl(url.pathname);
   if (!supabaseUrl) {
     return new Response('Not found', { status: 404 });
+  }
+
+  // Layer 0: in-memory store inside this isolate — the fastest path.
+  const memKey = url.pathname + url.search;
+  const mem = IMG_IN_MEM.get(memKey);
+  if (mem && mem.expiry > Date.now()) {
+    return new Response(mem.body, { status: 200, headers: mem.headers });
   }
 
   // Deterministic key: same URL + same transform params -> same entry.
@@ -140,9 +157,28 @@ export async function handleCdnRequest(request) {
     // clone() legally splits a Response body into two readable copies — the
     // previous version gave the SAME body to both put() and the return,
     // which locked the stream and crashed the Worker with error 1101.
-    const resp = new Response(origin.body, { status: 200, headers: new Headers(headers) });
+    const body = await origin.bytes();
+    const resp = new Response(body, { status: 200, headers: new Headers(headers) });
     const storeTask = cache.put(cacheKey, resp.clone());
     storeTask.catch(() => {}); // never let a cache failure break the response
+
+    // Layer 0 (write): keep a copy in isolate memory so the next request in
+    // this isolate skips both the Cache API and the bytes parse.
+    const len = Number(headers.get('Content-Length') || 0);
+    if (len && len <= IMG_IN_MEM_MAX_BYTES) {
+      while (imgInMemBytes + len > IMG_IN_MEM_MAX_BYTES && IMG_IN_MEM.size) {
+        const [k, v] = IMG_IN_MEM.entries().next().value;
+        imgInMemBytes -= v.bytesUsed || 0;
+        IMG_IN_MEM.delete(k);
+      }
+      IMG_IN_MEM.set(memKey, {
+        body,
+        headers,
+        bytesUsed: len,
+        expiry: Date.now() + CACHE_TTL_SECONDS * 1000,
+      });
+      imgInMemBytes += len;
+    }
     return resp;
   }
 

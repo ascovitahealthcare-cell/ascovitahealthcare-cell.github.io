@@ -103,24 +103,30 @@ const SITE_MEDIA_EDGE_TTL = 60; // seconds — admin changes visible within 1 mi
 const SITE_MEDIA_STALE_TTL = 31536000; // serve stale up to 1 year while refreshing
 const SITE_MEDIA_CACHE_KEY = new Request('https://ozylix-cdn/edge/site-media', { method: 'GET' });
 
+// In-memory map cache: survives for the lifetime of the isolate, which is
+// where almost all repeat traffic actually lands (one isolate serves thousands
+// of requests). Measured in production: the Cloudflare Cache API entries this
+// Worker writes are never re-readable by later requests (cache.match always
+// misses), so an in-process cache is the reliable hot path. Cold origin fetch
+// happens at most once per isolate lifetime instead of once per minute.
+const smInMem = { body: null, headers: null, expiry: 0 };
+
 async function handleSiteMedia() {
-  const cache = caches.default;
-  const stored = await cache.match(SITE_MEDIA_CACHE_KEY);
-  if (stored) {
-    const age = stored.headers.get('x-edge-age') || '0';
-    return new Response(stored.body, {
+  const now = Date.now();
+  if (smInMem.body !== null && smInMem.expiry > now) {
+    return new Response(smInMem.body, {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': `public, max-age=${SITE_MEDIA_EDGE_TTL}, stale-while-revalidate=${SITE_MEDIA_STALE_TTL}`,
         'Access-Control-Allow-Origin': '*',
-        'X-Edge-Age': String(Number(age) + 1),
+        'X-Edge-Age': String(Math.floor((now - smInMem.storedAt) / 1000)),
       },
     });
   }
 
-  // Cold edge — fetch from Render (may include cold-start time, but only once
-  // per minute instead of on every page load).
+  // Cold isolate — fetch from Render (may include cold-start time, but only
+  // once per isolate lifetime instead of on every page load).
   try {
     const r = await fetch(SITE_MEDIA_URL, {
       headers: { Accept: 'application/json' },
@@ -137,18 +143,15 @@ async function handleSiteMedia() {
     const body = await r.text();
     // Validate it's actually JSON before caching.
     JSON.parse(body);
-    const res = new Response(body, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': `public, max-age=${SITE_MEDIA_EDGE_TTL}, stale-while-revalidate=${SITE_MEDIA_STALE_TTL}`,
-        'Access-Control-Allow-Origin': '*',
-        'X-Edge-Age': '0',
-      },
-    });
-    const storeTask = cache.put(SITE_MEDIA_CACHE_KEY, res.clone());
-    storeTask.catch(() => {});
-    return res;
+    smInMem.body = body;
+    smInMem.headers = {
+      'Content-Type': 'application/json',
+      'Cache-Control': `public, max-age=${SITE_MEDIA_EDGE_TTL}, stale-while-revalidate=${SITE_MEDIA_STALE_TTL}`,
+      'Access-Control-Allow-Origin': '*',
+    };
+    smInMem.storedAt = now;
+    smInMem.expiry = now + SITE_MEDIA_EDGE_TTL * 1000;
+    return new Response(body, { status: 200, headers: smInMem.headers });
   } catch (e) {
     // Render is down or slow — fail loudly so the storefront keeps its
     // hard-coded defaults instead of painting broken banner URLs.
