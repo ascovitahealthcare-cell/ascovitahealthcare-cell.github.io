@@ -1,13 +1,48 @@
 // Extracted from index.html (line 11848) by Manus SEO pass — load order preserved
 
 // ═══════════════════════════════════════════════════════
-// WHATSAPP INTEGRATION — +91 98985 82650
+// WHATSAPP INTEGRATION — admin-configured support number
 // ═══════════════════════════════════════════════════════
-const WA_NUMBER = '919898582650';
+const WA_FALLBACK_NUMBER = '919898582650';
+let WA_NUMBER = WA_FALLBACK_NUMBER;
 
 // Faults go to a different phone than orders — see the second button in the
 // chat popup.
 const WA_TECH_NUMBER = '917265884137';
+
+function normalizeWhatsAppNumber(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.length === 10 && /^[6-9]/.test(digits)) return '91' + digits;
+  return digits;
+}
+
+function getCustomerWhatsAppNumber() { return WA_NUMBER; }
+window.getCustomerWhatsAppNumber = getCustomerWhatsAppNumber;
+
+function setCustomerWhatsAppNumber(value) {
+  const normalized = normalizeWhatsAppNumber(value);
+  if (!normalized) return;
+  WA_NUMBER = normalized;
+  document.querySelectorAll('[data-wa-support]').forEach(function (link) {
+    link.href = 'https://wa.me/' + WA_NUMBER;
+  });
+  window.dispatchEvent(new CustomEvent('ozylix:whatsapp-config-updated', {
+    detail: { number: WA_NUMBER }
+  }));
+}
+
+function loadStoreWhatsApp() {
+  const base = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://ascovitahealthcare-cell-github-io.onrender.com';
+  return fetch(base + '/api/public/store-config', { headers: { 'Accept': 'application/json' } })
+    .then(function (response) { return response.ok ? response.json() : null; })
+    .then(function (payload) {
+      const number = payload && payload.data && payload.data.whatsapp_number;
+      if (number) setCustomerWhatsAppNumber(number);
+      return WA_NUMBER;
+    })
+    .catch(function () { return WA_NUMBER; });
+}
 
 function openWhatsApp(msg) {
   const encoded = encodeURIComponent(msg || 'Hello! I have a question about Ozylix.');
@@ -43,7 +78,9 @@ window.waSync = function () {
     if (hide) pop.classList.remove('open');
   }
 };
-document.addEventListener('DOMContentLoaded', function () { window.waSync(); });
+document.addEventListener('DOMContentLoaded', function () {
+  window.waSync();
+});
 
 function toggleWAPopup() {
   const popup = document.getElementById('waChatPopup');
@@ -102,6 +139,7 @@ function fetchWithTimeout(url, options, ms) {
 // Admin changes (products, stock, coupons) reflect here live
 // ══════════════════════════════════════════════════════════════
 const API_BASE = 'https://ascovitahealthcare-cell-github-io.onrender.com';
+loadStoreWhatsApp();
 
 // Merge backend product data over static product array — ALL fields synced
 function mergeBackendProducts(backendProducts) {

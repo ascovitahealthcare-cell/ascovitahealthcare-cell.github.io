@@ -2138,14 +2138,27 @@ async function applyCode() {
 function updateCodBtnNote() {
   const note = document.getElementById('codBtnNote');
   const btn = document.getElementById('codBtn');
-  if (!note) return;
+  const tile = document.querySelector('#page-checkout .pay-method-compact[data-gateway="cod"]');
+  const sticky = document.querySelector('#ozPayBar .opb-cod');
   const { paidSubtotal } = getOrderTotal();
   const net = paidSubtotal;
   const codAllowed = DELIVERY_POLICY.cod_enabled === true || DELIVERY_POLICY.cod_enabled === 'true';
   const min = Math.max(0, Number(DELIVERY_POLICY.cod_min_order) || 0);
   const max = Math.max(0, Number(DELIVERY_POLICY.cod_max_order) || 0);
   const within = net >= min && (!max || net <= max);
-  if (btn) btn.style.display = codAllowed && within ? '' : 'none';
+  const visible = codAllowed && within;
+  const selectedGateway = getSelectedGateway();
+  [btn, tile, sticky].forEach(function(el) {
+    if (!el) return;
+    el.style.display = visible ? '' : 'none';
+    el.toggleAttribute('aria-hidden', !visible);
+    if (!visible) el.classList.remove('selected');
+  });
+  if (!visible && selectedGateway === 'cod') {
+    const online = document.querySelector('#page-checkout .pay-method-compact[data-gateway="cashfree"]') || document.querySelector('#page-checkout .pay-method-compact[data-gateway="gokwik"]');
+    if (online) selPayGateway(online);
+  }
+  if (!note) return;
   if (!codAllowed) note.textContent = 'COD is currently unavailable';
   else if (!within && min > 0 && net < min) note.textContent = 'COD available above ₹' + min.toLocaleString('en-IN');
   else if (!within && max > 0) note.textContent = 'COD available up to ₹' + max.toLocaleString('en-IN');
@@ -3325,6 +3338,8 @@ async function handleCashfreeReturn(orderId) {
   }
 }
 async function initiateCOD() {
+  const codEnabled = DELIVERY_POLICY && (DELIVERY_POLICY.cod_enabled === true || DELIVERY_POLICY.cod_enabled === 'true');
+  if (!codEnabled) { showToast('COD is currently unavailable. Please choose online payment.', 'error'); updateCodBtnNote(); return; }
   if (STORE.cart.length === 0) { showToast('🛒 Your cart is empty!', 'error'); return; }
   // 2026-08: PIN serviceability gate — see initiatePayment for the why.
   const pinEl = document.getElementById('ckPinInput');
@@ -3519,11 +3534,14 @@ function showPaymentResult(state, opts) {
     ? (opts.note ? `<div class="pay-result-note">${opts.note}</div>` : '')
     : `<div class="pay-result-note">${opts.refundNote || 'No money has been deducted from your account.'}</div>`;
 
+  const supportWaNumber = (typeof window.getCustomerWhatsAppNumber === 'function')
+    ? window.getCustomerWhatsAppNumber()
+    : '919898582650';
   const actionsHtml = ok
     ? `<button class="pay-result-btn pay-result-primary ok" onclick="closePaymentResult(); showPage('thankyou');">Continue to Order Confirmation →</button>
        <button class="pay-result-btn pay-result-secondary" onclick="closePaymentResult(); showPage('home');">Back to Home</button>`
     : `<button class="pay-result-btn pay-result-primary fail" onclick="closePaymentResult(); initiatePayment();">🔄 Retry Payment</button>
-       <button class="pay-result-btn pay-result-wa" onclick="window.open('https://wa.me/919898582650?text=${encodeURIComponent('Payment failed for order ' + (opts.orderId || '') + (opts.total ? ' amount ₹' + opts.total : '') + ', please help')}', '_blank')">💬 WhatsApp Support</button>
+       <button class="pay-result-btn pay-result-wa" onclick="window.open('https://wa.me/${supportWaNumber}?text=${encodeURIComponent('Payment failed for order ' + (opts.orderId || '') + (opts.total ? ' amount ₹' + opts.total : '') + ', please help')}', '_blank')">💬 WhatsApp Support</button>
        <button class="pay-result-btn pay-result-secondary" onclick="closePaymentResult(); showPage('cart');">← Back to Cart</button>
        <button class="pay-result-btn pay-result-secondary" onclick="closePaymentResult(); showPage('home');">Cancel & Continue Shopping</button>`;
 

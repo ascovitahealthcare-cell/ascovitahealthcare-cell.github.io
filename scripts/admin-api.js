@@ -161,12 +161,16 @@ async function loadStaffPage(){
   if (!body) return;
   body.innerHTML = '<tr><td colspan="7" style="padding:22px;text-align:center;color:var(--text3)">Loading team…</td></tr>';
   try {
-    const d = await apiFetch('/api/admin/staff');
-    if (d.error) throw new Error(d.error);
-    const isOwner = (function(){ try{ return JSON.parse(localStorage.getItem('ascovita_session')||'{}').is_owner; }catch(e){return false;} })();
+    const meResponse = await apiFetch('/api/admin/me');
+    if (!meResponse.ok) throw new Error('Could not verify the current admin role');
+    const me = await meResponse.json();
+    const isOwner = me && (me.is_owner === true || me.role === 'owner');
     notice.style.display = isOwner ? 'none' : 'block';
     content.style.display = isOwner ? '' : 'none';
     if (!isOwner) return;
+    const staffResponse = await apiFetch('/api/admin/staff');
+    const d = await staffResponse.json();
+    if (!staffResponse.ok || d.error) throw new Error(d.error || 'Could not load staff list');
     const rows = (d.staff || []).map(s => {
       const statusCls = s.enabled ? 'badge-ok' : 'badge-bad';
       const statusTxt = s.enabled ? 'Active' : 'Suspended';
