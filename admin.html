@@ -588,23 +588,53 @@ body.role-admin .admin-hidden{ display:flex !important; }
 *, *::before, *::after{ box-sizing: border-box; }
 html, body{ width:100%; max-width:100%; overflow-x:hidden; }
 img, canvas, svg, table{ max-width:100%; }
+/* ═══ RESPONSIVE ═══ */
+/* ════════════════════════════════════════════════════════
+   Ozylix ADMIN — UNIVERSAL RESPONSIVE CSS
+   Covers all screen sizes: 320px → 1400px+
+   Web: sidebar always visible
+   Mobile/Tablet: bottom nav, NO hamburger
+════════════════════════════════════════════════════════ */
+
+/* ── Reset & universal fluid base ── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { width:100%; max-width:100%; overflow-x:hidden; }
+img, canvas, svg, table { max-width:100%; }
+
+/* ════ DESKTOP (≥901px) — sidebar always visible ════ */
+/* ═══ RESPONSIVE ═══ */
+/* ════════════════════════════════════════════════════════
+   Ozylix ADMIN — UNIVERSAL RESPONSIVE CSS
+   Covers all screen sizes: 320px → 1400px+
+   Web: sidebar always visible
+   Mobile/Tablet: bottom nav, NO hamburger
+════════════════════════════════════════════════════════ */
+
+/* ── Reset & universal fluid base ── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { width:100%; max-width:100%; overflow-x:hidden; }
+img, canvas, svg, table { max-width:100%; }
+
+/* ════ DESKTOP (≥901px) — sidebar always visible ════ */
 @media(min-width:901px){
-  .hamburger-btn  display:none !important; 
-  .admin-bnav     display:none !important; 
-  .gemini-fab     bottom:24px !important; right:20px !important; 
-  .gemini-panel   bottom:88px !important; right:16px !important; 
-  .sidebar-overlay  display:none !important; 
+  .hamburger-btn { display:none !important; }
+  .admin-bnav    { display:none !important; }
+  .gemini-fab    { bottom:24px !important; right:20px !important; }
+  .gemini-panel  { bottom:88px !important; right:16px !important; }
+  .sidebar-overlay { display:none !important; }
 }
+
+/* ════ TABLET (769px – 900px) ════ */
 @media(max-width:900px){
-   
-  .app-layout 
+  /* Layout — single column, no sidebar column */
+  .app-layout {
     grid-template-columns: 1fr !important;
     grid-template-rows: 56px 1fr !important;
     height: 100dvh !important;
-  
+  }
 
-   
-  .sidebar 
+  /* Sidebar — hidden, slides in ONLY when .open */
+  .sidebar {
     display: none;
     position: fixed;
     left: 0; top: calc(56px + env(safe-area-inset-top, 0px));
@@ -615,172 +645,178 @@ img, canvas, svg, table{ max-width:100%; }
     transition: transform 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
     box-shadow: 4px 0 24px rgba(0,0,0,0.35);
     overflow-y: auto;
-  
-  .sidebar.open 
+  }
+  .sidebar.open {
     display: block !important;
     transform: translateX(0) !important;
-  
+  }
 
-   
-  .hamburger-btn  display:none !important; 
+  /* NO hamburger on mobile — bottom nav is used */
+  .hamburger-btn { display:none !important; }
 
-   
-  .topbar  padding: 0 clamp(12px,3vw,20px) !important; gap: 10px !important; 
-  .topbar-search  display:none !important; 
-  .logo-name  font-size: clamp(0.85rem,2.5vw,1rem) !important; 
+  /* Topbar */
+  .topbar { padding: 0 clamp(12px,3vw,20px) !important; gap: 10px !important; }
+  .topbar-search { display:none !important; }
+  .logo-name { font-size: clamp(0.85rem,2.5vw,1rem) !important; }
 
-   
-  .main 
+  /* Main content */
+  .main {
     padding: clamp(12px,3vw,20px) !important;
     padding-bottom: 76px !important;
     height: calc(100dvh - 56px - env(safe-area-inset-top, 0px)) !important;
     overflow-y: auto !important;
-  
-  .topbar  height: calc(56px + env(safe-area-inset-top, 0px)) !important; 
+  }
+  .topbar { height: calc(56px + env(safe-area-inset-top, 0px)) !important; }
 
-   
-  .admin-bnav  display:flex !important; 
+  /* Bottom nav visible */
+  .admin-bnav { display:flex !important; }
 
-   
-  .gemini-fab    bottom:74px !important; right:clamp(12px,3vw,20px) !important; 
-  .gemini-panel  bottom:136px !important; right:clamp(12px,3vw,20px) !important; width:min(380px,calc(100vw - 24px)) !important; 
-   
-  #toastContainer  bottom:74px !important; left:clamp(10px,3vw,16px) !important; right:auto !important; 
+  /* Gemini above bottom nav */
+  .gemini-fab   { bottom:74px !important; right:clamp(12px,3vw,20px) !important; }
+  .gemini-panel { bottom:136px !important; right:clamp(12px,3vw,20px) !important; width:min(380px,calc(100vw - 24px)) !important; }
+  #toastContainer { bottom:74px !important; right:clamp(12px,3vw,16px) !important; }
 
-   
-  .grid-4  grid-template-columns: 1fr 1fr !important; gap: clamp(10px,2.5vw,16px) !important; 
-  .grid-3  grid-template-columns: 1fr 1fr !important; gap: clamp(10px,2.5vw,16px) !important; 
+  /* Grids */
+  .grid-4 { grid-template-columns: 1fr 1fr !important; gap: clamp(10px,2.5vw,16px) !important; }
+  .grid-3 { grid-template-columns: 1fr 1fr !important; gap: clamp(10px,2.5vw,16px) !important; }
 
-   
-  .card   padding: clamp(14px,3vw,20px) !important; border-radius:14px !important; 
-  .kpi    padding: clamp(14px,3vw,18px) !important; border-radius:14px !important; 
-  .kpi-val  font-size: clamp(1.4rem,4vw,1.8rem) !important; 
+  /* Cards */
+  .card  { padding: clamp(14px,3vw,20px) !important; border-radius:14px !important; }
+  .kpi   { padding: clamp(14px,3vw,18px) !important; border-radius:14px !important; }
+  .kpi-val { font-size: clamp(1.4rem,4vw,1.8rem) !important; }
 
-   
-  .table-wrap  overflow-x:auto; -webkit-overflow-scrolling:touch; 
-  .data-table td, .data-table th  padding:clamp(8px,2vw,12px) clamp(8px,2vw,14px) !important; font-size:clamp(0.73rem,2vw,0.82rem) !important; white-space:nowrap; 
+  /* Tables */
+  .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .data-table td, .data-table th { padding:clamp(8px,2vw,12px) clamp(8px,2vw,14px) !important; font-size:clamp(0.73rem,2vw,0.82rem) !important; white-space:nowrap; }
 
-   
-  .modal-overlay  align-items:flex-end !important; padding:0 !important; 
-  .modal 
+  /* Modals → bottom sheet */
+  .modal-overlay { align-items:flex-end !important; padding:0 !important; }
+  .modal {
     border-radius: clamp(16px,4vw,22px) clamp(16px,4vw,22px) 0 0 !important;
     position:fixed !important; bottom:0 !important; left:0 !important; right:0 !important;
     max-height:90dvh !important; margin:0 !important; width:100% !important;
     max-width:100% !important;
-  
+  }
 }
+
+/* ════ MOBILE (≤600px) ════ */
 @media(max-width:600px){
-   
-  .grid-4, .grid-3, .grid-2  grid-template-columns:1fr !important; 
+  /* All multi-col grids collapse to 1 col */
+  .grid-4, .grid-3, .grid-2 { grid-template-columns:1fr !important; }
 
-   
-  #kpiCards.grid-4  grid-template-columns:1fr 1fr !important; 
+  /* KPI stays 2-col on small screens */
+  #kpiCards.grid-4 { grid-template-columns:1fr 1fr !important; }
 
-   
-  .main  padding:clamp(10px,3vw,14px) !important; padding-bottom:76px !important; 
+  /* Main padding */
+  .main { padding:clamp(10px,3vw,14px) !important; padding-bottom:76px !important; }
 
-   
-  .page-hdr  flex-direction:column !important; gap:8px !important; align-items:flex-start !important; 
-  .page-title  font-size:clamp(1.1rem,5vw,1.3rem) !important; 
-  .page-sub    font-size:clamp(0.72rem,2.5vw,0.8rem) !important; 
-  .page-actions  width:100%; display:flex; gap:6px; flex-wrap:wrap; 
-  .page-actions .btn  flex:1; justify-content:center; min-width:0; 
+  /* Page header stacks */
+  .page-hdr { flex-direction:column !important; gap:8px !important; align-items:flex-start !important; }
+  .page-title { font-size:clamp(1.1rem,5vw,1.3rem) !important; }
+  .page-sub   { font-size:clamp(0.72rem,2.5vw,0.8rem) !important; }
+  .page-actions { width:100%; display:flex; gap:6px; flex-wrap:wrap; }
+  .page-actions .btn { flex:1; justify-content:center; min-width:0; }
 
-   
-  .kpi  padding:clamp(12px,3.5vw,16px) !important; border-radius:12px !important; 
-  .kpi-val  font-size:clamp(1.3rem,6vw,1.6rem) !important; 
-  .kpi-label  font-size:clamp(0.62rem,2.2vw,0.72rem) !important; 
-  .kpi-trend, .kpi-change  font-size:clamp(0.62rem,2.2vw,0.72rem) !important; 
-  .kpi-ico  font-size:clamp(1.2rem,4vw,1.6rem) !important; 
+  /* KPI cards */
+  .kpi { padding:clamp(12px,3.5vw,16px) !important; border-radius:12px !important; }
+  .kpi-val { font-size:clamp(1.3rem,6vw,1.6rem) !important; }
+  .kpi-label { font-size:clamp(0.62rem,2.2vw,0.72rem) !important; }
+  .kpi-trend, .kpi-change { font-size:clamp(0.62rem,2.2vw,0.72rem) !important; }
+  .kpi-ico { font-size:clamp(1.2rem,4vw,1.6rem) !important; }
 
-   
-  .table-wrap  overflow-x:auto !important; -webkit-overflow-scrolling:touch !important; border-radius:10px !important; 
-  .data-table  min-width:500px; 
-  .data-table td, .data-table th 
+  /* Tables — horizontal scroll */
+  .table-wrap { overflow-x:auto !important; -webkit-overflow-scrolling:touch !important; border-radius:10px !important; }
+  .data-table { min-width:500px; }
+  .data-table td, .data-table th {
     padding:clamp(8px,2.5vw,11px) clamp(7px,2vw,10px) !important;
     font-size:clamp(0.7rem,2.5vw,0.78rem) !important;
     white-space:nowrap !important;
-  
+  }
 
-   
-  .btn  padding:clamp(7px,2.5vw,9px) clamp(10px,3vw,14px) !important; font-size:clamp(0.75rem,2.8vw,0.82rem) !important; 
-  .btn-sm  padding:clamp(5px,1.8vw,7px) clamp(8px,2.5vw,11px) !important; font-size:clamp(0.68rem,2.2vw,0.75rem) !important; 
+  /* Buttons */
+  .btn { padding:clamp(7px,2.5vw,9px) clamp(10px,3vw,14px) !important; font-size:clamp(0.75rem,2.8vw,0.82rem) !important; }
+  .btn-sm { padding:clamp(5px,1.8vw,7px) clamp(8px,2.5vw,11px) !important; font-size:clamp(0.68rem,2.2vw,0.75rem) !important; }
 
-   
-  .form-row.col2, .form-row.col3  grid-template-columns:1fr !important; 
-  .form-control  font-size:clamp(0.82rem,3vw,0.9rem) !important; padding:clamp(9px,3vw,11px) clamp(10px,3vw,13px) !important; 
+  /* Forms */
+  .form-row.col2, .form-row.col3 { grid-template-columns:1fr !important; }
+  .form-control { font-size:clamp(0.82rem,3vw,0.9rem) !important; padding:clamp(9px,3vw,11px) clamp(10px,3vw,13px) !important; }
 
-   
-  .filter-bar  gap:6px !important; 
-  .filter-bar .btn, .filter-bar select, .filter-bar input  font-size:clamp(0.72rem,2.5vw,0.8rem) !important; 
-  .filter-select  padding:clamp(7px,2.5vw,9px) clamp(8px,2.5vw,12px) !important; font-size:clamp(0.72rem,2.5vw,0.8rem) !important; 
+  /* Filter bar */
+  .filter-bar { gap:6px !important; }
+  .filter-bar .btn, .filter-bar select, .filter-bar input { font-size:clamp(0.72rem,2.5vw,0.8rem) !important; }
+  .filter-select { padding:clamp(7px,2.5vw,9px) clamp(8px,2.5vw,12px) !important; font-size:clamp(0.72rem,2.5vw,0.8rem) !important; }
 
-   
-  .card  padding:clamp(12px,3.5vw,16px) !important; border-radius:12px !important; 
-  .card-hdr  margin-bottom:10px !important; 
-  .card-title  font-size:clamp(0.82rem,3vw,0.95rem) !important; 
+  /* Cards */
+  .card { padding:clamp(12px,3.5vw,16px) !important; border-radius:12px !important; }
+  .card-hdr { margin-bottom:10px !important; }
+  .card-title { font-size:clamp(0.82rem,3vw,0.95rem) !important; }
 
-   
-  .topbar  padding:0 clamp(10px,3vw,14px) !important; gap:8px !important; height:calc(52px + env(safe-area-inset-top, 0px)) !important; 
-  .logo-icon  font-size:1.1rem !important; 
-  .logo-name  font-size:clamp(0.82rem,3vw,0.9rem) !important; 
-  .logo-badge  font-size:0.55rem !important; padding:1px 5px !important; 
-  .tb-btn  padding:clamp(5px,2vw,7px) clamp(8px,2.5vw,12px) !important; font-size:clamp(0.7rem,2.5vw,0.78rem) !important; 
-  #serverStatus  display:none !important; 
+  /* Topbar */
+  .topbar { padding:0 clamp(10px,3vw,14px) !important; gap:8px !important; height:calc(52px + env(safe-area-inset-top, 0px)) !important; }
+  .logo-icon { font-size:1.1rem !important; }
+  .logo-name { font-size:clamp(0.82rem,3vw,0.9rem) !important; }
+  .logo-badge { font-size:0.55rem !important; padding:1px 5px !important; }
+  .tb-btn { padding:clamp(5px,2vw,7px) clamp(8px,2.5vw,12px) !important; font-size:clamp(0.7rem,2.5vw,0.78rem) !important; }
+  #serverStatus { display:none !important; }
 
-   
-  #toastContainer 
+  /* ── App-like toasts: a storm of 6 status pills covering the whole
+     screen looked like a broken panel. Mobile keeps only the 2 newest
+     visible; the rest slide into a single compact "+N more" pill. ── */
+  #toastContainer {
     max-height: calc(100dvh - 150px);
     overflow: visible;
     pointer-events: none;
-  
-  #toastContainer > .toast  pointer-events: auto; 
-  .toast  max-width: 92vw !important; 
-   
-  .toast-hidden-mobile  display: none !important; 
-  .toast-summary  display: none; 
+  }
+  #toastContainer > .toast { pointer-events: auto; }
+  .toast { max-width: 92vw !important; }
+  /* Hide all but the last 2 toasts on mobile, plus a summary pill. */
+  .toast-hidden-mobile { display: none !important; }
+  .toast-summary { display: none; }
 
-   
-  .admin-bnav  height:clamp(58px,10vw,66px) !important; padding:0 2px clamp(6px,2vw,10px) !important; 
-  .abn-btn  overflow:hidden; display:grid !important; grid-template-columns:auto !important; grid-template-rows:auto auto !important; 
-   
-  .abn-btn span:first-child  font-size:clamp(18px,5.5vw,22px) !important; 
-  .abn-btn span:nth-child(2)  font-size:clamp(7.5px,2.2vw,9px) !important; 
-   
-  .abn-btn span:nth-child(2)  white-space:nowrap !important; overflow:hidden; text-overflow:ellipsis; min-width:0; max-width:100%; display:block; line-height:1.2 !important; 
+  /* Admin bottom nav */
+  .admin-bnav { height:clamp(58px,10vw,66px) !important; padding:0 2px clamp(6px,2vw,10px) !important; }
+  .abn-btn span:first-child { font-size:clamp(18px,5.5vw,22px) !important; }
+  .abn-btn span:last-child  { font-size:clamp(7.5px,2.2vw,9px) !important; }
 
-   
-  .modal-overlay  align-items:flex-end !important; padding:0 !important; 
-  .modal 
+  /* Modal bottom sheet */
+  .modal-overlay { align-items:flex-end !important; padding:0 !important; }
+  .modal {
     border-radius:clamp(16px,4vw,22px) clamp(16px,4vw,22px) 0 0 !important;
     position:fixed !important; bottom:0 !important; left:0 !important; right:0 !important;
     max-height:92dvh !important; margin:0 !important; width:100% !important; max-width:100% !important;
-  
-  .modal-hdr  padding:clamp(14px,4vw,18px) clamp(16px,4vw,20px) !important; 
-  .modal-body  padding:clamp(14px,4vw,20px) !important; 
-  .modal-ftr   padding:clamp(12px,3.5vw,16px) clamp(14px,4vw,20px) !important; flex-wrap:wrap; gap:8px; 
-  .modal-ftr .btn  flex:1; justify-content:center; min-width:0; 
+  }
+  .modal-hdr { padding:clamp(14px,4vw,18px) clamp(16px,4vw,20px) !important; }
+  .modal-body { padding:clamp(14px,4vw,20px) !important; }
+  .modal-ftr  { padding:clamp(12px,3.5vw,16px) clamp(14px,4vw,20px) !important; flex-wrap:wrap; gap:8px; }
+  .modal-ftr .btn { flex:1; justify-content:center; min-width:0; }
 
-   
-  .gemini-panel  width:calc(100vw - 20px) !important; right:10px !important; height:min(440px,55dvh) !important; 
+  /* Gemini panel */
+  .gemini-panel { width:calc(100vw - 20px) !important; right:10px !important; height:min(440px,55dvh) !important; }
 
-   
-  .admin-more-menu  grid-template-columns:1fr 1fr 1fr !important; 
+  /* Sidebar more menu */
+  .admin-more-menu { grid-template-columns:1fr 1fr 1fr !important; }
 
-   
-  .aiteam-grid  grid-template-columns:1fr !important; 
+  /* AI Agent Team: two-column grid must collapse on phones — the
+     280px roster column otherwise squeezes the chat row and its
+     controls clip behind the floating action button. */
+  .aiteam-grid { grid-template-columns:1fr !important; }
 }
+
+/* ════ SMALL PHONE (≤380px) ════ */
 @media(max-width:380px){
-  #kpiCards.grid-4  grid-template-columns:1fr !important; 
-  .kpi-val  font-size:1.25rem !important; 
-  .page-title  font-size:1.05rem !important; 
-  .abn-btn span:first-child  font-size:17px !important; 
-  .abn-btn span:last-child   font-size:7px !important; letter-spacing:0 !important; 
-  .admin-bnav  height:56px !important; 
-  .gemini-fab  width:44px !important; height:44px !important; font-size:18px !important; 
-  .main  padding:8px !important; padding-bottom:68px !important; 
-  .card  padding:10px !important; 
+  #kpiCards.grid-4 { grid-template-columns:1fr !important; }
+  .kpi-val { font-size:1.25rem !important; }
+  .page-title { font-size:1.05rem !important; }
+  .abn-btn span:first-child { font-size:17px !important; }
+  .abn-btn span:last-child  { font-size:7px !important; letter-spacing:0 !important; }
+  .admin-bnav { height:56px !important; }
+  .gemini-fab { width:44px !important; height:44px !important; font-size:18px !important; }
+  .main { padding:8px !important; padding-bottom:68px !important; }
+  .card { padding:10px !important; }
 }
+
+
+
 .export-range-btn{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text2);font-size:0.82rem;font-weight:600;cursor:pointer;transition:.15s;text-align:center;}
 .export-range-btn:hover,.export-range-btn.active{border-color:var(--green);background:rgba(var(--green-rgb),.12);color:var(--green-text);}
 .export-fmt-btn{padding:8px 18px;border:1.5px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text2);font-size:0.82rem;font-weight:600;cursor:pointer;transition:.15s;}
@@ -1649,11 +1685,11 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 </head>
 <body>
-<script defer src="scripts/admin-core.js?v=20260819-3"></script>
-<script defer src="scripts/admin-api.js?v=20260819-3"></script>
-<script defer src="scripts/admin-ui.js?v=20260819-3"></script>
-<script defer src="scripts/admin-seo.js?v=20260819-3"></script>
-<script defer src="scripts/admin-audit.js?v=20260819-3"></script>
+<script defer src="scripts/admin-core.js?v=20260819-4"></script>
+<script defer src="scripts/admin-api.js?v=20260819-4"></script>
+<script defer src="scripts/admin-ui.js?v=20260819-4"></script>
+<script defer src="scripts/admin-seo.js?v=20260819-4"></script>
+<script defer src="scripts/admin-audit.js?v=20260819-4"></script>
 
 
 <!-- ══════════════ LOGIN ══════════════ -->
@@ -4879,19 +4915,7 @@ body.role-admin #azRoleBanner{display:block}
   .main  height: calc(100dvh - 46px) !important; 
 }</style>
 
-<!-- Legacy mobile menu compatibility: preserves the original admin navigation proportions after modular CSS extraction. -->
-<style id="legacy-mobile-menu-compat">
-@media (max-width:600px){
-  .admin-bnav{height:clamp(58px,10vw,66px) !important;padding:0 2px clamp(6px,2vw,10px) !important;}
-  .abn-btn span:first-child{font-size:clamp(18px,5.5vw,22px) !important;}
-  .abn-btn span:last-child{font-size:clamp(7.5px,2.2vw,9px) !important;}
-}
-@media (max-width:380px){
-  .abn-btn span:first-child{font-size:17px !important;}
-  .abn-btn span:last-child{font-size:7px !important;letter-spacing:0 !important;}
-  .admin-bnav{height:56px !important;}
-}
-</style>
+
 
 <div id="azIdleModal" role="alertdialog" aria-live="assertive">
   <div id="azIdleCard">
