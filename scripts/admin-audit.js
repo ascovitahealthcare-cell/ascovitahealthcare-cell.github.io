@@ -1115,11 +1115,15 @@ async function azLoadPerms() {
     const grid = document.getElementById('storeEdGalleryGrid');
     const q = window._seGalQuery || '';
     const list = _seGalLib.filter(i => !q || (i.filename||'').toLowerCase().includes(q));
-    grid.innerHTML = list.length ? list.map(i =>
-      '<div class="photo-item" onclick="storeEdPickGallery(' + JSON.stringify(i.url) + ')" style="cursor:pointer;">' +
-      '<img src="' + adminCdnImg(i.url) + '" alt="' + escAttr(i.original_name||i.filename||'') + '" loading="lazy">' +
-      '<div class="photo-cap">' + esc((i.original_name||i.filename||'').replace(/\.[^.]+$/,'')) + '</div></div>'
-    ).join('') : '<div style="grid-column:1/-1;text-align:center;padding:22px;color:var(--text3);">No photos match' + (q ? ' "' + esc(q) + '"' : '') + '</div>';
+    grid.innerHTML = list.length ? list.map(i => {
+      const url = JSON.stringify(String(i.url || ''));
+      const name = String(i.original_name || i.filename || '');
+      const label = esc(name.replace(/\.[^.]+$/, '')) || 'Untitled image';
+      return '<div class="store-gallery-item" role="button" tabindex="0" aria-label="Select ' + escAttr(name) + '" onclick="storeEdPickGallery(' + url + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();storeEdPickGallery(' + url + ')}">' +
+        '<div class="store-gallery-preview"><img src="' + adminCdnImg(i.url) + '" alt="' + escAttr(name) + '" loading="lazy"></div>' +
+        '<span class="store-gallery-select" aria-hidden="true">✓</span>' +
+        '<span class="store-gallery-name" title="' + escAttr(name) + '">' + label + '</span></div>';
+    }).join('') : '<div style="grid-column:1/-1;text-align:center;padding:22px;color:var(--text3);">No photos match' + (q ? ' "' + esc(q) + '"' : '') + '</div>';
   };
   window.storeEdPickGallery = async function(url){
     try {
