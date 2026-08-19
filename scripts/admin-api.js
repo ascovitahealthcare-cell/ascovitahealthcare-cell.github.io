@@ -118,8 +118,12 @@ async function confirmCriticalAction(promptText, actionFn){
           const d = await r.json();
           if (!r.ok || !d.proof) throw new Error(d.error || 'Password did not match');
           __proof = null; __proofExp = 0;
+          // Keep the dialog mounted until the protected action succeeds. If
+          // the server rejects the proof or session, the catch block below
+          // can show the real error inside this still-visible dialog.
+          const actionResult = await actionFn(d.proof);
           closeModal('azProofModal');
-          resolve(await actionFn(d.proof));
+          resolve(actionResult);
         } catch (e) { msg.textContent = e.message; msg.style.display = 'block'; }
       }},
       { label: 'Cancel', cls: 'btn-secondary', action: function(){ closeModal('azProofModal'); reject(new Error('cancelled')); } },

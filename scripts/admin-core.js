@@ -341,6 +341,11 @@ async function apiFetch(path, opts={}) {
   // dozen simultaneous 401s — first reason recorded wins, the rest are
   // no-ops rather than a dozen competing messages.
   if(r.status === 401) {
+    // A password-confirmation failure or a protected write rejection is not
+    // proof that the login session expired. Returning the response lets the
+    // modal/save handler show the real server error instead of logging the
+    // user out. Only read-session failures below should redirect to login.
+    if (exemptPath || (writeMethod && protectedPath)) return r;
     // The server now names its privileged 401s with a `reason` code —
     // 'invalid-signature' (JWT_SECRET cannot verify, needs a Render fix)
     // or 'token-version-mismatch' (a real revocation). Reading the body
