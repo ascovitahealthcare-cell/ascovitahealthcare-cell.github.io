@@ -235,6 +235,27 @@
   <link rel="dns-prefetch" href="https://frwsjgrrtzhjfflcdjjs.supabase.co">
 
   <!-- ═══════════════════════════════════════════════════════
+       OFFER BANNER SNAPSHOT — generated, do not hand-edit
+       ═══════════════════════════════════════════════════════
+       The offer carousel is admin-managed, so its image URLs live in the
+       database and normally arrive with /api/site-media. On a first-ever
+       visit there is no localStorage copy to fall back on, which left the
+       top of the page blank until that request came back.
+
+       `node tools/snapshot-banners.mjs` writes the current banner URLs
+       between the markers below, so a first visit paints the banner from
+       the HTML itself. site-media.js still fetches the live map on the
+       same load and re-renders if anything changed, so a stale snapshot
+       corrects itself — it is a starting picture, never the source of
+       truth. Empty markers are valid: the page just behaves as it did
+       before, waiting for the API.
+
+       Re-run it whenever the offer banners change, before deploying.
+  -->
+  <!-- OZYLIX:BANNER-SNAPSHOT:START -->
+  <!-- OZYLIX:BANNER-SNAPSHOT:END -->
+
+  <!-- ═══════════════════════════════════════════════════════
        OPEN GRAPH — Facebook, WhatsApp, LinkedIn, Instagram
   ════════════════════════════════════════════════════════ -->
   <meta property="og:type" content="website">
@@ -6535,7 +6556,7 @@ button, [role="button"] {
        admin-uploaded replacements and swaps them in. If the request
        fails (offline, backend down, key not set) the page simply keeps
        showing the fallback — nothing ever breaks. -->
-  <script defer src="scripts/site-media.js?v=20260819-4"></script>
+  <script defer src="scripts/site-media.js?v=20260819-5"></script>
 
   <!-- CATEGORIES -->
   <section class="section" style="padding-bottom:32px">

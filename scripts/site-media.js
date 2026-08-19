@@ -4,8 +4,18 @@
     // cdnImg() is declared in store-core.js, which loads AFTER this file. The
     // bare calls that used to be here threw a ReferenceError whenever this ran
     // early, which is why the whole block was deferred behind a ~1.1s timer.
-    // Resolved lazily, the media map can be applied the moment it is known.
-    function smCdn(u){ return (typeof cdnImg === 'function') ? cdnImg(u) : u; }
+    //
+    // The fallback is not a no-op on purpose. Returning the raw URL made the
+    // <link rel=preload> point at the Supabase original while the carousel
+    // rendered the /cdn-storage/ copy — two URLs, two downloads, and the
+    // preload helping neither. This mirrors cdnImg() in store-core.js; keep
+    // the two in step.
+    function smCdnFallback(u){
+      if (!u) return u;
+      var m = String(u).match(/^https?:\/\/[^/]+\/storage\/v1\/object\/public\/([^"'?\s]+)(\?.*)?$/);
+      return m ? '/cdn-storage/' + m[1] + (m[2] || '') : String(u);
+    }
+    function smCdn(u){ return (typeof cdnImg === 'function') ? cdnImg(u) : smCdnFallback(u); }
     function applySiteMedia(map){
       if(!map) return;
       document.querySelectorAll('[data-media-key]').forEach(function(el){
@@ -157,12 +167,14 @@
       // the map is known, instead of waiting for the carousel init.
       var u = map && (map['home.banner.1'] || map['home.banner.2'] || map['home.banner.3']);
       if (!u) return;
-      // Resolve the CDN helper lazily: store-core (cdnImg) loads after
-      // this script, so check the global first and fall back to the
-      // local imgCdn copy (or the raw URL if nothing is available yet).
-      var cdn = (typeof window.cdnImg === 'function') ? window.cdnImg : (typeof imgCdn === 'function' ? imgCdn : null);
-      var src = cdn ? cdn(u) : u;
-      if (!document.querySelector('link[rel="preload"][as="image"].ozylix-sm-preload')) {
+      // imgCdn is a local inside applyAdminImageFamilies and was never in
+      // scope here, so this fell through to the raw Supabase URL and
+      // preloaded a file the carousel then did not request — it renders the
+      // /cdn-storage/ copy. smCdn resolves the same way store-core does.
+      var src = smCdn(u);
+      // The baked-in snapshot may already have preloaded this exact file from
+      // <head>; a second identical link is wasted markup.
+      if (!document.querySelector('link[rel="preload"][as="image"][href="' + src.replace(/"/g, '\\"') + '"]')) {
         var l = document.createElement('link');
         l.rel = 'preload'; l.as = 'image'; l.href = src;
         l.fetchPriority = 'high';
@@ -170,16 +182,43 @@
         document.head.appendChild(l);
       }
     }
+    // First-ever visit: nothing in localStorage yet. tools/snapshot-banners.mjs
+    // bakes the current banner URLs into <head>, which is enough to paint the
+    // top of the page while the live map is still in flight. Banner keys only,
+    // so it seeds the carousel rather than standing in for the whole map.
+    function smSnapshot(){
+      var snap = window.__OZYLIX_BANNER_SNAPSHOT;
+      if (!snap || typeof snap !== 'object') return null;
+      for (var k in snap) { if (Object.prototype.hasOwnProperty.call(snap, k)) return snap; }
+      return null;
+    }
+    function smFetchMap(url){
+      return fetch(url).then(function(r){
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(function(d){
+        var m = d && (d.data || d);
+        // A 200 that is not the media map (an SPA shell, a 404 page rendered
+        // with a 200) must count as a miss, or it would overwrite good data.
+        if (!m || typeof m !== 'object' || Array.isArray(m)) throw new Error('not a media map');
+        return m;
+      });
+    }
     function refreshSiteMedia(){
       var base = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://ascovitahealthcare-cell-github-io.onrender.com';
-      fetch(base + '/api/site-media').then(function(r){ return r.ok ? r.json() : null; })
-        .then(function(d){
-          var fresh = d && (d.data || d);
+      // Same origin first: worker/index.js already serves /api/site-media from
+      // an in-isolate edge cache, so this is a local hop rather than a Render
+      // round-trip (~1.9s on a cold container). The storefront was calling
+      // Render directly and never touching that cache. Hosts the Worker does
+      // not serve — local preview, github.io — 404 here and fall through.
+      smFetchMap('/api/site-media')
+        .catch(function(){ return smFetchMap(base + '/api/site-media'); })
+        .then(function(fresh){
           applySiteMedia(fresh);
           smPreloadHeroOne(fresh);
-          if (fresh) smCacheWrite(fresh);
+          smCacheWrite(fresh);
         })
-        .catch(function(){ /* keep hard-coded defaults already in the HTML */ });
+        .catch(function(){ /* keep whatever is already on screen */ });
     }
     // Cached map first, synchronously. This file is deferred, so it runs with
     // the document fully parsed but BEFORE DOMContentLoaded — which is exactly
@@ -188,7 +227,16 @@
     // display:none section, no late is-live flip pushing the page down.
     function startSiteMedia(){
       var cached = smCacheRead();
-      if (cached) { smPreloadHeroOne(cached); applySiteMedia(cached); }
+      if (cached) {
+        smPreloadHeroOne(cached);
+        applySiteMedia(cached);
+      } else {
+        // No cache — seed just the banner family from the baked-in snapshot.
+        // Deliberately not applySiteMedia(): that publishes __ozylixSiteMedia
+        // as the whole media map, and the snapshot is only a slice of it.
+        var snap = smSnapshot();
+        if (snap) { smPreloadHeroOne(snap); applyAdminImageFamilies(snap); }
+      }
       // With a warm cache the network pass only corrects what is already on
       // screen, so it can yield to first paint. With no cache the banner has
       // nothing to show until it lands — fetch straight away.
