@@ -121,6 +121,12 @@
 // mediaTypeFromUrl() lives in store-core.js, which loads after this file. The
 // banner engines below now run as soon as the markup exists — earlier than
 // that — so resolve it lazily and fall back to the same extension test.
+// True when the element is actually laid out — offsetParent is null for a
+// carousel inside an SPA page that is currently display:none.
+function bnVisible(el) {
+  return !!(el && el.offsetParent !== null);
+}
+
 function bnMediaType(url) {
   if (typeof mediaTypeFromUrl === 'function') return mediaTypeFromUrl(url);
   return /\.(mp4|webm|mov|m4v|3gp)(\?|$)/i.test(String(url || '')) ? 'video' : 'image';
@@ -149,7 +155,8 @@ function bnMediaType(url) {
     if (shSlides.length < 2) return;
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     shTimer = setInterval(function () {
-      if (!document.hidden) shGo(shIdx + 1);    // a hidden tab should not advance
+      // Same as the home carousel: skip the tick while this page is offscreen.
+      if (!document.hidden && bnVisible(document.getElementById('shopHero'))) shGo(shIdx + 1);
     }, 5000);
   }
   window.initShopHero = function () {
@@ -419,7 +426,15 @@ window.dismissOfferReminder = function () {
     bnIdx = ((i % n) + n) % n;                  // wraps both directions
     var track = document.getElementById('heroBannerTrack');
     if (track) track.style.transform = 'translateX(-' + (bnIdx * 100) + '%)';
-    document.querySelectorAll('.hero-banner-dot').forEach(function(d, j) {
+    // Scoped to this carousel. The shop hero (#shopHero) is the same engine
+    // rendering the same markup into the same document, so an unscoped
+    // '.hero-banner-dot' sweep matched ITS dots too: every home tick — a
+    // click, or just the 5s autoplay — cleared the shop hero's active dot,
+    // because the home index never lines up with the shop dots' positions in
+    // the combined list. shGo() has always scoped its own query; this one
+    // never did.
+    var wrap = document.getElementById('heroBanner');
+    if (wrap) wrap.querySelectorAll('.hero-banner-dot').forEach(function(d, j) {
       d.classList.toggle('active', j === bnIdx);
     });
   }
@@ -429,7 +444,12 @@ window.dismissOfferReminder = function () {
     if (bnSlides.length < 2) return;
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     bnTimer = setInterval(function() {
-      if (!document.hidden) bnGo(bnIdx + 1);    // a hidden tab should not advance
+      // A hidden tab should not advance — and neither should a carousel on a
+      // page the visitor is not looking at. Home and shop both build their
+      // slider at load, so without this the offscreen one animates every 5s
+      // for the whole session: style recalcs and a compositor layer nobody
+      // can see. offsetParent goes null as soon as the page is display:none.
+      if (!document.hidden && bnVisible(document.getElementById('heroBanner'))) bnGo(bnIdx + 1);
     }, 5000);
   }
 
