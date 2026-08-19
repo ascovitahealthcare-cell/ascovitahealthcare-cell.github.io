@@ -1,14 +1,19 @@
 // Extracted from index.html (line 9293) by Manus SEO pass — load order preserved
 
   (function(){
+    // cdnImg() is declared in store-core.js, which loads AFTER this file. The
+    // bare calls that used to be here threw a ReferenceError whenever this ran
+    // early, which is why the whole block was deferred behind a ~1.1s timer.
+    // Resolved lazily, the media map can be applied the moment it is known.
+    function smCdn(u){ return (typeof cdnImg === 'function') ? cdnImg(u) : u; }
     function applySiteMedia(map){
       if(!map) return;
       document.querySelectorAll('[data-media-key]').forEach(function(el){
         var key = el.getAttribute('data-media-key');
-        if(map[key]) el.src = cdnImg(map[key]);
+        if(map[key]) el.src = smCdn(map[key]);
       });
-      if(map['about.hero_background']) document.documentElement.style.setProperty('--about-hero-bg', "url('"+cdnImg(map['about.hero_background'])+"')");
-      if(map['b2b.hero_background']) document.documentElement.style.setProperty('--b2b-hero-bg', "url('"+cdnImg(map['b2b.hero_background'])+"')");
+      if(map['about.hero_background']) document.documentElement.style.setProperty('--about-hero-bg', "url('"+smCdn(map['about.hero_background'])+"')");
+      if(map['b2b.hero_background']) document.documentElement.style.setProperty('--b2b-hero-bg', "url('"+smCdn(map['b2b.hero_background'])+"')");
       // Reveal shop banners when their upload exists (fixed slots)
       ['shop.banner.1','shop.banner.2','shop.banner.mix_match'].forEach(function(k){
         if(map[k]){
@@ -31,9 +36,7 @@
     //   fallback.*                — category product-image fallbacks
     function applyAdminImageFamilies(map) {
       if (!map || !Object.keys(map).length) return;
-      // Local CDN rewriter — must not depend on cdnImg() which is declared
-      // later in this file and would throw here (temporal dead zone).
-      var imgCdn = (typeof cdnImg === 'function') ? cdnImg : function (u) { return u; };
+      var imgCdn = smCdn;
       // Offer banner carousel — admin decides the count (any positive N).
       var bnSlides = [];
       for (var i = 1; i <= 9; i++) {
@@ -132,7 +135,11 @@
     // Render round-trip out of the perceived load path on repeat
     // visits (first visits keep the old behaviour).
     var SM_CACHE_KEY = 'ozylix_site_media_v1';
-    var SM_CACHE_MAXAGE = 60000; // 1 min — freshness via the background refresh
+    // Stale-while-revalidate: the cached map paints instantly and the
+    // background fetch below corrects it on the same load, so a long TTL costs
+    // nothing. The old 1-minute TTL expired between visits, which meant almost
+    // every reload waited on the Render round-trip before the banner existed.
+    var SM_CACHE_MAXAGE = 86400000; // 24h
     function smCacheRead(){
       try {
         var raw = localStorage.getItem(SM_CACHE_KEY);
@@ -163,10 +170,8 @@
         document.head.appendChild(l);
       }
     }
-    function loadSiteMedia(){
+    function refreshSiteMedia(){
       var base = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://ascovitahealthcare-cell-github-io.onrender.com';
-      var cached = smCacheRead();
-      if (cached) { applySiteMedia(cached); smPreloadHeroOne(cached); }
       fetch(base + '/api/site-media').then(function(r){ return r.ok ? r.json() : null; })
         .then(function(d){
           var fresh = d && (d.data || d);
@@ -176,13 +181,26 @@
         })
         .catch(function(){ /* keep hard-coded defaults already in the HTML */ });
     }
+    // Cached map first, synchronously. This file is deferred, so it runs with
+    // the document fully parsed but BEFORE DOMContentLoaded — which is exactly
+    // when banners.js builds the carousel. Publishing ADMIN_HERO_BANNERS here
+    // means the hero is built with its images on the first pass: no empty
+    // display:none section, no late is-live flip pushing the page down.
     function startSiteMedia(){
-      var run = window.requestIdleCallback
-        ? function(fn){ window.requestIdleCallback(fn, {timeout: 1600}); }
-        : function(fn){ setTimeout(fn, 1100); };
-      run(loadSiteMedia);
+      var cached = smCacheRead();
+      if (cached) { smPreloadHeroOne(cached); applySiteMedia(cached); }
+      // With a warm cache the network pass only corrects what is already on
+      // screen, so it can yield to first paint. With no cache the banner has
+      // nothing to show until it lands — fetch straight away.
+      if (cached) {
+        var run = window.requestIdleCallback
+          ? function(fn){ window.requestIdleCallback(fn, {timeout: 1200}); }
+          : function(fn){ setTimeout(fn, 600); };
+        run(refreshSiteMedia);
+      } else {
+        refreshSiteMedia();
+      }
     }
-    if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',startSiteMedia); }
-    else { startSiteMedia(); }
+    startSiteMedia();
   })();
   
