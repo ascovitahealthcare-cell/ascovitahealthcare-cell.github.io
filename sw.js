@@ -17,12 +17,13 @@
 // changing this string is what actually evicts the bad copy from devices
 // already carrying it. Bump it on any deploy that fixes a page-breaking
 // bug — a fix nobody can receive is not shipped.
-const CACHE_NAME = 'ozylix-pwa-v13';
+const CACHE_NAME = 'ozylix-pwa-v14';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache on install (your core pages)
-// Note: CSS/JS are now inlined directly in index.html, so they no longer
-// need separate cache entries here.
+// index.html is now modular: core JS lives in external scripts/ modules
+// (security, tracking, seo-core in head; shop, promo-data at body end).
+// They are cacheable so offline fallbacks stay consistent.
 const CORE_FILES = [
   '/manifest.json',
   '/',
@@ -39,7 +40,15 @@ const CORE_FILES = [
   '/assets/ozylix-mark.svg',
   '/assets/favicon.svg',
   '/assets/ozylix-icon-192.png',
-  '/assets/ozylix-icon-512.png'
+  '/assets/ozylix-icon-512.png',
+  '/scripts/security.js',
+  '/scripts/tracking.js',
+  '/scripts/seo-core.js',
+  '/scripts/shop.js',
+  '/scripts/promo-data.js',
+  '/scripts/store-core.js',
+  '/scripts/auth-core.js',
+  '/scripts/cart-utils.js'
 ];
 
 // ── INSTALL: cache core files ──
