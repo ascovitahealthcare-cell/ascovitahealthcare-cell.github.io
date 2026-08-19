@@ -73,11 +73,11 @@ function azSessionUser(){ try{ return JSON.parse(localStorage.getItem('ascovita_
 function azSavePwRequired(){ return true; }
 async function azSavePwRequiredFresh(){
   const cached = azSessionUser();
-  if (cached.security && cached.security.save_pw_required === true) return true;
   try {
     const r = await apiFetch('/api/admin/me');
-    if (r && !r.error) {
-      const next = { ...cached, username:r.username, role:r.role, is_owner:!!r.is_owner, permissions:r.permissions, denied:r.denied, security:r.security || null };
+    if (r && r.ok) {
+      const fresh = await r.json();
+      const next = { ...cached, username:fresh.username, role:fresh.role, is_owner:!!fresh.is_owner, permissions:fresh.permissions, denied:fresh.denied, security:fresh.security || null };
       localStorage.setItem('ascovita_session', JSON.stringify(next));
       // Fail closed: a missing, stale, or false flag must never downgrade a critical action to the login password.
       return true;
@@ -86,10 +86,9 @@ async function azSavePwRequiredFresh(){
   return true;
 }
 async function confirmCriticalAction(promptText, actionFn){
-  // Refresh the save-password requirement first; then read the session identity
-  // so a stale mobile/localStorage session cannot issue a proof for an old user.
+  // Refresh the save-password requirement and identity cache before every
+  // critical action; the server binds the proof to the authenticated JWT.
   const saveRequired = await azSavePwRequiredFresh();
-  const sess = azSessionUser();
   // Proofs are one-use on the server. Never cache or replay one after a
   // successful action; every save/approval gets a fresh confirmation.
   const modalTitle = saveRequired ? 'Confirm with your save password' : 'Confirm with your password';
@@ -113,7 +112,7 @@ async function confirmCriticalAction(promptText, actionFn){
         msg.style.display = 'none';
         try {
           const r = await apiFetch('/api/admin/confirm-password', {
-            method: 'POST', body: JSON.stringify({ username: sess.username || '', password: pw }),
+            method: 'POST', body: JSON.stringify({ password: pw }),
           });
           const d = await r.json();
           if (!r.ok || !d.proof) throw new Error(d.error || 'Password did not match');
