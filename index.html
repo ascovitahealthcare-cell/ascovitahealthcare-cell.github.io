@@ -10895,11 +10895,37 @@ const _origRenderCkSummary = renderCheckoutSummary;
 // ══════════════════════════════════════════════════════════════
 var SHIP_THRESHOLD = 599;
 var SHIP_FEE = 79;
+var DELIVERY_POLICY = { shipping_mode: 'paid', shipping_fee: 79, free_shipping_threshold: 599, cod_enabled: false, cod_min_order: 0, cod_max_order: 0, cod_allowed_all_orders: true };
+function applyDeliveryPolicy(policy) {
+  if (!policy || typeof policy !== 'object') return;
+  DELIVERY_POLICY = Object.assign({}, DELIVERY_POLICY, {
+    store_online: policy.store_online ?? policy.storeOnline ?? DELIVERY_POLICY.store_online,
+    shipping_mode: policy.shipping_mode ?? policy.shippingMode ?? DELIVERY_POLICY.shipping_mode,
+    shipping_fee: policy.shipping_fee ?? policy.shippingFee ?? DELIVERY_POLICY.shipping_fee,
+    free_shipping_threshold: policy.free_shipping_threshold ?? policy.freeShippingThreshold ?? DELIVERY_POLICY.free_shipping_threshold,
+    cod_enabled: policy.cod_enabled ?? policy.codEnabled ?? DELIVERY_POLICY.cod_enabled,
+    cod_min_order: policy.cod_min_order ?? policy.codMinOrder ?? DELIVERY_POLICY.cod_min_order,
+    cod_max_order: policy.cod_max_order ?? policy.codMaxOrder ?? DELIVERY_POLICY.cod_max_order,
+    cod_allowed_all_orders: policy.cod_allowed_all_orders ?? policy.codAllowedAllOrders ?? DELIVERY_POLICY.cod_allowed_all_orders,
+  });
+  SHIP_THRESHOLD = Math.max(0, Number(DELIVERY_POLICY.free_shipping_threshold) || 0);
+  SHIP_FEE = DELIVERY_POLICY.shipping_mode === 'free' ? 0 : Math.max(0, Number(DELIVERY_POLICY.shipping_fee) || 0);
+  document.dispatchEvent(new CustomEvent('ozylix:delivery-policy-updated'));
+  try { updateCodBtnNote(); } catch (_) {}
+}
+function loadDeliveryPolicy() {
+  var base = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://ascovitahealthcare-cell-github-io.onrender.com';
+  fetch(base + '/api/public/delivery-policy', { headers: { 'Accept': 'application/json' } })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){ if (d && d.data) applyDeliveryPolicy(d.data); })
+    .catch(function(){ /* safe defaults keep checkout usable */ });
+}
 function calcShipping(netSubtotal) {
   if (!SHIP_FEE) return 0;
   return (Number(netSubtotal) || 0) >= SHIP_THRESHOLD ? 0 : SHIP_FEE;
 }
 function shippingIsAlwaysFree() { return !SHIP_FEE; }
+loadDeliveryPolicy();
 
 // NOTE: this function is ALSO declared further down, in a later <script>
 // block. It looks like dead duplication and I removed it on that reading —
@@ -16024,10 +16050,19 @@ async function applyCode() {
 // ── CHECKOUT ──
 function updateCodBtnNote() {
   const note = document.getElementById('codBtnNote');
+  const btn = document.getElementById('codBtn');
   if (!note) return;
   const { paidSubtotal } = getOrderTotal();
   const net = paidSubtotal;
-  note.textContent = calcShipping(net) === 0 ? '✅ Free COD on your order!' : '+₹' + calcShipping(net) + ' COD charge · Free if order ≥ ₹' + SHIP_THRESHOLD;
+  const codAllowed = DELIVERY_POLICY.cod_enabled === true || DELIVERY_POLICY.cod_enabled === 'true';
+  const min = Math.max(0, Number(DELIVERY_POLICY.cod_min_order) || 0);
+  const max = Math.max(0, Number(DELIVERY_POLICY.cod_max_order) || 0);
+  const within = net >= min && (!max || net <= max);
+  if (btn) btn.style.display = codAllowed && within ? '' : 'none';
+  if (!codAllowed) note.textContent = 'COD is currently unavailable';
+  else if (!within && min > 0 && net < min) note.textContent = 'COD available above ₹' + min.toLocaleString('en-IN');
+  else if (!within && max > 0) note.textContent = 'COD available up to ₹' + max.toLocaleString('en-IN');
+  else note.textContent = calcShipping(net) === 0 ? '✅ Free COD on your order!' : '+₹' + calcShipping(net) + ' COD charge · Free if order ≥ ₹' + SHIP_THRESHOLD;
   note.style.color = calcShipping(net) === 0 ? 'var(--st-ok-bg)' : 'rgba(255,255,255,0.85)';
 }
 

@@ -2131,21 +2131,22 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
         </div>
       </div>
       <!-- Email OTP step: after the password matches, the server emails a
-           6-digit code to the owner's mailbox and the login completes only
+           6-digit code sent to the server-configured security mailbox; the login completes only
            after it is entered here. Hidden until step 2. -->
       <div id="otpStep" style="display:none;margin-top:18px">
         <div class="form-group" style="margin-bottom:0">
           <label class="field-label" for="loginOtp">Login code</label>
           <div style="display:flex;gap:10px">
-            <input type="text" id="loginOtp" class="field-input" placeholder="Enter the 6-digit code from email"
+            <input type="tel" id="loginOtp" class="field-input" placeholder="6-digit code"
                    inputmode="numeric" autocomplete="one-time-code" autocapitalize="none" autocorrect="off" spellcheck="false"
-                   style="flex:1;letter-spacing:6px;font-weight:700;text-align:center;font-size:1.1rem;">
-            <button type="button" class="btn-login" id="otpResendBtn" style="margin:0;padding:10px 14px;background:var(--ink);font-size:0.8rem;white-space:nowrap" onclick="otpResend()">📩 Resend</button>
+                   maxlength="6" minlength="6" pattern="[0-9]{6}" aria-describedby="otpHint"
+                   style="flex:1;min-width:0;letter-spacing:6px;font-weight:700;text-align:center;font-size:1.1rem;">
+            <button type="button" class="btn-login" id="otpResendBtn" style="flex:0 0 auto;width:auto;max-width:max-content;margin:0;padding:10px 14px;background:var(--ink);font-size:0.8rem;white-space:nowrap" onclick="otpResend()">Resend</button>
           </div>
           <div id="otpHint" style="font-size:0.75rem;color:#9aa;margin-top:6px;display:none"></div>
         </div>
       </div>
-      <div class="login-error" id="loginError">Invalid credentials. Please try again.</div>
+      <div class="login-error" id="loginError">Invalid password.</div>
       <button class="btn-login" type="submit" id="loginSubmitBtn" style="margin-top:20px">Sign In →</button>
     </form>
   </div>
@@ -4563,9 +4564,12 @@ function azBuildModal2(id, title, body, buttons){
     el = document.createElement('div');
     el.id = id;
     el.className = 'modal-overlay';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
     el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
     document.body.appendChild(el);
   }
+  el.style.zIndex = '4000';
   const btnsHtml = (buttons || []).map((b,i) =>
     `<button class="btn ${b.cls||''}" data-azmodal-idx="${i}">${escHtml(b.label)}</button>`).join('');
   el.innerHTML = AZ_MODAL_TPL2.replace('{id}', id).replace('{title}', escHtml(title))
@@ -4573,9 +4577,15 @@ function azBuildModal2(id, title, body, buttons){
       ? '<div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">' + btnsHtml + '</div>' : '');
   (buttons || []).forEach((b,i) => {
     const btn = el.querySelector(`button[data-azmodal-idx="${i}"]`);
-    if (btn) btn.addEventListener('click', () => { try { b.action(); } catch (e) { toast('❌ ' + e.message, 'error'); } });
+    if (btn) btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try { await b.action(); } catch (e) { if (e?.message !== 'cancelled') toast('❌ ' + e.message, 'error'); }
+      finally { btn.disabled = false; }
+    });
   });
   el.classList.add('open');
+  const focusable = el.querySelector('input,button');
+  if (focusable) setTimeout(() => focusable.focus(), 0);
 }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
@@ -4592,11 +4602,24 @@ function azSessionUser(){ try{ return JSON.parse(localStorage.getItem('ascovita_
 // the login password — so a leaked login password can't approve changes.
 // The flag arrives via /api/admin/me and is cached on the session object.
 function azSavePwRequired(){ return !!azSessionUser().security?.save_pw_required; }
+async function azSavePwRequiredFresh(){
+  const cached = azSessionUser();
+  if (cached.security && Object.prototype.hasOwnProperty.call(cached.security, 'save_pw_required')) return !!cached.security.save_pw_required;
+  try {
+    const r = await apiFetch('/api/admin/me');
+    if (r && !r.error) {
+      const next = { ...cached, username:r.username, role:r.role, is_owner:!!r.is_owner, permissions:r.permissions, denied:r.denied, security:r.security || null };
+      localStorage.setItem('ascovita_session', JSON.stringify(next));
+      return !!r.security?.save_pw_required;
+    }
+  } catch (_) {}
+  return false;
+}
 async function confirmCriticalAction(promptText, actionFn){
   const sess = azSessionUser();
   const reuses = __proof && Date.now() < __proofExp;
   if (reuses) return actionFn(__proof);
-  const saveRequired = azSavePwRequired();
+  const saveRequired = await azSavePwRequiredFresh();
   const modalTitle = saveRequired ? 'Confirm with your save password' : 'Confirm with your password';
   const fieldLabel = saveRequired ? 'Save (transaction) password' : 'Password';
   const emptyMsg = saveRequired ? 'Enter your save password.' : 'Enter your password.';
@@ -4682,6 +4705,8 @@ async function loadStaffPage(){
         <td style="padding:10px;font-size:.72rem;color:var(--text3)">${s.last_login_at ? new Date(s.last_login_at).toLocaleString() : '—'}</td>
         <td style="padding:10px;text-align:right;white-space:nowrap">
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffEditPerms('${escHtml(s.username)}', ${JSON.stringify(s.permissions||[]).replace(/"/g,'&quot;')})">✏️ Perms</button>
+          <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffApplyProfile('${escHtml(s.username)}','full')">⬆ Promote</button>
+          <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffApplyProfile('${escHtml(s.username)}','support')">⬇ Demote</button>
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffToggle('${escHtml(s.username)}', ${s.enabled})">${s.enabled ? '⏸ Suspend' : '▶ Enable'}</button>
           <button class="btn" style="font-size:.68rem;padding:4px 9px;color:var(--red-text);border-color:var(--red)" onclick="azStaffRevoke('${escHtml(s.username)}')">Revoke</button>
         </td>
@@ -4697,7 +4722,6 @@ async function azStaffInvite(){
   const msg = document.getElementById('azStaffInviteMsg');
   const username = document.getElementById('azStaffNewUsername').value.trim();
   const password = document.getElementById('azStaffNewPassword').value;
-  const enforced = document.getElementById('azStaffNewEnforced').checked;
   const permissions = [...document.querySelectorAll('.az-new-perm:checked')].map(c=>c.value);
   if (!/^[A-Za-z0-9._-]{3,30}$/.test(username)) { msg.textContent = 'Username: 3–30 characters, a-z, 0-9, dots, underscores, hyphens.'; msg.style.display = 'block'; return; }
   if (password.length < 10) { msg.textContent = 'Password must be at least 10 characters.'; msg.style.display = 'block'; return; }
@@ -4721,6 +4745,24 @@ async function azStaffInvite(){
   } catch (e) {
     if (e.message !== 'cancelled') { msg.textContent = e.message || 'Invite failed'; msg.style.display = 'block'; }
   }
+}
+
+async function azStaffApplyProfile(username, profile){
+  const isFull = profile === 'full';
+  const permissions = isFull ? null : (AZ_STAFF_PRESETS.support || ['orders.view','customers.view','products.view']);
+  const label = isFull ? 'promote to full operations access' : 'demote to the Support profile';
+  try {
+    await confirmCriticalAction(`${isFull ? 'Promote' : 'Demote'} ${username} — ${label}?`, async function(proof){
+      const r = await apiFetch('/api/admin/staff/' + encodeURIComponent(username), {
+        method:'PUT', headers: proof ? {'X-Password-Proof': proof} : {}, body: JSON.stringify({permissions}),
+      });
+      const d = await r.json().catch(()=>({}));
+      if (!r.ok) throw new Error(d.error || 'Profile update failed');
+      return d;
+    });
+    toast(`${username} ${isFull ? 'promoted' : 'demoted'} ✅`);
+    loadStaffPage();
+  } catch (e) { if (e.message !== 'cancelled') toast('❌ ' + e.message, 'error'); }
 }
 
 async function azStaffToggle(username, currentlyEnabled){
@@ -4851,13 +4893,25 @@ async function azStaffEditPerms(username, currentPerms, _unused){
         <label class="toggle-wrap"><label class="toggle"><input type="checkbox" id="storeOnline" checked><span class="toggle-slider"></span></label><span style="font-size:0.82rem;color:var(--text2)">Accept orders</span></label>
       </div>
       <div class="form-group" style="margin-bottom:14px">
-        <label class="form-label">COD Available</label>
-        <label class="toggle-wrap"><label class="toggle"><input type="checkbox" id="codAvailable" disabled><span class="toggle-slider"></span></label><span style="font-size:0.82rem;color:var(--text2)">Cash on Delivery — unavailable at launch</span></label>
+        <label class="form-label">Delivery price mode</label>
+        <select class="form-control" id="shippingMode">
+          <option value="paid">Paid delivery below threshold</option>
+          <option value="free">Free delivery on every order</option>
+        </select>
+      </div>
+      <div class="form-row col2" style="margin-bottom:14px">
+        <div class="form-group"><label class="form-label">Delivery fee (₹)</label><input type="number" class="form-control" id="shippingFee" value="79" min="0" step="1"></div>
+        <div class="form-group"><label class="form-label">Free above order (₹)</label><input type="number" class="form-control" id="freeShippingThreshold" value="599" min="0" step="1"></div>
       </div>
       <div class="form-group" style="margin-bottom:14px">
-        <label class="form-label">Free Shipping Threshold (₹)</label>
-        <input type="number" class="form-control" id="freeShippingThreshold" value="599">
+        <label class="form-label">Cash on Delivery</label>
+        <label class="toggle-wrap"><label class="toggle"><input type="checkbox" id="codAvailable"><span class="toggle-slider"></span></label><span style="font-size:0.82rem;color:var(--text2)">Enable COD at checkout</span></label>
       </div>
+      <div class="form-row col2" style="margin-bottom:14px">
+        <div class="form-group"><label class="form-label">COD minimum (₹)</label><input type="number" class="form-control" id="codMinOrder" value="0" min="0" step="1"></div>
+        <div class="form-group"><label class="form-label">COD maximum (₹, 0 = no cap)</label><input type="number" class="form-control" id="codMaxOrder" value="0" min="0" step="1"></div>
+      </div>
+      <label class="toggle-wrap" style="margin-bottom:14px"><label class="toggle"><input type="checkbox" id="codAllowedAllOrders" checked><span class="toggle-slider"></span></label><span style="font-size:0.82rem;color:var(--text2)">Allow COD for all orders within the limits</span></label>
       <div class="form-group">
         <label class="form-label">WhatsApp Number</label>
         <input type="text" class="form-control" id="whatsappNumber" placeholder="+919898582650">
@@ -4904,8 +4958,9 @@ async function azStaffEditPerms(username, currentPerms, _unused){
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Admin Email</label>
-        <input type="text" class="form-control" value="ascovitahealthcare@gmail.com" readonly style="opacity:0.6;">
+        <label class="form-label">Security email</label>
+        <div class="form-control" style="opacity:0.75;display:flex;align-items:center;min-height:42px;">Configured in Render environment variables</div>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:6px;">Login OTP and operational alerts use the server-configured recipient. The mailbox is never shown here.</div>
       </div>
     </div>
     <div class="card">
@@ -5631,7 +5686,7 @@ async function doLogin() {
       if (!r.ok || !d.token) {
         err.style.background = '';
         err.style.color = '';
-        err.textContent = d.error || 'That code did not match — check your inbox.';
+        err.textContent = 'Invalid code.';
         err.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Verify code →';
@@ -5689,7 +5744,7 @@ async function doLogin() {
         err.style.display = 'none';
         const hint = document.getElementById('otpHint');
         hint.style.display = 'block';
-        hint.textContent = `A 6-digit code was sent to ${d.otpTo || 'your mailbox'} · valid for 5 minutes`;
+        hint.textContent = 'A 6-digit code was sent · valid for 5 minutes';
         const otpField = document.getElementById('loginOtp');
         otpField.value = '';
         otpField.focus();
@@ -5763,14 +5818,14 @@ async function otpResend() {
     const d = await r.json();
     if (d && d.pending_otp && d.nonce) {
       _otpNonce = d.nonce;
-      hint.textContent = `A fresh 6-digit code was sent to ${d.otpTo || 'your mailbox'} · valid for 5 minutes`;
+      hint.textContent = 'A fresh 6-digit code was sent · valid for 5 minutes';
       document.getElementById('loginOtp').value = '';
       document.getElementById('loginOtp').focus();
     } else {
       hint.textContent = d.error || 'Could not send a new code — try signing in again.';
     }
   } catch(e) {
-    hint.textContent = 'Cannot reach server — check your connection.';
+    hint.textContent = 'Cannot reach server — try again.';
   }
   btn.disabled = false;
   btn.textContent = '📩 Resend';
@@ -5849,7 +5904,7 @@ async function apiFetch(path, opts={}) {
   const r = await fetch(`${API}${path}`, {...opts, headers, signal});
   // A 401 used to call doLogout() and nothing else. The login screen then
   // appeared with whatever text happened to be sitting in #loginError —
-  // in practice "Invalid credentials. Please try again.", which sends the
+  // in practice "Invalid password.", which sends the
   // admin off checking a password that was never wrong. Record WHY the
   // session ended so the screen can say something true.
   //
@@ -10016,6 +10071,11 @@ async function openCustomerInsight(id) {
       ${kpi('Avg / Order', '₹' + fmtNum(ins.avg_order_value||0), '🧾')}
       ${kpi('Days Since Last Order', ins.days_since_last_order == null ? '–' : ins.days_since_last_order, '⏳')}
     </div>
+    <div style="background:linear-gradient(135deg,var(--green-glow),var(--bg2));border:1px solid var(--border2);border-radius:12px;padding:11px 13px;margin-bottom:14px;">
+      <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);font-weight:800;margin-bottom:4px;">Recommended next action</div>
+      <div style="font-size:.82rem;color:var(--text);font-weight:600;">${ins.segment === 'churned' ? 'Win back this customer with a personalised offer.' : ins.segment === 'dormant' ? 'Send a reminder featuring their previously purchased products.' : ins.segment === 'vip' ? 'Prioritise a high-touch VIP follow-up and early access.' : ins.segment === 'new' ? 'Encourage a second purchase with a post-order reminder.' : 'Continue regular re-targeting based on recent purchases.'}</div>
+      <div style="font-size:.7rem;color:var(--text3);margin-top:4px;">${c.marketing_email !== false || c.marketing_whatsapp !== false ? 'At least one marketing channel is opted in.' : 'Both marketing channels are opted out — obtain consent before contacting.'}</div>
+    </div>
     <h4 style="font-size:0.72rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin:4px 0 8px;">Contact for re-targeting</h4>
     ${copyable('Email', ins.email)}
     ${copyable('WhatsApp / Phone', ins.phone)}
@@ -12893,8 +12953,16 @@ async function loadSettings() {
     const raw = await r.json();
     const d = raw.data || raw;
     if(d.store_online !== undefined) document.getElementById('storeOnline').checked = d.store_online === 'true' || d.store_online === true;
+    const policy = d.delivery_policy && typeof d.delivery_policy === 'object' ? d.delivery_policy : (typeof d.delivery_policy === 'string' ? (()=>{try{return JSON.parse(d.delivery_policy)}catch(_){return {}}})() : {});
     if(d.cod_available !== undefined) document.getElementById('codAvailable').checked = d.cod_available === 'true' || d.cod_available === true;
-    if(d.free_shipping?.threshold) document.getElementById('freeShippingThreshold').value = d.free_shipping.threshold;
+    document.getElementById('shippingMode').value = policy.shipping_mode || d.shipping_mode || 'paid';
+    if(policy.shipping_fee !== undefined || d.shipping_fee !== undefined) document.getElementById('shippingFee').value = policy.shipping_fee ?? d.shipping_fee;
+    if(d.free_shipping?.threshold !== undefined) document.getElementById('freeShippingThreshold').value = d.free_shipping.threshold;
+    if(policy.free_shipping_threshold !== undefined) document.getElementById('freeShippingThreshold').value = policy.free_shipping_threshold;
+    if(policy.cod_enabled !== undefined) document.getElementById('codAvailable').checked = policy.cod_enabled === true || policy.cod_enabled === 'true';
+    if(policy.cod_min_order !== undefined) document.getElementById('codMinOrder').value = policy.cod_min_order;
+    if(policy.cod_max_order !== undefined) document.getElementById('codMaxOrder').value = policy.cod_max_order;
+    if(policy.cod_allowed_all_orders !== undefined) document.getElementById('codAllowedAllOrders').checked = policy.cod_allowed_all_orders === true || policy.cod_allowed_all_orders === 'true';
     if(d.whatsapp_number) document.getElementById('whatsappNumber').value = d.whatsapp_number;
     if(d.gst_rate) { document.getElementById('cgstRate').value = d.gst_rate.cgst||2.5; document.getElementById('sgstRate').value = d.gst_rate.sgst||2.5; }
     if(d.razorpay_mode) document.getElementById('pgMode').value = d.razorpay_mode;
@@ -12913,7 +12981,11 @@ async function loadSettings() {
 
 async function saveSettings() {
   if (typeof confirmCriticalAction === 'function') {
-    await confirmCriticalAction('Save global store settings? These changes affect every visitor immediately.', saveSettingsCore);
+    try {
+      await confirmCriticalAction('Save global store settings? These changes affect every visitor immediately.', saveSettingsCore);
+    } catch (e) {
+      if (e?.message !== 'cancelled') toast(e.message || 'Save cancelled', 'error');
+    }
     return;
   }
   await saveSettingsCore();
@@ -12926,10 +12998,26 @@ async function saveSettingsCore() {
   if (!Number.isFinite(ceilingGlutathioneAcv) || ceilingGlutathioneAcv < 0 || ceilingGlutathioneAcv > 50 || !Number.isFinite(ceilingStandard) || ceilingStandard < 0 || ceilingStandard > 50) {
     toast('Discount ceilings must be between 0% and 50%', 'error'); return;
   }
+  const shippingMode = document.getElementById('shippingMode').value === 'free' ? 'free' : 'paid';
+  const shippingFee = Number(document.getElementById('shippingFee').value);
+  const freeShippingThreshold = Number(document.getElementById('freeShippingThreshold').value);
+  const codMinOrder = Number(document.getElementById('codMinOrder').value);
+  const codMaxOrder = Number(document.getElementById('codMaxOrder').value);
+  if (![shippingFee, freeShippingThreshold, codMinOrder, codMaxOrder].every(v => Number.isFinite(v) && v >= 0) || (codMaxOrder > 0 && codMaxOrder < codMinOrder)) {
+    toast('Delivery and COD amounts must be valid; COD maximum cannot be below minimum.', 'error'); return;
+  }
   const settings = {
     store_online: document.getElementById('storeOnline').checked,
     cod_available: document.getElementById('codAvailable').checked,
-    free_shipping: {threshold: parseInt(document.getElementById('freeShippingThreshold').value)||599},
+    shipping_mode: shippingMode,
+    shipping_fee: shippingFee,
+    free_shipping_threshold: freeShippingThreshold,
+    cod_enabled: document.getElementById('codAvailable').checked,
+    cod_min_order: codMinOrder,
+    cod_max_order: codMaxOrder,
+    cod_allowed_all_orders: document.getElementById('codAllowedAllOrders').checked,
+    delivery_policy: {shipping_mode: shippingMode, shipping_fee: shippingFee, free_shipping_threshold: freeShippingThreshold, cod_enabled: document.getElementById('codAvailable').checked, cod_min_order: codMinOrder, cod_max_order: codMaxOrder, cod_allowed_all_orders: document.getElementById('codAllowedAllOrders').checked},
+    free_shipping: {threshold: freeShippingThreshold},
     whatsapp_number: document.getElementById('whatsappNumber').value,
     gst_rate: {cgst: parseFloat(document.getElementById('cgstRate').value)||2.5, sgst: parseFloat(document.getElementById('sgstRate').value)||2.5},
     razorpay_mode: document.getElementById('pgMode').value,
