@@ -124,7 +124,14 @@ async function handleSiteMedia() {
   try {
     const r = await fetch(SITE_MEDIA_URL, {
       headers: { Accept: 'application/json' },
-      cf: { cacheTtl: SITE_MEDIA_EDGE_TTL, cacheEverything: true },
+      cf: {
+        // Deterministic key in the zone cache so every visitor shares one
+        // entry, and cf cacheTtl applies even though the origin (Render) is
+        // not itself behind Cloudflare.
+        cacheKey: SITE_MEDIA_CACHE_KEY,
+        cacheTtl: SITE_MEDIA_EDGE_TTL,
+        cacheEverything: true,
+      },
     });
     if (!r.ok) throw new Error('backend ' + r.status);
     const body = await r.text();

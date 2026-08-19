@@ -136,13 +136,14 @@ export async function handleCdnRequest(request) {
   // pages or unexpected content types so we never serve broken bytes.
   const ct = headers.get('Content-Type') || '';
   if (IMAGE_TYPES.test(url.pathname) || ct.startsWith('image/') || ct.startsWith('video/')) {
-    const cached = new Response(origin.body, { status: 200, headers: new Headers(headers) });
-    const storeTask = cache.put(cacheKey, cached);
+    // One source stream, two consumers: the client response AND the cache.
+    // clone() legally splits a Response body into two readable copies — the
+    // previous version gave the SAME body to both put() and the return,
+    // which locked the stream and crashed the Worker with error 1101.
+    const resp = new Response(origin.body, { status: 200, headers: new Headers(headers) });
+    const storeTask = cache.put(cacheKey, resp.clone());
     storeTask.catch(() => {}); // never let a cache failure break the response
-    // The clone() race is gone — we cache the fresh Response directly, and
-    // the same bytes flow to the client. A second consumer is not needed
-    // because put() and the return share exactly one readable body each.
-    return cached;
+    return resp;
   }
 
   return new Response(origin.body, { status: 200, headers });
