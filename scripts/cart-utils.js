@@ -116,6 +116,32 @@ function calcShipping(netSubtotal) {
   return (Number(netSubtotal) || 0) >= SHIP_THRESHOLD ? 0 : SHIP_FEE;
 }
 function shippingIsAlwaysFree() { return !SHIP_FEE; }
+var DELIVERY_POLICY = { shipping_mode: 'paid', shipping_fee: 79, free_shipping_threshold: 599, cod_enabled: false, cod_min_order: 0, cod_max_order: 0, cod_allowed_all_orders: true };
+function applyDeliveryPolicy(policy) {
+  if (!policy || typeof policy !== 'object') return;
+  DELIVERY_POLICY = Object.assign({}, DELIVERY_POLICY, {
+    store_online: policy.store_online ?? policy.storeOnline ?? DELIVERY_POLICY.store_online,
+    shipping_mode: policy.shipping_mode ?? policy.shippingMode ?? DELIVERY_POLICY.shipping_mode,
+    shipping_fee: policy.shipping_fee ?? policy.shippingFee ?? DELIVERY_POLICY.shipping_fee,
+    free_shipping_threshold: policy.free_shipping_threshold ?? policy.freeShippingThreshold ?? DELIVERY_POLICY.free_shipping_threshold,
+    cod_enabled: policy.cod_enabled ?? policy.codEnabled ?? DELIVERY_POLICY.cod_enabled,
+    cod_min_order: policy.cod_min_order ?? policy.codMinOrder ?? DELIVERY_POLICY.cod_min_order,
+    cod_max_order: policy.cod_max_order ?? policy.codMaxOrder ?? DELIVERY_POLICY.cod_max_order,
+    cod_allowed_all_orders: policy.cod_allowed_all_orders ?? policy.codAllowedAllOrders ?? DELIVERY_POLICY.cod_allowed_all_orders,
+  });
+  SHIP_THRESHOLD = Math.max(0, Number(DELIVERY_POLICY.free_shipping_threshold) || 0);
+  SHIP_FEE = DELIVERY_POLICY.shipping_mode === 'free' ? 0 : Math.max(0, Number(DELIVERY_POLICY.shipping_fee) || 0);
+  document.dispatchEvent(new CustomEvent('ozylix:delivery-policy-updated'));
+  try { updateCodBtnNote(); } catch (_) {}
+}
+function loadDeliveryPolicy() {
+  var base = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://ascovitahealthcare-cell-github-io.onrender.com';
+  fetch(base + '/api/public/delivery-policy', { headers: { 'Accept': 'application/json' } })
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){ if (d && d.data) applyDeliveryPolicy(d.data); })
+    .catch(function(){ /* safe defaults keep checkout usable */ });
+}
+loadDeliveryPolicy();
 
 // NOTE: this function is ALSO declared further down, in a later <script>
 // block. It looks like dead duplication and I removed it on that reading —

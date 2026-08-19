@@ -37,6 +37,9 @@ function azBuildModal2(id, title, body, buttons){
     el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
     document.body.appendChild(el);
   }
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  el.style.zIndex = '4000';
   const btnsHtml = (buttons || []).map((b,i) =>
     `<button class="btn ${b.cls||''}" data-azmodal-idx="${i}">${escHtml(b.label)}</button>`).join('');
   el.innerHTML = AZ_MODAL_TPL2.replace('{id}', id).replace('{title}', escHtml(title))
@@ -44,7 +47,11 @@ function azBuildModal2(id, title, body, buttons){
       ? '<div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">' + btnsHtml + '</div>' : '');
   (buttons || []).forEach((b,i) => {
     const btn = el.querySelector(`button[data-azmodal-idx="${i}"]`);
-    if (btn) btn.addEventListener('click', () => { try { b.action(); } catch (e) { toast('❌ ' + e.message, 'error'); } });
+    if (btn) btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      try { await b.action(); } catch (e) { if (e?.message !== 'cancelled') toast('❌ ' + e.message, 'error'); }
+      finally { btn.disabled = false; }
+    });
   });
   el.classList.add('open');
 }
@@ -63,11 +70,24 @@ function azSessionUser(){ try{ return JSON.parse(localStorage.getItem('ascovita_
 // the login password — so a leaked login password can't approve changes.
 // The flag arrives via /api/admin/me and is cached on the session object.
 function azSavePwRequired(){ return !!azSessionUser().security?.save_pw_required; }
+async function azSavePwRequiredFresh(){
+  const cached = azSessionUser();
+  if (cached.security && Object.prototype.hasOwnProperty.call(cached.security, 'save_pw_required')) return !!cached.security.save_pw_required;
+  try {
+    const r = await apiFetch('/api/admin/me');
+    if (r && !r.error) {
+      const next = { ...cached, username:r.username, role:r.role, is_owner:!!r.is_owner, permissions:r.permissions, denied:r.denied, security:r.security || null };
+      localStorage.setItem('ascovita_session', JSON.stringify(next));
+      return !!r.security?.save_pw_required;
+    }
+  } catch (_) {}
+  return false;
+}
 async function confirmCriticalAction(promptText, actionFn){
   const sess = azSessionUser();
   const reuses = __proof && Date.now() < __proofExp;
   if (reuses) return actionFn(__proof);
-  const saveRequired = azSavePwRequired();
+  const saveRequired = await azSavePwRequiredFresh();
   const modalTitle = saveRequired ? 'Confirm with your save password' : 'Confirm with your password';
   const fieldLabel = saveRequired ? 'Save (transaction) password' : 'Password';
   const emptyMsg = saveRequired ? 'Enter your save password.' : 'Enter your password.';
@@ -153,6 +173,8 @@ async function loadStaffPage(){
         <td style="padding:10px;font-size:.72rem;color:var(--text3)">${s.last_login_at ? new Date(s.last_login_at).toLocaleString() : '—'}</td>
         <td style="padding:10px;text-align:right;white-space:nowrap">
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffEditPerms('${escHtml(s.username)}', ${JSON.stringify(s.permissions||[]).replace(/"/g,'&quot;')})">✏️ Perms</button>
+          <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffApplyProfile('${escHtml(s.username)}','full')">⬆ Promote</button>
+          <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffApplyProfile('${escHtml(s.username)}','support')">⬇ Demote</button>
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffToggle('${escHtml(s.username)}', ${s.enabled})">${s.enabled ? '⏸ Suspend' : '▶ Enable'}</button>
           <button class="btn" style="font-size:.68rem;padding:4px 9px;color:var(--red-text);border-color:var(--red)" onclick="azStaffRevoke('${escHtml(s.username)}')">Revoke</button>
         </td>
@@ -168,7 +190,6 @@ async function azStaffInvite(){
   const msg = document.getElementById('azStaffInviteMsg');
   const username = document.getElementById('azStaffNewUsername').value.trim();
   const password = document.getElementById('azStaffNewPassword').value;
-  const enforced = document.getElementById('azStaffNewEnforced').checked;
   const permissions = [...document.querySelectorAll('.az-new-perm:checked')].map(c=>c.value);
   if (!/^[A-Za-z0-9._-]{3,30}$/.test(username)) { msg.textContent = 'Username: 3–30 characters, a-z, 0-9, dots, underscores, hyphens.'; msg.style.display = 'block'; return; }
   if (password.length < 10) { msg.textContent = 'Password must be at least 10 characters.'; msg.style.display = 'block'; return; }
@@ -192,6 +213,24 @@ async function azStaffInvite(){
   } catch (e) {
     if (e.message !== 'cancelled') { msg.textContent = e.message || 'Invite failed'; msg.style.display = 'block'; }
   }
+}
+
+async function azStaffApplyProfile(username, profile){
+  const isFull = profile === 'full';
+  const permissions = isFull ? null : (AZ_STAFF_PRESETS?.support || ['orders.view','customers.view','products.view']);
+  const label = isFull ? 'promote to full operations access' : 'demote to the Support profile';
+  try {
+    await confirmCriticalAction(`${isFull ? 'Promote' : 'Demote'} ${username} — ${label}?`, async function(proof){
+      const r = await apiFetch('/api/admin/staff/' + encodeURIComponent(username), {
+        method:'PUT', headers: proof ? {'X-Password-Proof': proof} : {}, body: JSON.stringify({permissions}),
+      });
+      const d = await r.json().catch(()=>({}));
+      if (!r.ok) throw new Error(d.error || 'Profile update failed');
+      return d;
+    });
+    toast(`${username} ${isFull ? 'promoted' : 'demoted'} ✅`);
+    loadStaffPage();
+  } catch (e) { if (e.message !== 'cancelled') toast('❌ ' + e.message, 'error'); }
 }
 
 async function azStaffToggle(username, currentlyEnabled){

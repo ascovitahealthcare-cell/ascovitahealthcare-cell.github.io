@@ -2137,10 +2137,19 @@ async function applyCode() {
 // ── CHECKOUT ──
 function updateCodBtnNote() {
   const note = document.getElementById('codBtnNote');
+  const btn = document.getElementById('codBtn');
   if (!note) return;
   const { paidSubtotal } = getOrderTotal();
   const net = paidSubtotal;
-  note.textContent = calcShipping(net) === 0 ? '✅ Free COD on your order!' : '+₹' + calcShipping(net) + ' COD charge · Free if order ≥ ₹' + SHIP_THRESHOLD;
+  const codAllowed = DELIVERY_POLICY.cod_enabled === true || DELIVERY_POLICY.cod_enabled === 'true';
+  const min = Math.max(0, Number(DELIVERY_POLICY.cod_min_order) || 0);
+  const max = Math.max(0, Number(DELIVERY_POLICY.cod_max_order) || 0);
+  const within = net >= min && (!max || net <= max);
+  if (btn) btn.style.display = codAllowed && within ? '' : 'none';
+  if (!codAllowed) note.textContent = 'COD is currently unavailable';
+  else if (!within && min > 0 && net < min) note.textContent = 'COD available above ₹' + min.toLocaleString('en-IN');
+  else if (!within && max > 0) note.textContent = 'COD available up to ₹' + max.toLocaleString('en-IN');
+  else note.textContent = calcShipping(net) === 0 ? '✅ Free COD on your order!' : '+₹' + calcShipping(net) + ' COD charge · Free if order ≥ ₹' + SHIP_THRESHOLD;
   note.style.color = calcShipping(net) === 0 ? 'var(--st-ok-bg)' : 'rgba(255,255,255,0.85)';
 }
 

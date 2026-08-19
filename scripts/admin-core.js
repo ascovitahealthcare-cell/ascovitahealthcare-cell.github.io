@@ -85,7 +85,7 @@ async function doLogin() {
       if (!r.ok || !d.token) {
         err.style.background = '';
         err.style.color = '';
-        err.textContent = d.error || 'That code did not match — check your inbox.';
+        err.textContent = 'Invalid code.';
         err.style.display = 'block';
         btn.disabled = false;
         btn.textContent = 'Verify code →';
@@ -143,7 +143,7 @@ async function doLogin() {
         err.style.display = 'none';
         const hint = document.getElementById('otpHint');
         hint.style.display = 'block';
-        hint.textContent = `A 6-digit code was sent to ${d.otpTo || 'your mailbox'} · valid for 5 minutes`;
+        hint.textContent = 'A 6-digit code was sent · valid for 5 minutes';
         const otpField = document.getElementById('loginOtp');
         otpField.value = '';
         otpField.focus();
@@ -217,7 +217,7 @@ async function otpResend() {
     const d = await r.json();
     if (d && d.pending_otp && d.nonce) {
       _otpNonce = d.nonce;
-      hint.textContent = `A fresh 6-digit code was sent to ${d.otpTo || 'your mailbox'} · valid for 5 minutes`;
+      hint.textContent = 'A fresh 6-digit code was sent · valid for 5 minutes';
       document.getElementById('loginOtp').value = '';
       document.getElementById('loginOtp').focus();
     } else {
@@ -7347,7 +7347,12 @@ async function loadSettings() {
     const raw = await r.json();
     const d = raw.data || raw;
     if(d.store_online !== undefined) document.getElementById('storeOnline').checked = d.store_online === 'true' || d.store_online === true;
+    if(d.shipping_mode) { const sm = document.getElementById('shippingMode'); if (sm) sm.value = d.shipping_mode; }
+    if(d.shipping_fee !== undefined) { const sf = document.getElementById('shippingFee'); if (sf) sf.value = d.shipping_fee; }
     if(d.cod_available !== undefined) document.getElementById('codAvailable').checked = d.cod_available === 'true' || d.cod_available === true;
+    if(d.cod_min_order !== undefined) { const cm = document.getElementById('codMinOrder'); if (cm) cm.value = d.cod_min_order; }
+    if(d.cod_max_order !== undefined) { const cx = document.getElementById('codMaxOrder'); if (cx) cx.value = d.cod_max_order; }
+    if(d.cod_allowed_all_orders !== undefined) document.getElementById('codAllowedAllOrders').checked = d.cod_allowed_all_orders === 'true' || d.cod_allowed_all_orders === true;
     if(d.free_shipping?.threshold) document.getElementById('freeShippingThreshold').value = d.free_shipping.threshold;
     if(d.whatsapp_number) document.getElementById('whatsappNumber').value = d.whatsapp_number;
     if(d.gst_rate) { document.getElementById('cgstRate').value = d.gst_rate.cgst||2.5; document.getElementById('sgstRate').value = d.gst_rate.sgst||2.5; }
@@ -7382,6 +7387,12 @@ async function saveSettingsCore() {
   }
   const settings = {
     store_online: document.getElementById('storeOnline').checked,
+    shipping_mode: (document.getElementById('shippingMode')||{}).value || 'paid',
+    shipping_fee: parseInt((document.getElementById('shippingFee')||{}).value)||79,
+    cod_available: document.getElementById('codAvailable').checked,
+    cod_min_order: parseInt((document.getElementById('codMinOrder')||{}).value)||0,
+    cod_max_order: parseInt((document.getElementById('codMaxOrder')||{}).value)||0,
+    cod_allowed_all_orders: document.getElementById('codAllowedAllOrders').checked,
     cod_available: document.getElementById('codAvailable').checked,
     free_shipping: {threshold: parseInt(document.getElementById('freeShippingThreshold').value)||599},
     whatsapp_number: document.getElementById('whatsappNumber').value,

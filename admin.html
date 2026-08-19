@@ -1698,21 +1698,22 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
         </div>
       </div>
       <!-- Email OTP step: after the password matches, the server emails a
-           6-digit code to the owner's mailbox and the login completes only
+           6-digit code sent to the server-configured security mailbox; the login completes only
            after it is entered here. Hidden until step 2. -->
       <div id="otpStep" style="display:none;margin-top:18px">
         <div class="form-group" style="margin-bottom:0">
           <label class="field-label" for="loginOtp">Login code</label>
           <div style="display:flex;gap:10px">
-            <input type="text" id="loginOtp" class="field-input" placeholder="Enter the 6-digit code from email"
+            <input type="tel" id="loginOtp" class="field-input" placeholder="6-digit code"
                    inputmode="numeric" autocomplete="one-time-code" autocapitalize="none" autocorrect="off" spellcheck="false"
-                   style="flex:1;letter-spacing:6px;font-weight:700;text-align:center;font-size:1.1rem;">
-            <button type="button" class="btn-login" id="otpResendBtn" style="margin:0;padding:10px 14px;background:var(--ink);font-size:0.8rem;white-space:nowrap" onclick="otpResend()">📩 Resend</button>
+                   maxlength="6" minlength="6" pattern="[0-9]{6}" aria-describedby="otpHint"
+                   style="flex:1;min-width:0;letter-spacing:6px;font-weight:700;text-align:center;font-size:1.1rem;">
+            <button type="button" class="btn-login" id="otpResendBtn" style="flex:0 0 auto;width:auto;max-width:max-content;margin:0;padding:10px 14px;background:var(--ink);font-size:0.8rem;white-space:nowrap" onclick="otpResend()">Resend</button>
           </div>
           <div id="otpHint" style="font-size:0.75rem;color:#9aa;margin-top:6px;display:none"></div>
         </div>
       </div>
-      <div class="login-error" id="loginError">Invalid credentials. Please try again.</div>
+      <div class="login-error" id="loginError">Invalid password.</div>
       <button class="btn-login" type="submit" id="loginSubmitBtn" style="margin-top:20px">Sign In →</button>
     </form>
   </div>
@@ -3880,13 +3881,25 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
         <label class="toggle-wrap"><label class="toggle"><input type="checkbox" id="storeOnline" checked><span class="toggle-slider"></span></label><span style="font-size:0.82rem;color:var(--text2)">Accept orders</span></label>
       </div>
       <div class="form-group" style="margin-bottom:14px">
-        <label class="form-label">COD Available</label>
-        <label class="toggle-wrap"><label class="toggle"><input type="checkbox" id="codAvailable" disabled><span class="toggle-slider"></span></label><span style="font-size:0.82rem;color:var(--text2)">Cash on Delivery — unavailable at launch</span></label>
+        <label class="form-label">Delivery price mode</label>
+        <select class="form-control" id="shippingMode">
+          <option value="paid">Paid delivery below threshold</option>
+          <option value="free">Free delivery on every order</option>
+        </select>
+      </div>
+      <div class="form-row col2" style="margin-bottom:14px">
+        <div class="form-group"><label class="form-label">Delivery fee (₹)</label><input type="number" class="form-control" id="shippingFee" value="79" min="0" step="1"></div>
+        <div class="form-group"><label class="form-label">Free above order (₹)</label><input type="number" class="form-control" id="freeShippingThreshold" value="599" min="0" step="1"></div>
       </div>
       <div class="form-group" style="margin-bottom:14px">
-        <label class="form-label">Free Shipping Threshold (₹)</label>
-        <input type="number" class="form-control" id="freeShippingThreshold" value="599">
+        <label class="form-label">Cash on Delivery</label>
+        <label class="toggle-wrap"><label class="toggle"><input type="checkbox" id="codAvailable"><span class="toggle-slider"></span></label><span style="font-size:0.82rem;color:var(--text2)">Enable COD at checkout</span></label>
       </div>
+      <div class="form-row col2" style="margin-bottom:14px">
+        <div class="form-group"><label class="form-label">COD minimum (₹)</label><input type="number" class="form-control" id="codMinOrder" value="0" min="0" step="1"></div>
+        <div class="form-group"><label class="form-label">COD maximum (₹, 0 = no cap)</label><input type="number" class="form-control" id="codMaxOrder" value="0" min="0" step="1"></div>
+      </div>
+      <label class="toggle-wrap" style="margin-bottom:14px"><label class="toggle"><input type="checkbox" id="codAllowedAllOrders" checked><span class="toggle-slider"></span></label><span style="font-size:0.82rem;color:var(--text2)">Allow COD for all orders within the limits</span></label>
       <div class="form-group">
         <label class="form-label">WhatsApp Number</label>
         <input type="text" class="form-control" id="whatsappNumber" placeholder="+919898582650">
@@ -3933,8 +3946,9 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Admin Email</label>
-        <input type="text" class="form-control" value="ascovitahealthcare@gmail.com" readonly style="opacity:0.6;">
+        <label class="form-label">Security email</label>
+        <div class="form-control" style="opacity:0.75;display:flex;align-items:center;min-height:42px;">Configured in Render environment variables</div>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:6px;">Login OTP and operational alerts use the server-configured recipient. The mailbox is never shown here.</div>
       </div>
     </div>
     <div class="card">
