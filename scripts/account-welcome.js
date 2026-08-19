@@ -54,8 +54,15 @@
     for (var n = 0; n < imgs.length; n++) {
       var im = imgs[n];
       im.setAttribute('data-az-img', '1');
-      if (!im.hasAttribute('loading'))  im.setAttribute('loading', 'lazy');
-      if (!im.hasAttribute('decoding')) im.setAttribute('decoding', 'async');
+      // Never lazy-load the LCP image. This blanket sweep was stamping
+      // loading="lazy" onto the first hero banner slide, which ships with
+      // fetchpriority="high" precisely so it starts downloading immediately —
+      // the two cancel out and the banner lands a round-trip later than it
+      // should. Anything explicitly marked high priority is left alone.
+      var isPriority = im.getAttribute('fetchpriority') === 'high' ||
+                       im.closest('.hero-banner') !== null;
+      if (!im.hasAttribute('loading') && !isPriority) im.setAttribute('loading', 'lazy');
+      if (!im.hasAttribute('decoding') && !isPriority) im.setAttribute('decoding', 'async');
       if (!im.getAttribute('alt'))      im.setAttribute('alt', '');
       if (!im.complete) {
         im.classList.add('az-fade');

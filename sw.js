@@ -17,7 +17,7 @@
 // changing this string is what actually evicts the bad copy from devices
 // already carrying it. Bump it on any deploy that fixes a page-breaking
 // bug — a fix nobody can receive is not shipped.
-const CACHE_NAME = 'ozylix-pwa-v14';
+const CACHE_NAME = 'ozylix-pwa-v18';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache on install (your core pages)
@@ -110,6 +110,14 @@ self.addEventListener('fetch', event => {
 
   // Rule 1 — anything not served from this origin.
   if (url.origin !== self.location.origin) return;
+
+  // Rule 1b — the API. /api/site-media is now fetched same-origin so it hits
+  // the Worker's edge cache instead of Render directly, which brought it
+  // under Rule 2b: cache-first, so an admin's banner change could take two
+  // loads to show. API responses have their own freshness rules (a 60s edge
+  // TTL, and the storefront's own localStorage copy) and have no business in
+  // the static asset cache.
+  if (url.pathname.startsWith('/api/')) return;
 
   const isDocument = request.mode === 'navigate' || request.destination === 'document';
 

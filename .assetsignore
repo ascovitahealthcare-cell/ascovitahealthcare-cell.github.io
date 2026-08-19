@@ -33,3 +33,6 @@ CNAME
 .git
 node_modules
 **/.DS_Store
+
+# Build tooling — not part of the published site.
+tools
