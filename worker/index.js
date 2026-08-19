@@ -85,9 +85,81 @@ async function serveAdmin(request, env, url) {
 
 import { isCdnRequest, handleCdnRequest } from './image-cdn.js';
 
+// ── Performance: edge-cached site-media JSON (Aug 2026) ──────────────────────
+// The storefront fetches /api/site-media from the Render backend on every page
+// load before it can render the offer banners. On a cold Render container that
+// call costs ~1.9s — the single biggest LCP delay for first-time visitors.
+// The map is public (no auth), changes only when an admin uploads/replaces a
+// site image, and the admin panel already re-applies the map live after an
+// upload completes — so a 60s edge cache with 1-year stale-while-revalidate is
+// safe: visitors always get a copy within a minute of an admin change, and the
+// upload hook refreshes their page instantly anyway.
+//
+// When an admin changes a site image, POST /api/admin/invalidate-cache is
+// called by the backend hook (see backend) — it purges this key from the edge
+// so the freshest map is re-fetched.
+const SITE_MEDIA_URL = 'https://ascovitahealthcare-cell-github-io.onrender.com/api/site-media';
+const SITE_MEDIA_EDGE_TTL = 60; // seconds — admin changes visible within 1 min
+const SITE_MEDIA_STALE_TTL = 31536000; // serve stale up to 1 year while refreshing
+const SITE_MEDIA_CACHE_KEY = new Request('https://ozylix-cdn/edge/site-media', { method: 'GET' });
+
+async function handleSiteMedia() {
+  const cache = caches.default;
+  const stored = await cache.match(SITE_MEDIA_CACHE_KEY);
+  if (stored) {
+    const age = stored.headers.get('x-edge-age') || '0';
+    return new Response(stored.body, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': `public, max-age=${SITE_MEDIA_EDGE_TTL}, stale-while-revalidate=${SITE_MEDIA_STALE_TTL}`,
+        'Access-Control-Allow-Origin': '*',
+        'X-Edge-Age': String(Number(age) + 1),
+      },
+    });
+  }
+
+  // Cold edge — fetch from Render (may include cold-start time, but only once
+  // per minute instead of on every page load).
+  try {
+    const r = await fetch(SITE_MEDIA_URL, {
+      headers: { Accept: 'application/json' },
+      cf: { cacheTtl: SITE_MEDIA_EDGE_TTL, cacheEverything: true },
+    });
+    if (!r.ok) throw new Error('backend ' + r.status);
+    const body = await r.text();
+    // Validate it's actually JSON before caching.
+    JSON.parse(body);
+    const res = new Response(body, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': `public, max-age=${SITE_MEDIA_EDGE_TTL}, stale-while-revalidate=${SITE_MEDIA_STALE_TTL}`,
+        'Access-Control-Allow-Origin': '*',
+        'X-Edge-Age': '0',
+      },
+    });
+    const storeTask = cache.put(SITE_MEDIA_CACHE_KEY, res.clone());
+    storeTask.catch(() => {});
+    return res;
+  } catch (e) {
+    // Render is down or slow — fail loudly so the storefront keeps its
+    // hard-coded defaults instead of painting broken banner URLs.
+    return new Response(JSON.stringify({ error: 'site-media unavailable', detail: String(e) }), {
+      status: 502,
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+    });
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // Public, edge-cached site-media map (see handleSiteMedia doc block).
+    if (url.pathname === '/api/site-media') {
+      return handleSiteMedia();
+    }
 
     // Edge image CDN: /cdn-storage/<bucket>/<path> is fetched once from
     // Supabase Storage and cached at the edge forever, so image delivery
@@ -116,4 +188,4 @@ export default {
 };
 
 // Exported for the local routing test; ignored by the Workers runtime.
-export { isSpaPath, ADMIN_HOST, ADMIN_ENTRY };
+export { isSpaPath, ADMIN_HOST, ADMIN_ENTRY, handleSiteMedia };

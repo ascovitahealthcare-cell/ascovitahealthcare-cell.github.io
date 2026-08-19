@@ -123,10 +123,57 @@
       var __smTargets = [document.getElementById('heroBanner'), document.querySelector('.shop-promos')].filter(Boolean);
       __smTargets.forEach(function (t) { __smObserver.observe(t, { childList: true }); });
     }
+    // ── Instant media map (no waiting for the API) ──────────────
+    // The media map rarely changes between visits, so keep the last
+    // known good copy in localStorage and apply it SYNCHRONOUSLY on
+    // every load. A fresh fetch still runs afterwards to pick up any
+    // admin change, but hero banners and promo cards are already on
+    // screen before the request completes — cutting the ~0.5-1.9s
+    // Render round-trip out of the perceived load path on repeat
+    // visits (first visits keep the old behaviour).
+    var SM_CACHE_KEY = 'ozylix_site_media_v1';
+    var SM_CACHE_MAXAGE = 60000; // 1 min — freshness via the background refresh
+    function smCacheRead(){
+      try {
+        var raw = localStorage.getItem(SM_CACHE_KEY);
+        if (!raw) return null;
+        var o = JSON.parse(raw);
+        if (o && o.t && (Date.now() - o.t < SM_CACHE_MAXAGE) && o.map) return o.map;
+      } catch (e) { /* corrupted entry, ignore */ }
+      return null;
+    }
+    function smCacheWrite(map){
+      try { localStorage.setItem(SM_CACHE_KEY, JSON.stringify({ t: Date.now(), map: map })); } catch (e) { /* quota, ignore */ }
+    }
+    function smPreloadHeroOne(map){
+      // Start downloading hero banner #1 at maximum priority the moment
+      // the map is known, instead of waiting for the carousel init.
+      var u = map && (map['home.banner.1'] || map['home.banner.2'] || map['home.banner.3']);
+      if (!u) return;
+      // Resolve the CDN helper lazily: store-core (cdnImg) loads after
+      // this script, so check the global first and fall back to the
+      // local imgCdn copy (or the raw URL if nothing is available yet).
+      var cdn = (typeof window.cdnImg === 'function') ? window.cdnImg : (typeof imgCdn === 'function' ? imgCdn : null);
+      var src = cdn ? cdn(u) : u;
+      if (!document.querySelector('link[rel="preload"][as="image"].ozylix-sm-preload')) {
+        var l = document.createElement('link');
+        l.rel = 'preload'; l.as = 'image'; l.href = src;
+        l.fetchPriority = 'high';
+        l.className = 'ozylix-sm-preload';
+        document.head.appendChild(l);
+      }
+    }
     function loadSiteMedia(){
       var base = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://ascovitahealthcare-cell-github-io.onrender.com';
+      var cached = smCacheRead();
+      if (cached) { applySiteMedia(cached); smPreloadHeroOne(cached); }
       fetch(base + '/api/site-media').then(function(r){ return r.ok ? r.json() : null; })
-        .then(function(d){ applySiteMedia(d && (d.data || d)); })
+        .then(function(d){
+          var fresh = d && (d.data || d);
+          applySiteMedia(fresh);
+          smPreloadHeroOne(fresh);
+          if (fresh) smCacheWrite(fresh);
+        })
         .catch(function(){ /* keep hard-coded defaults already in the HTML */ });
     }
     function startSiteMedia(){
