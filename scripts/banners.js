@@ -127,6 +127,72 @@ function bnVisible(el) {
   return !!(el && el.offsetParent !== null);
 }
 
+// Build a carousel only once its own page is on screen.
+//
+// Home and shop are two sliders in ONE document, and both used to build at
+// load whichever page you were on: opening the home page also rendered the
+// shop hero's slides — extra <img> elements fetched, decoded and held in
+// memory for a section the visitor cannot see — and /shop did the same for
+// the home banner. They are independent sliders and now boot independently.
+//
+// #page-home ships with class "active", so the home banner is laid out at
+// parse time and still builds immediately — the LCP path is unchanged. Only
+// the offscreen one waits, and it waits on the element itself rather than on
+// a router hook, so it works however the visitor arrives.
+// The gate has to watch the PAGE, not the carousel. .hero-banner is
+// display:none until it goes live, so its own offsetParent is null right up
+// until the thing we are deciding whether to build has been built.
+function bnPageOf(el) {
+  return (el && el.closest && el.closest('.page')) || (el && el.parentElement) || el;
+}
+// Which page the URL asks for. #page-home ships with class "active" so the
+// home banner can build before the router runs — that is what keeps it on the
+// LCP path. But on a deep link the router is about to swap that class, so at
+// boot the markup says "home is visible" for a page that is about to be
+// replaced: a visitor landing on /shop was still building the whole home
+// carousel. For that first decision the URL is the honest signal.
+function bnRoute() {
+  var p = String(location.pathname || '').replace(/\/+$/, '');
+  if (p === '' || p === '/index.html') return 'home';
+  if (p === '/shop') return 'shop';
+  return 'other';
+}
+// Build a carousel only when its own page is the one on screen, and watch for
+// that moment if it is not.
+//
+// Both sliders live in ONE document, so whichever page you opened used to
+// build both: the home page also rendered the shop hero's slides — extra
+// <img> elements fetched, decoded and held in memory for a section the
+// visitor cannot see — and /shop did the same for the home banner. They are
+// independent sliders and now boot independently.
+//
+// The test is the ROUTE, not layout. #page-home carries class "active" in the
+// static markup until the router swaps it, and the router runs well after
+// these scripts do, so during boot layout claims the home page is on screen
+// even on a deep link to /shop. showPage() pushes a clean path ('/' or
+// '/shop') on every navigation, so the URL is the one signal that is true
+// both at boot and afterwards.
+function bnWhenVisible(el, name, build) {
+  if (!el) return;
+  var page = bnPageOf(el);
+  var ready = function () { return bnRoute() === name && bnVisible(page); };
+  if (ready()) { build(); return; }
+  // No IntersectionObserver: keep the old eager behaviour rather than a
+  // carousel that never appears.
+  if (!('IntersectionObserver' in window)) { build(); return; }
+  if (el.__bnWatching) return;
+  el.__bnWatching = true;
+  var io = new IntersectionObserver(function () {
+    // Fires on the way out as well, and can fire while the route still names
+    // the other page — keep observing until both agree.
+    if (!ready()) return;
+    io.disconnect();
+    el.__bnWatching = false;
+    build();
+  }, { rootMargin: '400px 0px' });
+  io.observe(page);
+}
+
 function bnMediaType(url) {
   if (typeof mediaTypeFromUrl === 'function') return mediaTypeFromUrl(url);
   return /\.(mp4|webm|mov|m4v|3gp)(\?|$)/i.test(String(url || '')) ? 'video' : 'image';
@@ -159,10 +225,20 @@ function bnMediaType(url) {
       if (!document.hidden && bnVisible(document.getElementById('shopHero'))) shGo(shIdx + 1);
     }, 5000);
   }
-  window.initShopHero = function () {
+  // force: only the visibility watcher passes true, to build a carousel whose
+  // page has just been revealed. Every other caller leaves it out and goes
+  // through the route gate below.
+  window.initShopHero = function (force) {
     var wrap  = document.getElementById('shopHero');
     var track = document.getElementById('shTrack');
     if (!wrap || !track) return;
+    // Offscreen and never built: wait for the shop page instead of rendering
+    // slides nobody can see. Once built, later calls fall through and update
+    // it in place so it is correct the moment the page is shown.
+    if (force !== true && bnRoute() !== 'shop' && !wrap.classList.contains('is-live')) {
+      bnWhenVisible(wrap, 'shop', function () { window.initShopHero(true); });
+      return;
+    }
 
     // Same source of truth as the home banner, filtered the same way: empty
     // entries are dropped BEFORE render, so an <img src=""> never fires an
@@ -249,8 +325,11 @@ function bnMediaType(url) {
   // defined initShopHero; site-media.js now publishes its cached map earlier
   // than that as well. Initialising here means the shop hero renders on the
   // first pass no matter which of the three gets there first.
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', window.initShopHero);
-  else window.initShopHero();
+  // On /shop this carousel is the LCP, so build it straight away rather than
+  // waiting for the router to reveal the page and the observer to fire.
+  function shBoot() { window.initShopHero(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', shBoot);
+  else shBoot();
 })();
 
 // ── OFFER REMINDER — real offer only, once per session ─────────────
@@ -297,10 +376,15 @@ window.dismissOfferReminder = function () {
 
   var bnIdx = 0, bnTimer = null, bnSlides = [];
 
-  function initHeroBanner() {
+  function initHeroBanner(force) {
     var wrap  = document.getElementById('heroBanner');
     var track = document.getElementById('heroBannerTrack');
     if (!wrap || !track) return;
+    // Symmetrical: on /shop the home banner is the offscreen one.
+    if (force !== true && bnRoute() !== 'home' && !wrap.classList.contains('is-live')) {
+      bnWhenVisible(wrap, 'home', function () { initHeroBanner(true); });
+      return;
+    }
 
     // Filter FIRST, then render. An earlier build kept empty entries in the
     // array and rendered <img src="">, which fires an error, removes the
@@ -462,9 +546,11 @@ window.dismissOfferReminder = function () {
   // Deferred scripts run with the document already parsed, so #heroBanner
   // exists now. Building it immediately — instead of waiting for the
   // DOMContentLoaded pass — puts the banner on screen a frame earlier when
-  // site-media has already published a cached map.
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initHeroBanner);
-  else initHeroBanner();
+  // site-media has already published a cached map. On any other route it is
+  // the offscreen carousel, so it waits for the visitor to come to it.
+  function bnBoot() { initHeroBanner(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bnBoot);
+  else bnBoot();
 
   // ── REELS ──
   // Only plays what is actually on screen, and pauses everything else. Left
