@@ -31,12 +31,12 @@ function openBlog(id) {
   const blogOgUrl = document.querySelector('meta[property="og:url"]');
   if (blogOgUrl) blogOgUrl.setAttribute('content', 'https://www.ozylix.com/blog/' + blogSlug);
   const blogOgImage = document.querySelector('meta[property="og:image"]');
-  if (blogOgImage) blogOgImage.setAttribute('content', 'https://www.ozylix.com' + b.img);
+  if (blogOgImage) blogOgImage.setAttribute('content', /^https?:/.test(b.img) ? b.img : 'https://www.ozylix.com' + b.img);
   let blogSchema = document.getElementById('blog-article-schema');
   if (!blogSchema) { blogSchema = document.createElement('script'); blogSchema.id = 'blog-article-schema'; blogSchema.type = 'application/ld+json'; document.head.appendChild(blogSchema); }
   blogSchema.textContent = JSON.stringify({
     '@context':'https://schema.org', '@type':'Article', headline:b.title, description:b.metaDescription || b.excerpt,
-    image:['https://www.ozylix.com' + b.img], datePublished:'2026-08-15', dateModified:'2026-08-15', author:{'@type':'Organization',name:b.author}, publisher:{'@type':'Organization',name:'Ozylix',url:'https://www.ozylix.com/'}, mainEntityOfPage:{'@type':'WebPage','@id':'https://www.ozylix.com/blog/' + blogSlug}
+    image:[/^https?:/.test(b.img) ? b.img : 'https://www.ozylix.com' + b.img], datePublished:new Date(b.date).toISOString().split('T')[0], dateModified:new Date(b.date).toISOString().split('T')[0], author:{'@type':'Organization',name:b.author}, publisher:{'@type':'Organization',name:'Ozylix',url:'https://www.ozylix.com/'}, mainEntityOfPage:{'@type':'WebPage','@id':'https://www.ozylix.com/blog/' + blogSlug}
   });
   ov.style.display = 'block';
   try { history.pushState({ page:'blog', id:id }, '', '/blog/' + blogSlug); } catch(e) { window.location.hash = 'blog-' + id; }
