@@ -378,7 +378,15 @@ document.addEventListener('visibilitychange', function () {
 });
 setInterval(healStuckScrollLock, 1000);
 
+const OZYLIX_SUBSCRIPTIONS_ENABLED = false;
+window.OZYLIX_SUBSCRIPTIONS_ENABLED = OZYLIX_SUBSCRIPTIONS_ENABLED;
+
 function showPage(pg) {
+  // Recurring subscriptions are not active. Keep stale links and cached routes
+  // from presenting an offer that the backend cannot fulfil.
+  if (pg === 'subscriptions' && !OZYLIX_SUBSCRIPTIONS_ENABLED) {
+    pg = 'shop';
+  }
   // Navigation must never begin on a locked body OR under a drawer that
   // is still open from the previous page. Nothing in this store is meant
   // to stay open across a navigation, so closing everything is always
@@ -413,10 +421,6 @@ function showPage(pg) {
     faq:           [
       'FAQ – Effervescent Vitamins, Shipping & Returns | Ozylix',
       'Common questions about Ozylix supplements: absorption, FSSAI certification, delivery across India, returns and all payment options including UPI and EMI.'
-    ],
-    subscriptions: [
-      'Subscribe & Save 20% on Vitamins | Ozylix Monthly Wellness Plans',
-      'Auto-subscribe to Ozylix effervescent vitamins and save up to 20%. Monthly, quarterly or half-yearly delivery plans. Free shipping, priority dispatch. Cancel anytime.'
     ],
     contact:       [
       'Contact Ozylix | Supplement Manufacturer in Anand, Gujarat India',
@@ -687,8 +691,7 @@ async function initHome() {
   // New arrivals
   const newP = visibleProducts.filter(p => p.tags.includes('new')).slice(0,4);
   const nag=document.getElementById('newArrivalsGrid'); if(nag) nag.innerHTML = newP.map(p => renderProductCard(p)).join('');
-  // Blog
-  const hbg=document.getElementById('homeBlogGrid'); if(hbg) hbg.innerHTML = BLOGS_NEWEST_FIRST.slice(0,4).map(renderBlogCard).join(''); hydrateBlogImgs();
+  // Blog content is rendered only on the dedicated blog page.
   // FAQ
   const hfw=document.getElementById('homeFaqWrap'); if(hfw) hfw.innerHTML = FAQS.slice(0,5).map(renderFaqItem).join('');
   // Category tile counts + About page figures
@@ -2808,10 +2811,10 @@ function bootApp() {
   const _pathSlug = _pathParts[1] || null; // e.g. 'glutathione-effervescent' from /product/glutathione-effervescent
   const _hashPage = window.location.hash.replace('#', '').trim();
   const _initPage = _pathPage || _hashPage;
-  // wishlist/subscriptions have real page sections but were missing here, so a
-  // direct hit on /wishlist rendered the HOME page at 200 — a soft 404. Keep
+  // wishlist has a real page section but was missing here, so a direct hit on
+  // /wishlist rendered the HOME page at 200 — a soft 404. Keep
   // this list in step with SPA_ROUTES in worker/index.js.
-  const _validPages = ['home','shop','blog','about','contact','faq','advisor','account','product','wishlist','notifications','subscriptions','privacy','terms','shipping','refund','accessibility','download'];
+  const _validPages = ['home','shop','blog','about','contact','faq','advisor','account','product','wishlist','notifications','privacy','terms','shipping','refund','accessibility','download'];
   // Legacy /b2b links now redirect to the Ascovita corporate B2B page
   if (_initPage === 'b2b') { window.location.href = 'https://www.ascovita.com/#/capabilities'; }
   if (_initPage && (_validPages.includes(_initPage) || _initPage === 'blog')) {
@@ -6863,7 +6866,6 @@ window.showPage = function(pg) {
   if (pg === 'account')       { try { loadAccountPage(); } catch(e){} }
   if (pg === 'checkout')      { try { checkSavedAddressForCheckout(); } catch(e){} }
   if (pg === 'wishlist')      { try { renderWishlistPage(); } catch(e){} }
-  if (pg === 'subscriptions') { try { initSubscriptionsPage(); } catch(e){} }
   // VitaMatch is the default now — it works whether or not the chat's
   // quota is intact. vitaInit() only runs if the visitor asks to chat.
   if (pg === 'advisor')       { try { vitaShowMatch(); } catch(e){} }
@@ -7094,6 +7096,10 @@ function selectSubProduct(id, el) {
 }
 
 function startSubscription(plan) {
+  if (!window.OZYLIX_SUBSCRIPTIONS_ENABLED) {
+    showToast('Subscriptions are currently unavailable. Please place a one-time order.', 'info');
+    return;
+  }
   if (!selectedSubProduct) {
     showToast('Please select a product first', 'error');
     const grid = document.getElementById('subProductGrid');
