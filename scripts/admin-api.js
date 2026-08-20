@@ -477,9 +477,54 @@ async function mktLoadOverview() {
     ? losers.map(a => `<div class="mkt-angle"><div style="display:flex;justify-content:space-between;"><strong>${mktEsc(a.name)}</strong><span style="color:#963848;font-weight:700;">${mktFmtRoas(a.last_roas)}</span></div><div style="font-size:12px;color:var(--text2);">${mktEsc(a.last_reason || '')}</div></div>`).join('')
     : '<p class="mkt-empty">Nothing flagged for pausing right now.</p>';
 
+  mktRenderPerformanceChart(active);
+  mktRenderAutomationFlow({ active: active.length, pending, totalSpend, totalPurchases });
+
   // Automation status strip — fetched from the dedicated status endpoint
   // (one cheap call instead of five), through the admin-gated proxy.
   mktLoadAutomationStatus();
+}
+
+function mktRenderPerformanceChart(adSets) {
+  const host = document.getElementById('mkt-performance-chart');
+  if (!host) return;
+  const rows = (adSets || []).slice().sort((a, b) => (Number(b.last_roas) || 0) - (Number(a.last_roas) || 0)).slice(0, 6);
+  if (!rows.length) {
+    host.innerHTML = '<p class="mkt-empty">No active ad-set performance is available yet.</p>';
+    return;
+  }
+  const maxRoas = Math.max(...rows.map(a => Number(a.last_roas) || 0), 1);
+  host.innerHTML = rows.map((a, index) => {
+    const roas = Number(a.last_roas) || 0;
+    const spend = Number(a.last_spend) || 0;
+    const width = Math.max(4, Math.round((roas / maxRoas) * 100));
+    const verdict = a.last_verdict === 'pause' ? ' · pause' : '';
+    return '<div class="mkt-bar-row" title="' + mktEsc((a.name || 'Unnamed ad set') + ' · ROAS ' + roas.toFixed(2) + 'x') + '">' +
+      '<div class="mkt-bar-label">' + mktEsc(a.name || 'Unnamed ad set') + '</div>' +
+      '<div class="mkt-bar-track"><div class="mkt-bar-fill" style="width:' + width + '%;animation-delay:' + (index * 70) + 'ms"></div></div>' +
+      '<div class="mkt-bar-value">' + roas.toFixed(2) + 'x · ' + mktFmtMoney(spend) + mktEsc(verdict) + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function mktRenderAutomationFlow(metrics) {
+  const host = document.getElementById('mkt-automation-flow');
+  if (!host) return;
+  const active = Number(metrics.active) || 0;
+  const pending = Number(metrics.pending) || 0;
+  const spend = Number(metrics.totalSpend) || 0;
+  const purchases = Number(metrics.totalPurchases) || 0;
+  const nodes = [
+    ['◉', 'Signals', active ? active + ' active ad sets' : 'Waiting for data', active ? 'ready' : 'muted'],
+    ['↗', 'Score & segment', active ? 'Behaviour rules ready' : 'Awaiting signals', active ? 'ready' : 'muted'],
+    ['◇', 'Review gate', pending ? pending + ' approvals pending' : 'No approvals waiting', pending ? 'warn' : 'ready'],
+    ['✉', 'Deliver', spend || purchases ? 'Channels can dispatch safely' : 'Test mode / no activity', spend || purchases ? 'ready' : 'muted'],
+    ['⌁', 'Learn', 'Reports refresh the next decision', 'ready']
+  ];
+  host.innerHTML = nodes.map((node, index) => {
+    const item = '<div class="mkt-flow-node"><div class="mkt-flow-icon">' + node[0] + '</div><div><strong>' + mktEsc(node[1]) + '</strong><div class="mkt-sub">' + mktEsc(node[2]) + '</div></div><span class="mkt-flow-state ' + node[3] + '">' + (node[3] === 'warn' ? 'review' : node[3]) + '</span></div>';
+    return index === nodes.length - 1 ? item : item + '<div class="mkt-flow-arrow">↓</div>';
+  }).join('');
 }
 
 async function mktLoadAutomationStatus() {
