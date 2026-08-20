@@ -22,6 +22,10 @@
     {
       "pattern": "back.ozylix.com",
       "custom_domain": true
+    },
+    {
+      "pattern": "www.ozylix.com",
+      "custom_domain": true
     }
   ],
 
