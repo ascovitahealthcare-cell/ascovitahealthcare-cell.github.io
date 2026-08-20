@@ -2956,6 +2956,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="recovery" onclick="mktShowTab('recovery')">Recovery</button>
       <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="automations" onclick="mktShowTab('automations')">Automations</button>
       <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="attribution" onclick="mktShowTab('attribution')">Attribution</button>
+      <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="reality" onclick="mktShowTab('reality')">🔍 Reality</button>
     </div>
   </div>
 
@@ -3262,6 +3263,31 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <div><h3 style="margin-bottom:8px;">New vs repeat</h3><div id="att-newrepeat"><p class="mkt-empty">Loading…</p></div></div>
     </div>
   </div>
+
+  <!-- REALITY TAB — every source side by side, and the gap between them -->
+  <div id="mkt-tab-reality" class="mkt-tab" style="display:none;">
+    <div class="card" style="padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h3 style="margin:0 0 4px;">Is what I'm looking at real?</h3>
+        <div class="mkt-sub">Store database, browser beacon and marketing engine compared directly. Where they disagree, the gap is shown rather than blended away.</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="mktSyncNow()">⟳ Sync store now</button>
+    </div>
+
+    <div id="rl-status" class="mkt-hint" style="margin-bottom:16px;">Loading…</div>
+
+    <h3 style="margin-bottom:8px;">Orders &amp; revenue <span class="mkt-sub">last 30 days</span></h3>
+    <div id="rl-totals"><p class="mkt-empty">Loading…</p></div>
+
+    <h3 style="margin:22px 0 8px;">Tracking coverage <span class="mkt-sub">what share of real orders the browser beacon actually saw</span></h3>
+    <div id="rl-coverage"><p class="mkt-empty">Loading…</p></div>
+
+    <h3 style="margin:22px 0 8px;">Orders the beacon missed <span class="mkt-sub">found only in the store database — these would have kept receiving cart reminders</span></h3>
+    <div id="rl-missed"><p class="mkt-empty">Loading…</p></div>
+
+    <h3 style="margin:22px 0 8px;">Sync &amp; engine health</h3>
+    <div id="rl-sync"><p class="mkt-empty">Loading…</p></div>
+  </div>
 </div>
 
 <style>#page-marketing .mkt-navbtn.mkt-active{ background:var(--accent,#1F7A6C); color:#fff; border-color:var(--accent,#1F7A6C); }
@@ -3313,6 +3339,18 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 #page-marketing .mkt-toggle::after{ content:''; position:absolute; top:2px; left:2px; width:19px; height:19px; border-radius:50%; background:#fff; transition:transform .2s; }
 #page-marketing .mkt-toggle.on::after{ transform:translateX(19px); }
 #page-marketing .mkt-skip{ font-size:11px; color:var(--text2); }
+/* ── Reality tab (phase 2) ── */
+#page-marketing .rl-n{ font-family:var(--mono,ui-monospace,monospace); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+#page-marketing .rl-meter{ display:flex; align-items:center; gap:12px; }
+#page-marketing .rl-meter-track{ flex:1; height:22px; background:var(--surface2,#F3EDE1); border-radius:5px; overflow:hidden; }
+#page-marketing .rl-meter-fill{ height:100%; border-radius:0 5px 5px 0; transition:width .35s ease; }
+/* Semantic, not decorative: green/amber/red here mean healthy / degraded /
+   poor coverage, and each is paired with an explanatory sentence below the
+   meter so the state never rests on colour alone. */
+#page-marketing .rl-meter-fill.ok{   background:var(--accent,#1F7A6C); }
+#page-marketing .rl-meter-fill.warn{ background:#C08A2E; }
+#page-marketing .rl-meter-fill.bad{  background:#963848; }
+#page-marketing .rl-meter-val{ font-family:var(--mono,ui-monospace,monospace); font-size:1.3rem; font-weight:700; font-variant-numeric:tabular-nums; min-width:4.2rem; text-align:right; }
 @media (max-width:900px){
   #page-marketing .mkt-kpi-row{ grid-template-columns:repeat(2,1fr) !important; }
   #page-marketing .mkt-split{ grid-template-columns:1fr; }

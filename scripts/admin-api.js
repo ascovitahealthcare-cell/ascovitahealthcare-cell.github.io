@@ -1532,3 +1532,322 @@ if (typeof _mktOrigShowPage === 'function') {
     });
   };
 })();
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OZYLIX — REALITY TAB + LIVE STORE DATA  (phase 2, Aug 2026)
+
+   Appended, as with everything else in this file. Nothing above is edited.
+
+   THREE SOURCES, SHOWN SEPARATELY
+     · store    — the main backend / store database. Authoritative for money.
+     · beacon   — what the browser tracking saw. Fast, but blockable.
+     · engine   — what the marketing engine decided from the above.
+
+   Where they disagree the gap is displayed, not averaged. A blended number
+   would hide exactly the thing worth knowing: how much the browser tracking
+   is missing. That gap is otherwise invisible — it shows up only as an
+   unexplained decline across every behavioural metric at once.
+
+   Store reads go through the panel's EXISTING apiFetch (admin-core.js:300),
+   which already attaches the admin JWT and already treats /api/admin/* as a
+   protected path. No new credential enters the browser.
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  if (window.__ozyRealityTab) return;
+  window.__ozyRealityTab = true;
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+      });
+  }
+  function money(n) { return '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
+  function num(n)   { return Number(n || 0).toLocaleString('en-IN'); }
+  function ago(t) {
+    if (!t) return 'never';
+    var s = Math.round((Date.now() - new Date(t)) / 1000);
+    if (s < 60) return s + 's ago';
+    if (s < 3600) return Math.round(s / 60) + 'm ago';
+    if (s < 86400) return Math.round(s / 3600) + 'h ago';
+    return Math.round(s / 86400) + 'd ago';
+  }
+
+  function mktApi(path, opts) {
+    return fetch(window.MARKETING_BACKEND_URL + '/api/dash' + path, opts)
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  }
+
+  /* Store reads via the panel's own authed helper. Returns null rather than
+     throwing, so one unreachable store endpoint degrades a single panel
+     instead of blanking the whole tab. */
+  function storeApi(path) {
+    if (typeof apiFetch !== 'function') return Promise.resolve(null);
+    return apiFetch(path)
+      .then(function (r) { return r && r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+  }
+
+  /* ── tab routing ─────────────────────────────────────────────────────── */
+  var prevShowTab = window.mktShowTab;
+  window.mktShowTab = function (tab) {
+    if (tab !== 'reality') return prevShowTab.apply(this, arguments);
+    document.querySelectorAll('.mkt-tab').forEach(function (t) { t.style.display = 'none'; });
+    var el = document.getElementById('mkt-tab-reality');
+    if (el) el.style.display = 'block';
+    document.querySelectorAll('.mkt-navbtn').forEach(function (b) {
+      b.classList.toggle('mkt-active', b.dataset.tab === 'reality');
+    });
+    mktLoadReality();
+  };
+
+  /* ── Reality ─────────────────────────────────────────────────────────── */
+
+  window.mktLoadReality = function () {
+    mktApi('/reconciliation?days=30').then(function (d) {
+      var t = d.totals;
+
+      /* Status strip — the connection state and whether sending is paused.
+         "Sending paused" is surfaced loudly because otherwise it looks like
+         the automations have silently stopped working for no reason. */
+      var statusEl = document.getElementById('rl-status');
+      if (!d.store_connected) {
+        statusEl.className = 'mkt-hint warn';
+        statusEl.innerHTML =
+          '<strong>Store database not connected.</strong> ' +
+          'The engine is running on browser-beacon data alone, so orders it did not see ' +
+          '(tab closed, COD confirmed later) will not stop cart reminders, and consent changes ' +
+          'made in the Customers page will not reach it.<br>' +
+          '<span class="mkt-sub">Fix: run <code>supabase/003_store_readonly_role.sql</code> in the store ' +
+          'Supabase project and set <code>STORE_DB_URL</code> on the marketing service.</span>';
+      } else {
+        var paused = d.sync.sending_paused;
+        statusEl.className = 'mkt-hint ' + (paused ? 'warn' : 'ok');
+        statusEl.innerHTML =
+          '<strong>Store connected</strong> — ' + esc(d.store.mode) +
+          ' · write protection: ' + esc(d.store.readonly_enforced_by || 'unknown') +
+          '<br>Last successful sync: <strong>' + ago(d.sync.last_successful_sync) + '</strong>' +
+          (d.sync.minutes_since_sync !== null ? ' (' + d.sync.minutes_since_sync + ' min)' : '') +
+          (paused
+            ? '<br><strong style="color:#963848">⏸ Automated sending is PAUSED</strong> — consent data is ' +
+              esc(d.sync.consent_staleness.minutes) + ' min old, past the ' +
+              esc(d.sync.consent_staleness.limit) + ' min limit. Messages are held rather than sent on ' +
+              'possibly-withdrawn consent. They resume automatically once the sync recovers.'
+            : '<br><span class="mkt-sub">Consent data is fresh — automations are free to send.</span>');
+      }
+
+      /* Totals: three sources in one table, each labelled. */
+      var gap = t.store_orders - t.beacon_orders;
+      document.getElementById('rl-totals').innerHTML =
+        '<table class="mkt-table"><thead><tr><th>Source</th><th>Orders</th><th>Revenue</th><th>What it is</th></tr></thead><tbody>' +
+        '<tr><td><strong>Store database</strong></td><td class="rl-n">' + num(t.store_orders) + '</td>' +
+          '<td class="rl-n"><strong>' + money(t.store_revenue) + '</strong></td>' +
+          '<td class="mkt-sub">Authoritative. Matches your Orders page.</td></tr>' +
+        '<tr><td><strong>Browser beacon</strong></td><td class="rl-n">' + num(t.beacon_orders) + '</td>' +
+          '<td class="rl-n">' + money(t.beacon_revenue) + '</td>' +
+          '<td class="mkt-sub">What the tracking script saw. Blockable.</td></tr>' +
+        '<tr style="background:rgba(0,0,0,.02)"><td><strong>Gap</strong></td>' +
+          '<td class="rl-n">' + (gap > 0 ? '−' + num(gap) : num(-gap)) + '</td>' +
+          '<td class="rl-n">' + money(t.revenue_delta) + '</td>' +
+          '<td class="mkt-sub">' + (gap > 0
+            ? 'Orders the beacon missed. The store sync recovers these.'
+            : 'No gap — the beacon saw everything.') + '</td></tr>' +
+        '</tbody></table>' +
+        '<div class="mkt-sub" style="margin-top:8px;">Confirmed by both sources: <strong>' +
+          num(t.matched_orders) + '</strong> · recovered by the store sync: <strong>' +
+          num(t.store_only_orders) + '</strong>' +
+          (t.beacon_only_orders ? ' · beacon-only (no store record): <strong>' + num(t.beacon_only_orders) +
+            '</strong> — worth checking, this normally means an order that did not complete' : '') +
+        '</div>';
+
+      /* Coverage — a single meter, because it is one number about one thing. */
+      var cov = t.beacon_coverage_pct;
+      var covEl = document.getElementById('rl-coverage');
+      if (cov === null || cov === undefined) {
+        covEl.innerHTML = '<p class="mkt-empty">No store orders in this window, so there is nothing to measure coverage against.</p>';
+      } else {
+        var tone = cov >= 90 ? 'ok' : cov >= 70 ? 'warn' : 'bad';
+        covEl.innerHTML =
+          '<div class="rl-meter"><div class="rl-meter-track"><div class="rl-meter-fill ' + tone + '" style="width:' +
+            Math.max(1, Math.min(100, cov)) + '%"></div></div>' +
+          '<div class="rl-meter-val">' + cov + '%</div></div>' +
+          '<div class="mkt-sub" style="margin-top:6px;">' +
+            (cov >= 90 ? 'Healthy. The beacon is seeing nearly every order.'
+             : cov >= 70 ? 'Some orders are being missed — commonly ad blockers, or customers closing the tab at payment. The store sync covers the gap, so nothing is lost; behavioural attribution is just less complete for those orders.'
+             : 'A large share of orders never reach the beacon. Worth checking that the tracking script is loading on the thank-you page. Revenue figures are still correct — they come from the store.') +
+          '</div>';
+      }
+
+      /* The orders that would have kept getting cart reminders. */
+      var missed = d.recent_store_only_orders || [];
+      document.getElementById('rl-missed').innerHTML = missed.length
+        ? '<table class="mkt-table"><thead><tr><th>Order</th><th>Customer</th><th>Value</th><th>Placed</th></tr></thead><tbody>' +
+          missed.map(function (o) {
+            return '<tr><td>' + esc(o.order_id) + '</td><td>' + esc(o.email || '—') + '</td>' +
+              '<td class="rl-n">' + money(o.total) + '</td><td>' + ago(o.placed_at) + '</td></tr>';
+          }).join('') + '</tbody></table>'
+        : '<p class="mkt-empty">' + (d.store_connected
+            ? 'None — the beacon saw every order in this window.'
+            : 'Connect the store database to find these.') + '</p>';
+
+      /* Sync + engine health. */
+      var states = (d.sync.states || []).map(function (s) {
+        var bad = s.consecutive_failures > 0;
+        return '<tr><td>' + esc(s.key) + '</td>' +
+          '<td>' + (s.last_ok_at ? ago(s.last_ok_at) : '<span style="color:#963848">never</span>') + '</td>' +
+          '<td class="rl-n">' + num(s.rows_total) + '</td>' +
+          '<td>' + (bad
+            ? '<span class="mkt-pill pause">' + s.consecutive_failures + ' failure(s)</span>' +
+              (s.last_error ? '<br><span class="mkt-skip">' + esc(s.last_error).slice(0, 90) + '</span>' : '')
+            : '<span class="mkt-pill approved">ok</span>') + '</td></tr>';
+      }).join('');
+
+      var engine = (d.engine.recent || []).map(function (r) {
+        return '<tr><td>' + esc(r.job) + '</td><td>' + ago(r.started_at) + '</td><td colspan="2">' +
+          (r.ok ? '<span class="mkt-pill approved">ok</span>'
+                : '<span class="mkt-pill pause">failed</span>' +
+                  (r.error ? '<br><span class="mkt-skip">' + esc(r.error).slice(0, 120) + '</span>' : '')) +
+          '</td></tr>';
+      }).join('');
+
+      document.getElementById('rl-sync').innerHTML =
+        '<table class="mkt-table"><thead><tr><th>Stream</th><th>Last success</th><th>Rows pulled</th><th>Status</th></tr></thead><tbody>' +
+        (states || '<tr><td colspan="4" class="mkt-sub">Store sync has not run.</td></tr>') +
+        (engine || '') + '</tbody></table>';
+    })['catch'](function (e) {
+      document.getElementById('rl-status').className = 'mkt-hint warn';
+      document.getElementById('rl-status').innerHTML =
+        'Could not reach the marketing service: ' + esc(e.message) +
+        '<br><span class="mkt-sub">If this persists, check that <code>supabase/003_store_sync.sql</code> has been run ' +
+        'in the marketing Supabase project.</span>';
+    });
+
+    mktLoadRealityStore();
+  };
+
+  /* Live store figures, read through the panel's own admin session.
+     Appended once, and cleared first so repeat visits to the tab do not
+     stack duplicate panels. */
+  function mktLoadRealityStore() {
+    var host = document.getElementById('mkt-tab-reality');
+    if (!host) return;
+    var old = document.getElementById('rl-store-live');
+    if (old) old.remove();
+
+    Promise.all([
+      storeApi('/api/visitors/active'),
+      storeApi('/api/analytics/dashboard?range=today'),
+    ]).then(function (r) {
+      var live = r[0], an = r[1];
+      if (!live && !an) return;
+
+      var ov = (an && an.overview) || {};
+      var rows = [];
+      if (live) {
+        rows.push(['Active visitors right now', num(live.active_count)]);
+        rows.push(['Page views today', num(live.page_views_today)]);
+      }
+      // The overview shape comes from a Postgres function, so only render
+      // keys that are actually present rather than assuming a schema.
+      [['visitors', 'Visitors'], ['sessions', 'Sessions'], ['pageviews', 'Page views'],
+       ['conversions', 'Conversions']].forEach(function (pair) {
+        if (ov[pair[0]] !== undefined && ov[pair[0]] !== null) {
+          rows.push([pair[1] + ' (store analytics, today)', num(ov[pair[0]])]);
+        }
+      });
+      if (!rows.length) return;
+
+      var el = document.createElement('div');
+      el.id = 'rl-store-live';
+      el.style.marginTop = '22px';
+      el.innerHTML =
+        '<h3 style="margin-bottom:8px;">Store analytics ' +
+        '<span class="mkt-sub">read live from the main backend — a third, independent count</span></h3>' +
+        '<table class="mkt-table"><tbody>' +
+        rows.map(function (x) {
+          return '<tr><td>' + esc(x[0]) + '</td><td class="rl-n"><strong>' + x[1] + '</strong></td></tr>';
+        }).join('') +
+        '</tbody></table>' +
+        '<div class="mkt-sub" style="margin-top:6px;">This is the store\'s own visitor tracking, which predates ' +
+        'the marketing beacon and runs separately. Small differences from the beacon\'s numbers are expected ' +
+        '\u2014 they count sessions slightly differently.</div>';
+      host.appendChild(el);
+    })['catch'](function () { /* store analytics are a bonus, never a blocker */ });
+  }
+
+  window.mktSyncNow = function () {
+    var el = document.getElementById('rl-status');
+    el.className = 'mkt-hint';
+    el.textContent = 'Syncing from the store database…';
+    mktApi('/sync-now', { method: 'POST' }).then(function (r) {
+      var s = r.stats || {};
+      if (s.skipped) {
+        alert('Store sync skipped: the store database is not configured on the marketing service.');
+      } else {
+        alert('Store sync complete.\n\n' +
+          'Orders pulled: ' + (s.orders_pulled || 0) + '\n' +
+          'New from store (beacon missed these): ' + (s.orders_new_from_store || 0) + '\n' +
+          'Confirmed against the beacon: ' + (s.orders_confirmed || 0) + '\n' +
+          'Recovery workflows cancelled: ' + (s.runs_cancelled_by_store || 0) + '\n' +
+          'Customers pulled: ' + (s.customers_pulled || 0) + '\n' +
+          'Consent withdrawn: ' + (s.consent_withdrawn || 0) + '\n' +
+          'Unsubscribes protected from being overwritten: ' + (s.consent_unsub_protected || 0) +
+          ((r.errors && r.errors.length) ? '\n\nErrors:\n' + r.errors.join('\n') : ''));
+      }
+      mktLoadReality();
+    })['catch'](function (e) { alert('Sync failed: ' + e.message); });
+  };
+
+  /* ── Journeys: pull the real customer record from the main backend ───── */
+
+  var prevOpenJourney = window.mktOpenJourney;
+  window.mktOpenJourney = function (profileId) {
+    prevOpenJourney.call(this, profileId);
+    // Runs after the marketing journey renders and appends to it. Deliberately
+    // additive: if the store lookup fails the behavioural view is unaffected.
+    setTimeout(function () { attachStoreRecord(profileId); }, 400);
+  };
+
+  function attachStoreRecord(profileId) {
+    if (!mktSupabase) return;
+    mktSupabase.from('mkt_profiles').select('email,customer_id').eq('id', profileId).maybeSingle()
+      .then(function (r) {
+        var p = r && r.data;
+        if (!p || !p.customer_id) return;
+        return Promise.all([
+          storeApi('/api/admin/customers/' + encodeURIComponent(p.customer_id) + '/360'),
+          storeApi('/api/admin/customers/' + encodeURIComponent(p.customer_id) + '/insights'),
+        ]);
+      })
+      .then(function (res) {
+        if (!res) return;
+        var c360 = res[0], ins = res[1];
+        if (!c360 && !ins) return;
+        var detail = document.getElementById('jrn-detail');
+        if (!detail) return;
+
+        var i = (ins && ins.data) || ins || {};
+        var box = document.createElement('div');
+        box.className = 'card';
+        box.style.cssText = 'padding:18px;margin-top:14px;';
+        box.innerHTML =
+          '<h3 style="margin:0 0 4px;">Store record <span class="mkt-sub">live from the main backend</span></h3>' +
+          '<table class="mkt-table" style="margin-top:10px;"><tbody>' +
+          (i.total_orders !== undefined ? '<tr><td>Orders</td><td class="rl-n">' + num(i.total_orders) + '</td></tr>' : '') +
+          (i.total_spent !== undefined ? '<tr><td>Lifetime value</td><td class="rl-n"><strong>' + money(i.total_spent) + '</strong></td></tr>' : '') +
+          (i.avg_order_value !== undefined ? '<tr><td>Average order</td><td class="rl-n">' + money(i.avg_order_value) + '</td></tr>' : '') +
+          (i.segment ? '<tr><td>Store segment</td><td>' + esc(i.segment) + '</td></tr>' : '') +
+          (i.days_since_last_order !== undefined && i.days_since_last_order !== null
+            ? '<tr><td>Days since last order</td><td class="rl-n">' + num(i.days_since_last_order) + '</td></tr>' : '') +
+          (i.payment && i.payment.preference ? '<tr><td>Payment preference</td><td>' + esc(i.payment.preference) + '</td></tr>' : '') +
+          (Array.isArray(i.last_products) && i.last_products.length
+            ? '<tr><td>Recently bought</td><td>' + i.last_products.map(esc).join(', ') + '</td></tr>' : '') +
+          '</tbody></table>' +
+          '<div class="mkt-sub" style="margin-top:8px;">The behaviour above and this record are two different systems. ' +
+          'If the order counts disagree, the store is right and the Reality tab shows by how much.</div>';
+        detail.appendChild(box);
+      })
+      ['catch'](function () { /* store enrichment is additive; never blocks the journey */ });
+  }
+})();
