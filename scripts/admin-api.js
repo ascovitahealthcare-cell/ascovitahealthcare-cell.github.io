@@ -332,6 +332,12 @@ async function loadAutomation() {
     ]);
     const cfg = st.config || {};
     const s = st.state || {};
+    const engineReady = !!(st && !st.error);
+    const engineState = document.getElementById('autEngineState');
+    if (engineState) {
+      engineState.className = 'oz-pill ' + (engineReady ? 'info' : 'error');
+      engineState.textContent = engineReady ? 'Ready · live endpoint' : 'Unavailable';
+    }
     document.getElementById('autReturnsCycle').textContent = autWhen(s.lastCycleAt);
     document.getElementById('autRecon').textContent = autWhen(s.lastReconAt);
     document.getElementById('autShip').textContent = s.lastShipAt ? `${autWhen(s.lastShipAt)}` : 'never';
@@ -345,10 +351,16 @@ async function loadAutomation() {
     // Queue
     const qe = document.getElementById('autQueueTable');
     const list = q.queue || [];
-    if (!list.length) { qe.innerHTML = '<div style="color:var(--green-text);">✅ Nothing pending — all returns fully automatic.</div>'; }
+    const flowStates = document.querySelectorAll('#autExecutionFlow .oz-flow-state');
+    flowStates.forEach((el, index) => {
+      const waiting = index === 2 && list.length > 0;
+      el.className = 'oz-flow-state ' + (engineReady ? (waiting ? 'wait' : '') : 'off');
+      el.textContent = engineReady ? (waiting ? 'queued' : 'passed') : 'unavailable';
+    });
+    if (!list.length) { qe.innerHTML = '<div class="oz-empty"><strong>Nothing pending</strong>All returns are currently clear; the manual override remains available.</div>'; }
     else {
       const rows = list.map(x => `<tr><td style="padding:6px 8px;border-top:1px solid var(--border);">${x.id}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">${x.order_id}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">${x.status}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">${x.nextAction}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">${x.dueInHours === 0 ? 'now' : (x.dueInHours + ' h')}</td></tr>`).join('');
-      qe.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><tr style="text-align:left;font-size:0.72rem;color:var(--text3);"><th style="padding:6px 8px;">Return</th><th style="padding:6px 8px;">Order</th><th style="padding:6px 8px;">Status</th><th style="padding:6px 8px;">Next</th><th style="padding:6px 8px;">Due</th></tr>${rows}</table></div>`;
+      qe.innerHTML = `<div class="oz-table-scroll"><table class="oz-data-table"><thead><tr><th>Return</th><th>Order</th><th>Status</th><th>Next</th><th>Due</th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
     // Reconciliation
     const re = document.getElementById('autReconTable');
@@ -356,7 +368,7 @@ async function loadAutomation() {
     if (!hist.length) { re.innerHTML = '<div>History starts after the first scheduled reconciliation run (every 6 hours) or press "Reconcile now".</div>' + (rc.note ? `<div style="color:var(--text3);font-size:0.75rem;margin-top:4px;">${esc(rc.note)}</div>` : ''); }
     else {
       const hrows = hist.map(h => `<tr><td style="padding:6px 8px;border-top:1px solid var(--border);">${h.period}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">₹${Number(h.online_paid||0).toFixed(0)}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">₹${Number(h.gateway_gross||0).toFixed(0)}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">₹${Number(h.cod_collected||0).toFixed(0)}</td><td style="padding:6px 8px;border-top:1px solid var(--border);">${esc((h.warnings||'—').slice(0,100))}</td></tr>`).join('');
-      re.innerHTML = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><tr style="text-align:left;font-size:0.72rem;color:var(--text3);"><th style="padding:6px 8px;">Day</th><th style="padding:6px 8px;">Online paid</th><th style="padding:6px 8px;">Gateway gross</th><th style="padding:6px 8px;">COD collected</th><th style="padding:6px 8px;">Warnings</th></tr>${hrows}</table></div>`;
+      re.innerHTML = `<div class="oz-table-scroll"><table class="oz-data-table"><thead><tr><th>Day</th><th>Online paid</th><th>Gateway gross</th><th>COD collected</th><th>Warnings</th></tr></thead><tbody>${hrows}</tbody></table></div>`;
     }
     if (rc.lastRun) {
       const lr = document.createElement('div');
