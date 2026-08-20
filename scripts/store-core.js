@@ -1154,22 +1154,13 @@ if (document.readyState === 'loading') {
 
 async function loadProductReviews(productId) {
   try {
-    // Throw rather than return: the catch below already sets the honest
-    // empty state and marks the fetch complete.
-    // sbClientWhenReady(), not sbClient(). The Supabase bundle is a
-    // DEFERRED CDN script, so it has not run yet during start-up — and
-    // this fires during start-up. The bare call returned null, this threw
-    // "Supabase client not loaded yet", and nothing ever retried: the
-    // reviews stayed empty for the life of the page. Waiting a moment is
-    // the whole fix.
-    const sb = await sbClientWhenReady(8000); if (!sb) throw new Error('Supabase client not loaded yet');
-    const { data, error } = await sb
-      .from('public_reviews')
-      .select('id, user_name, rating, review_text, created_at, verified')
-      .eq('product_id', productId)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    REVIEWS[productId] = (data || []).map(r => ({
+    const response = await fetch(`${API_BASE}/api/public-reviews?product_id=${encodeURIComponent(productId)}`, {
+      headers: { Accept: 'application/json' },
+      credentials: 'omit',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || `Review request failed (${response.status})`);
+    REVIEWS[productId] = (Array.isArray(payload.reviews) ? payload.reviews : []).map(r => ({
       id: r.id, user: r.user_name, rating: r.rating, text: r.review_text,
       date: r.created_at, verified: r.verified
     }));

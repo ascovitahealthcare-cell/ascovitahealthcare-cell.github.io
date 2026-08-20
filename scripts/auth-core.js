@@ -2410,21 +2410,14 @@ let _reviewsBatchDone = null;
 async function loadReviewsBatch() {
   if (_reviewsBatchDone) return _reviewsBatchDone;
   _reviewsBatchDone = (async () => {
-    // sbClientWhenReady(), not sbClient(). The Supabase bundle is a
-    // DEFERRED CDN script, so it has not run yet during start-up — and
-    // this fires during start-up. The bare call returned null, this threw
-    // "Supabase client not loaded yet", and nothing ever retried: the
-    // reviews stayed empty for the life of the page. Waiting a moment is
-    // the whole fix.
-    const sb = await sbClientWhenReady(8000); if (!sb) return [];
-    const { data, error, count } = await sb
-      .from('public_reviews')
-      .select('id, product_id, product_name, user_name, rating, review_text, created_at', { count: 'exact' })
-      .order('rating', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(1000); // covers the realistic review volume; totals use exact count + sum
-    if (error) throw error;
-    const rows = data || [];
+    const response = await fetch(API_BASE + '/api/public-reviews', {
+      headers: { Accept: 'application/json' },
+      credentials: 'omit',
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload.error || `Review request failed (${response.status})`);
+    const rows = Array.isArray(payload.reviews) ? payload.reviews : [];
+    const count = rows.length;
     // TRUE site-wide totals. REVIEW volume is far below the 1000-row cap,
     // so the returned rows cover the whole table and the average below
     // IS the real site average. If review volume ever exceeded the cap,
