@@ -6008,13 +6008,28 @@ async function renderReturnsPanel() {
 
   try {
     const h = { 'Authorization': 'Bearer ' + _retJwt() };
-    const [eR, mR] = await Promise.all([
-      fetch(API_BASE + '/api/returns/eligible', { headers: h }),
-      fetch(API_BASE + '/api/returns/my', { headers: h }),
+    // Never leave the customer on an infinite spinner. The eligible-orders
+    // request is the critical path; the request-history call is best effort,
+    // because a temporary failure there must not hide returnable products.
+    const results = await Promise.allSettled([
+      fetchWithTimeout(API_BASE + '/api/returns/eligible', { headers: h }, 15000),
+      fetchWithTimeout(API_BASE + '/api/returns/my', { headers: h }, 15000),
     ]);
-    const eD = await eR.json();
-    const mD = await mR.json();
+    const eligibleResult = results[0];
+    const historyResult = results[1];
+    if (eligibleResult.status !== 'fulfilled') {
+      throw new Error('The returns service took too long to respond. Please try again.');
+    }
+    const eR = eligibleResult.value;
+    const eD = await eR.json().catch(() => ({}));
     if (!eR.ok) throw new Error(eD.error || 'Could not load your orders');
+
+    let mD = {};
+    if (historyResult.status === 'fulfilled' && historyResult.value.ok) {
+      mD = await historyResult.value.json().catch(() => ({}));
+    } else {
+      console.warn('[renderReturnsPanel] request history unavailable; showing eligible orders');
+    }
     RETURN_REASONS = eD.reasons || [];
 
     const existing = (mD && mD.returns) || [];
