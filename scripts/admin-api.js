@@ -159,6 +159,22 @@ function azStaffNewPermsPreset(name){
   document.querySelectorAll('.az-new-perm').forEach(c=>{ c.checked = sel.has(c.value); });
 }
 
+function azNormalizeStaffPermissions(value){
+  if (Array.isArray(value)) return value.filter(Boolean).map(String);
+  if (typeof value === 'string') {
+    const raw = value.trim();
+    if (!raw) return [];
+    try { return azNormalizeStaffPermissions(JSON.parse(raw)); } catch (_) {
+      return raw.split(',').map(v => v.trim()).filter(Boolean);
+    }
+  }
+  if (value && typeof value === 'object') {
+    if (Array.isArray(value.permissions)) return azNormalizeStaffPermissions(value.permissions);
+    return Object.keys(value).filter(k => value[k] === true);
+  }
+  return [];
+}
+
 async function loadStaffPage(){
   const body = document.getElementById('azStaffBody');
   const notice = document.getElementById('staffOwnerNotice');
@@ -179,8 +195,9 @@ async function loadStaffPage(){
     const rows = (d.staff || []).map(s => {
       const statusCls = s.enabled ? 'badge-ok' : 'badge-bad';
       const statusTxt = s.enabled ? 'Active' : 'Suspended';
-      const permTags = (s.permissions && s.permissions.length)
-        ? s.permissions.map(p=>`<span style="font-size:.62rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1px 5px">${escHtml(azStaffPermLabel(p))}</span>`).join(' ')
+      const permissions = azNormalizeStaffPermissions(s.permissions);
+      const permTags = permissions.length
+        ? permissions.map(p=>`<span style="font-size:.62rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1px 5px">${escHtml(azStaffPermLabel(p))}</span>`).join(' ')
         : '<span style="font-size:.7rem;color:var(--text3)">Full admin (default role)</span>';
       return `<tr style="border-bottom:1px solid var(--border);vertical-align:top">
         <td style="padding:10px;font-weight:600">${escHtml(s.username)}</td>
@@ -189,7 +206,7 @@ async function loadStaffPage(){
         <td style="padding:10px;max-width:320px">${permTags}</td>
         <td style="padding:10px;font-size:.72rem;color:var(--text3)">${s.last_login_at ? new Date(s.last_login_at).toLocaleString() : '—'}</td>
         <td style="padding:10px;text-align:right;white-space:nowrap">
-          <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffEditPerms('${escHtml(s.username)}', ${JSON.stringify(s.permissions||[]).replace(/"/g,'&quot;')})">✏️ Perms</button>
+          <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffEditPerms('${escHtml(s.username)}', ${JSON.stringify(permissions).replace(/"/g,'&quot;')})">✏️ Perms</button>
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffApplyProfile('${escHtml(s.username)}','full')">⬆ Promote</button>
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffApplyProfile('${escHtml(s.username)}','support')">⬇ Demote</button>
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffToggle('${escHtml(s.username)}', ${s.enabled})">${s.enabled ? '⏸ Suspend' : '▶ Enable'}</button>
