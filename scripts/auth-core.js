@@ -2613,7 +2613,6 @@ function bootApp() {
   try { renderFeatured(); } catch(e) {}
   try { renderNewArrivals(); } catch(e) {}
   try { hydrateProductImgs(); } catch(e) {}
-  try { hydrateProductImgs(); } catch(e) {}
   try { hydrateCategoryCounts(); } catch(e) {}
   try { hydrateAboutStats(); } catch(e) {}
   try { if(document.getElementById('bundleProdList')) renderBundleBuilder(); } catch(e) {}

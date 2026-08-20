@@ -34,7 +34,7 @@ function setCustomerWhatsAppNumber(value) {
 
 function loadStoreWhatsApp() {
   const base = (typeof API_BASE !== 'undefined') ? API_BASE : 'https://ascovitahealthcare-cell-github-io.onrender.com';
-  return fetch(base + '/api/public/store-config', { headers: { 'Accept': 'application/json' } })
+  return fetchWithTimeout(base + '/api/public/store-config', { headers: { 'Accept': 'application/json' } }, 4500)
     .then(function (response) { return response.ok ? response.json() : null; })
     .then(function (payload) {
       const number = payload && payload.data && payload.data.whatsapp_number;
@@ -104,8 +104,9 @@ setTimeout(() => {
 // ========== Ozylix PRODUCT DATA ==========
 // ══════════════════════════════════════════════════════════════
 
-// fetchWithTimeout — with per-endpoint rate limiting to prevent spam
-// Uses Promise.race() for timeout handling
+// fetchWithTimeout — with per-endpoint rate limiting and real cancellation.
+// Aborting the underlying request matters on mobile: a timed-out Promise.race
+// otherwise leaves the fetch consuming a socket and competing with the retry.
 const _rateCounters = {};
 const _RATE_LIMITS = {
   '/api/confirm-cod-order':    3,
@@ -128,12 +129,44 @@ function fetchWithTimeout(url, options, ms) {
       setTimeout(function() { delete _rateCounters[limitKey]; }, 30000);
     }
   }
-  var timeoutPromise = new Promise(function(_, reject) {
-    setTimeout(function() {
-      reject(new DOMException('Timeout after ' + ms + 'ms', 'TimeoutError'));
-    }, ms);
-  });
-  return Promise.race([fetch(url, options), timeoutPromise]);
+
+  const controller = new AbortController();
+  const input = options || {};
+  const requestOptions = Object.assign({}, input, { signal: controller.signal });
+  let timedOut = false;
+  let timer;
+  let onExternalAbort;
+
+  const timeoutError = function () {
+    const error = new Error('Timeout after ' + ms + 'ms');
+    error.name = 'TimeoutError';
+    return error;
+  };
+
+  if (input.signal) {
+    onExternalAbort = function () {
+      controller.abort(input.signal.reason);
+    };
+    if (input.signal.aborted) onExternalAbort();
+    else input.signal.addEventListener('abort', onExternalAbort, { once: true });
+  }
+
+  timer = setTimeout(function () {
+    timedOut = true;
+    controller.abort();
+  }, ms);
+
+  return fetch(url, requestOptions)
+    .catch(function (error) {
+      if (timedOut) throw timeoutError();
+      throw error;
+    })
+    .finally(function () {
+      clearTimeout(timer);
+      if (input.signal && onExternalAbort) {
+        input.signal.removeEventListener('abort', onExternalAbort);
+      }
+    });
 }
 // BACKEND CONNECTION — Supabase via Render API
 // Admin changes (products, stock, coupons) reflect here live
@@ -643,8 +676,8 @@ async function syncProductsFromBackend() {
   if (_productsSyncInFlight) return _productsSyncInFlight;
   _productsSyncInFlight = (async function () {
   const MAX_ATTEMPTS = 3;
-  const TIMEOUTS     = [8000, 10000, 12000];
-  const RETRY_DELAY  = 800;
+  const TIMEOUTS     = [6000, 8000, 10000];
+  const RETRY_DELAY  = 500;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
