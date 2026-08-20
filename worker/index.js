@@ -117,6 +117,10 @@ const SITE_MEDIA_CACHE_KEY = new Request('https://ozylix-cdn/edge/site-media', {
 // matching _headers file covers static assets that bypass this Worker.
 const PUBLIC_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://connect.facebook.net https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net https://frwsjgrrtzhjfflcdjjs.supabase.co https://ascovitahealthcare-cell-github-io.onrender.com https://marketing-automation-rmcb.onrender.com https://*.gokwik.co https://gkx.gokwik.co https://www.google-analytics.com https://region1.google-analytics.com https://www.googleapis.com https://oauth2.googleapis.com https://openidconnect.googleapis.com https://accounts.google.com https://api.cashfree.com https://sandbox.cashfree.com; frame-src 'self' https://www.googletagmanager.com https://accounts.google.com https://content.googleapis.com https://oauth2.googleapis.com https://*.gokwik.co https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';";
 
+// Cloudflare can otherwise replace the repository file with its managed
+// Content-Signals policy. Keep one authoritative crawler policy at the Worker.
+const ROBOTS_TXT = `User-agent: *\nDisallow: /admin\nDisallow: /admin.html\nDisallow: /api/\nDisallow: /_page_\nDisallow: /tools/\nDisallow: /scripts/\nDisallow: /platform_review_report.md\nSitemap: https://www.ozylix.com/sitemap.xml\n`;
+
 function publicHeaders(res) {
   const headers = new Headers(res.headers);
   headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
@@ -190,6 +194,16 @@ async function handleSiteMedia() {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.pathname === '/robots.txt') {
+      return publicHeaders(new Response(ROBOTS_TXT, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Cache-Control': 'public, max-age=3600',
+        },
+      }));
+    }
 
     // Public, edge-cached site-media map (see handleSiteMedia doc block).
     if (url.pathname === '/api/site-media') {
