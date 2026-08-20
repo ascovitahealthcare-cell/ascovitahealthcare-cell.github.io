@@ -41,7 +41,11 @@
           var imgs = node.tagName === 'IMG' ? [node] : node.querySelectorAll('div.product-card img[data-src]');
           for (var j = 0; j < imgs.length; j++) {
             var im = imgs[j];
-            if (im.dataset.src && !im.src) {
+            // An IMG element reports the current document URL through its
+            // .src property even when it has no src attribute. Check the
+            // attribute/data payload instead, otherwise lazy cards are never
+            // observed and can remain blank until the timed flush.
+            if (im.dataset.src && !im.getAttribute('src')) {
               if (isNearView(im)) { hydrate(im); } else { io.observe(im); }
             }
           }
