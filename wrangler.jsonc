@@ -14,6 +14,17 @@
   // prompts with fallback values. Committing it makes each build identical.
   "main": "./worker/index.js",
 
+  // The admin hostname must invoke this Worker for every path. Without an
+  // explicit custom-domain binding, Cloudflare Pages can serve the storefront
+  // asset bundle directly at back.ozylix.com/, bypassing serveAdmin() and its
+  // no-store/noindex policy.
+  "routes": [
+    {
+      "pattern": "back.ozylix.com",
+      "custom_domain": true
+    }
+  ],
+
   "assets": {
     // The site is served from the repository root — there is no build step.
     "directory": ".",
