@@ -52,7 +52,7 @@
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <meta name="googlebot" content="index, follow, max-image-preview:large">
   <meta name="bingbot" content="index, follow">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://connect.facebook.net https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net https://frwsjgrrtzhjfflcdjjs.supabase.co https://ascovitahealthcare-cell-github-io.onrender.com https://*.gokwik.co https://gkx.gokwik.co https://www.google-analytics.com https://region1.google-analytics.com https://www.googleapis.com https://oauth2.googleapis.com https://openidconnect.googleapis.com https://accounts.google.com https://api.cashfree.com https://sandbox.cashfree.com; frame-src https://www.googletagmanager.com https://accounts.google.com https://content.googleapis.com https://oauth2.googleapis.com https://*.gokwik.co https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com; object-src 'none'; base-uri 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://connect.facebook.net https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net https://frwsjgrrtzhjfflcdjjs.supabase.co https://ascovitahealthcare-cell-github-io.onrender.com https://marketing-automation-rmcb.onrender.com https://*.gokwik.co https://gkx.gokwik.co https://www.google-analytics.com https://region1.google-analytics.com https://www.googleapis.com https://oauth2.googleapis.com https://openidconnect.googleapis.com https://accounts.google.com https://api.cashfree.com https://sandbox.cashfree.com; frame-src https://www.googletagmanager.com https://accounts.google.com https://content.googleapis.com https://oauth2.googleapis.com https://*.gokwik.co https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com; object-src 'none'; base-uri 'self';">
   <!-- ── Clickjacking guard ──────────────────────────────────────────
        X-Frame-Options is a response header, and CSP's frame-ancestors is
        explicitly ignored when the policy arrives in a <meta> tag — so on
@@ -9317,6 +9317,14 @@ body:not(.oz-product) #stickyCart { display: none !important; }
 <script defer src="scripts/scroll-progress.js?v=20260819-3"></script>
 
 <script defer src="scripts/fire-pageview.js?v=20260819-3"></script>
+
+<!-- Ozylix behaviour beacon — sends first-party behaviour events to the
+     marketing service so the store owns its own customer data (Meta Pixel
+     and GA4 send only to Meta and Google). Loaded after tracking.js and the
+     store scripts because it WRAPS them rather than duplicating them.
+     Fire-and-forget and fully try/catch'd: if the marketing service is down
+     or blocked, the shopper sees no difference. -->
+<script defer src="scripts/ozy-track.js?v=20260820-1"></script>
 
 <!-- Central contextual popup manager root (max 1 card, never covers CTAs) -->
 <div id="ozylxNotify" aria-live="polite"></div>
