@@ -7908,10 +7908,16 @@ else setTimeout(ozylixScheduleReminders, 1000);
 
 async function hydrateOzylixPublicSettings() {
   try {
-    const r = await fetch((typeof API_BASE === 'string' ? API_BASE : '') + '/api/settings', { cache: 'no-store' });
+    const base = (typeof API_BASE === 'string' ? API_BASE : '');
+    const r = await fetch(base + '/api/public/store-config', {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json' },
+    });
     if (!r.ok) return;
-    const data = await r.json();
-    window.__OZYLIX_SETTINGS = data.data || data || {};
+    const payload = await r.json();
+    const data = payload && payload.ok ? payload.data : null;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return;
+    window.__OZYLIX_SETTINGS = data;
     document.querySelectorAll('[data-offer-bar]').forEach(function (bar) {
       const replacement = offerBarHTML('');
       if (replacement) { const wrap = document.createElement('div'); wrap.innerHTML = replacement; bar.replaceWith(wrap.firstElementChild); }

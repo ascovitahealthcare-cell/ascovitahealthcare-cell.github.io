@@ -60,12 +60,18 @@ function isSpaPath(pathname) {
 // complete copy of the storefront — duplicate content for Google, under a name
 // that is meant to be private.
 const ADMIN_HOST = 'back.ozylix.com';
-const ADMIN_ENTRY = new Set(['/', '/admin', '/admin.html']);
+const ADMIN_ENTRY = new Set(['/','/admin','/admin.html']);
+const ADMIN_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://frwsjgrrtzhjfflcdjjs.supabase.co https://wyvpuafzirwlwweifzao.supabase.co https://i.ibb.co https://ascovita.imgbb.com https://images.unsplash.com; connect-src 'self' https://ascovitahealthcare-cell-github-io.onrender.com https://frwsjgrrtzhjfflcdjjs.supabase.co https://wyvpuafzirwlwweifzao.supabase.co https://accounts.google.com https://www.googleapis.com https://analytics.google.com https://sdk.cashfree.com http://localhost:* http://127.0.0.1:*; frame-src 'self' about:blank https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';";
 
 // Never let the admin hostname into a search index, whatever it serves.
 function noIndex(res) {
   const headers = new Headers(res.headers);
   headers.set('X-Robots-Tag', 'noindex, nofollow');
+  headers.set('Content-Security-Policy', ADMIN_CSP);
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Referrer-Policy', 'no-referrer');
+  headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   return new Response(res.body, { status: res.status, headers });
 }
 
