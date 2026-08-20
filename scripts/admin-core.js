@@ -660,11 +660,19 @@ const RET_BADGE = {
 async function loadReturns() {
   const wrap = document.getElementById('returnsTableWrap');
   if (!wrap) return;
+  // showPage can be triggered more than once by navigation and mobile layout
+  // listeners. Do not let overlapping requests continually put the table back
+  // into Loading… while an earlier request is still in flight.
+  if (loadReturns._busy) return;
+  loadReturns._busy = true;
   wrap.innerHTML = '<div style="padding:26px;text-align:center;color:var(--text3)">Loading…</div>';
   try {
     const status = (document.getElementById('retFilter') || {}).value || '';
-    // apiFetch returns the raw Response, not parsed JSON.
-    const d = await (await apiFetch('/api/admin/returns' + (status ? '?status=' + encodeURIComponent(status) : ''))).json();
+    // apiFetch returns the raw Response, not parsed JSON. A page load must
+    // fail visibly rather than wait on a sleeping database/Render instance.
+    const d = await (await apiFetch('/api/admin/returns' + (status ? '?status=' + encodeURIComponent(status) : ''), {
+      signal: AbortSignal.timeout(20000),
+    })).json();
     RETURNS_CACHE = d.returns || [];
     const c = d.counts || {};
 
@@ -722,6 +730,8 @@ async function loadReturns() {
       + '</tbody></table>';
   } catch (e) {
     wrap.innerHTML = '<div style="padding:26px;text-align:center;color:var(--red-text)">Could not load returns: ' + retEsc(e.message) + '</div>';
+  } finally {
+    loadReturns._busy = false;
   }
 }
 
