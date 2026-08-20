@@ -20,14 +20,14 @@
      carry its own hand-written invoice — different layout, fonts, GST split
      and header — so the document a customer received and the one staff
      printed for the same order did not match. One template now. -->
-<script src="invoice-template.js?v=20260815-3"></script>
+<script src="scripts/invoice-template.js?v=20260815-3"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, minimum-scale=1.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ozylix Admin">
 <meta name="format-detection" content="telephone=no">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://frwsjgrrtzhjfflcdjjs.supabase.co https://wyvpuafzirwlwweifzao.supabase.co https://i.ibb.co https://ascovita.imgbb.com https://images.unsplash.com; connect-src 'self' https://ascovitahealthcare-cell-github-io.onrender.com https://frwsjgrrtzhjfflcdjjs.supabase.co https://wyvpuafzirwlwweifzao.supabase.co https://accounts.google.com https://www.googleapis.com https://analytics.google.com https://sdk.cashfree.com http://localhost:* http://127.0.0.1:*; frame-src 'self' about:blank https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
 <title>Ozylix — Admin Backoffice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -4563,12 +4563,11 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 
 <!-- ══════════════════════════════════════
      AUDIT / DEBUGGER
-     Calls the standalone audit-system service (its own repo/Supabase/
-     Render) at auditdebuging.onrender.com, authenticated with this
-     panel's own admin/owner JWT (the `authToken` variable declared
-     earlier in this file) — no second login. Built entirely from this
-     file's own components (.card, .kpi, .badge, .grid-4, .tab-bar,
-     .table-wrap, drawRing()) — no separate stylesheet or palette.
+     Audit requests go through the main backend's permission-gated
+     /api/admin/audit/* proxy. The browser never sends its admin JWT to
+     the standalone audit service. Built entirely from this file's own
+     components (.card, .kpi, .badge, .grid-4, .tab-bar, .table-wrap,
+     drawRing()) — no separate stylesheet or palette.
      ══════════════════════════════════════ -->
 <div class="page" id="page-auditdebugger">
     <div class="page-hdr">

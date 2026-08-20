@@ -1164,7 +1164,7 @@ async function loadProductReviews(productId) {
     // the whole fix.
     const sb = await sbClientWhenReady(8000); if (!sb) throw new Error('Supabase client not loaded yet');
     const { data, error } = await sb
-      .from('reviews')
+      .from('public_reviews')
       .select('id, user_name, rating, review_text, created_at, verified')
       .eq('product_id', productId)
       .order('created_at', { ascending: false });

@@ -1,0 +1,5 @@
+Contact: mailto:ascovitahealthcare@gmail.com
+Expires: 2027-08-20T00:00:00Z
+Preferred-Languages: en
+Policy: https://www.ozylix.com/privacy
+Canonical: https://www.ozylix.com/.well-known/security.txt

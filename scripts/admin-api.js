@@ -148,6 +148,7 @@ function azToggleStaffNewPw(){
   i.type = i.type === 'password' ? 'text' : 'password';
 }
 function renderAzStaffNewPerms(selected){
+  selected = Array.isArray(selected) ? selected : [];
   const w = document.getElementById('azStaffNewPerms');
   w.innerHTML = AZ_STAFF_PERMS.map(([k,lab]) =>
     `<label style="font-size:.75rem;display:flex;align-items:center;gap:6px;padding:2px 0;cursor:pointer">
@@ -176,11 +177,12 @@ async function loadStaffPage(){
     const staffResponse = await apiFetch('/api/admin/staff');
     const d = await staffResponse.json();
     if (!staffResponse.ok || d.error) throw new Error(d.error || 'Could not load staff list');
-    const rows = (d.staff || []).map(s => {
+    const rows = (Array.isArray(d.staff) ? d.staff : []).map(s => {
       const statusCls = s.enabled ? 'badge-ok' : 'badge-bad';
       const statusTxt = s.enabled ? 'Active' : 'Suspended';
-      const permTags = (s.permissions && s.permissions.length)
-        ? s.permissions.map(p=>`<span style="font-size:.62rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1px 5px">${escHtml(azStaffPermLabel(p))}</span>`).join(' ')
+      const permissions = Array.isArray(s.permissions) ? s.permissions : [];
+      const permTags = permissions.length
+        ? permissions.map(p=>`<span style="font-size:.62rem;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:1px 5px">${escHtml(azStaffPermLabel(p))}</span>`).join(' ')
         : '<span style="font-size:.7rem;color:var(--text3)">Full admin (default role)</span>';
       return `<tr style="border-bottom:1px solid var(--border);vertical-align:top">
         <td style="padding:10px;font-weight:600">${escHtml(s.username)}</td>
@@ -189,7 +191,7 @@ async function loadStaffPage(){
         <td style="padding:10px;max-width:320px">${permTags}</td>
         <td style="padding:10px;font-size:.72rem;color:var(--text3)">${s.last_login_at ? new Date(s.last_login_at).toLocaleString() : '—'}</td>
         <td style="padding:10px;text-align:right;white-space:nowrap">
-          <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffEditPerms('${escHtml(s.username)}', ${JSON.stringify(s.permissions||[]).replace(/"/g,'&quot;')})">✏️ Perms</button>
+          <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffEditPerms('${escHtml(s.username)}', ${JSON.stringify(permissions).replace(/"/g,'&quot;')})">✏️ Perms</button>
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffApplyProfile('${escHtml(s.username)}','full')">⬆ Promote</button>
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffApplyProfile('${escHtml(s.username)}','support')">⬇ Demote</button>
           <button class="btn btn-secondary" style="font-size:.68rem;padding:4px 9px" onclick="azStaffToggle('${escHtml(s.username)}', ${s.enabled})">${s.enabled ? '⏸ Suspend' : '▶ Enable'}</button>
@@ -319,7 +321,7 @@ async function autFetch(url, opts) {
     const r = await apiFetch(url, opts || {});
     return r.json().catch(() => ({}));
   }
-  const r = await fetch(url, Object.assign({ headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('ascovita_token') || '') } }, opts || {}));
+  const r = await fetch(url, Object.assign({ headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (sessionStorage.getItem('ascovita_token') || '') } }, opts || {}));
   return r.json().catch(() => ({}));
 }
 function autWhen(ts){ return ts ? (new Date(ts).toLocaleString()) : 'never'; }

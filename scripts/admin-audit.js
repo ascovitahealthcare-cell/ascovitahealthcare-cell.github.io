@@ -5,36 +5,19 @@
 
 /* ══ block 11 (origin 801185-807869, 6667 B) ══ */
 /* ══════════════════════════════════════════════════════════════
-   Ozylix ADMIN — Login IP Audit & Bot Detection
-   - Captures IP on every login attempt (success + failure)
-   - Uses ip-api.com (free, no key needed, 45 req/min)
-   - Stores up to 200 records in localStorage
-   - Bot heuristics: headless UA, missing languages, etc.
+   Ozylix ADMIN — Minimal local login status telemetry
+   - Stores only bounded status events in the current browser profile
+   - Does not collect IP, geo, ISP, precise coordinates, or full UA data
+   - Bot heuristics use local browser signals only
+   - Central security logging belongs on the backend over HTTPS
 ══════════════════════════════════════════════════════════════ */
 
 const LOGIN_AUDIT_KEY = 'asc_login_audit';
 const LOGIN_AUDIT_MAX = 200;
 
-// ── Fetch visitor IP + geo info ──────────────────────────────
-async function fetchIpInfo() {
-  try {
-    // ip-api.com: free, no key, returns JSON
-    const r = await fetch('http://ip-api.com/json/?fields=status,message,country,regionName,city,zip,lat,lon,isp,org,as,query', {
-      signal: AbortSignal.timeout(6000)
-    });
-    if (!r.ok) throw new Error('ip-api error');
-    return await r.json();
-  } catch(e) {
-    // Fallback: ipify just for the IP
-    try {
-      const r2 = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
-      const d = await r2.json();
-      return { query: d.ip, country: '?', city: '?', isp: '?', status: 'partial' };
-    } catch(e2) {
-      return { query: 'unknown', country: '?', city: '?', isp: '?', status: 'fail' };
-    }
-  }
-}
+// Login telemetry is intentionally local and minimal. IP, geo, ISP, precise
+// coordinates, and full user-agent data must not be collected in the browser;
+// central security logging belongs on the backend over HTTPS.
 
 // ── Bot heuristic score ──────────────────────────────────────
 function botScore(ua, ipData) {
@@ -63,31 +46,25 @@ function botScore(ua, ipData) {
 
 // ── Record one login attempt ──────────────────────────────────
 async function recordLoginAttempt(username, status) {
-  const ipData = await fetchIpInfo();
   const ua = navigator.userAgent;
-  const bot = botScore(ua, ipData);
+  const bot = botScore(ua, null);
 
   const entry = {
     ts: new Date().toISOString(),
     username,
     status,           // 'success' | 'fail' | 'locked'
-    ip: ipData.query || 'unknown',
-    country: ipData.country || '?',
-    region: ipData.regionName || '',
-    city: ipData.city || '',
-    isp: ipData.isp || '',
-    org: ipData.org || '',
-    lat: ipData.lat,
-    lon: ipData.lon,
-    ua: ua.substring(0, 200),
     botScore: bot.score,
     botFlags: bot.flags,
     botLabel: bot.label
   };
 
-  // Persist to localStorage (ring buffer — keep newest 200)
+  // Persist only minimal status telemetry. Strip legacy IP/geo/UA fields from
+  // records created by older panel versions before writing the ring buffer.
   let log = [];
   try { log = JSON.parse(localStorage.getItem(LOGIN_AUDIT_KEY) || '[]'); } catch(e) {}
+  log = Array.isArray(log) ? log.map(function (old) {
+    return { ts: old.ts, username: old.username, status: old.status, botScore: old.botScore, botFlags: old.botFlags, botLabel: old.botLabel };
+  }).filter(function (old) { return old.ts && old.status; }) : [];
   log.unshift(entry);
   if (log.length > LOGIN_AUDIT_MAX) log = log.slice(0, LOGIN_AUDIT_MAX);
   localStorage.setItem(LOGIN_AUDIT_KEY, JSON.stringify(log));
@@ -105,7 +82,7 @@ function renderLoginAudit() {
   // Owner-only data: don't populate the table for non-owner roles, even if the
   // card's CSS were somehow bypassed. The real boundary should also be enforced
   // server-side wherever this log is persisted centrally.
-  const role = localStorage.getItem('ascovita_role') || 'admin';
+  const role = sessionStorage.getItem('ascovita_role') || 'admin';
   if (role !== 'owner') {
     tbody.innerHTML = '<tr><td colspan="5" class="empty-state" style="padding:24px;text-align:center;color:var(--text3)">🔒 Owner access only.</td></tr>';
     if (countEl) countEl.textContent = '';
@@ -129,15 +106,12 @@ function renderLoginAudit() {
         ? '<span class="badge badge-red">🔒 Locked</span>'
         : '<span class="badge badge-red">✗ Failed</span>';
 
-    // Simplified location: City / Country only (no ISP, UA, or bot heuristics shown)
-    const location = [e.city, e.country].filter(Boolean).join(', ') || '?';
-
     return `<tr>
       <td style="font-size:0.72rem;white-space:nowrap;color:var(--text3)">${new Date(e.ts).toLocaleString('en-IN')}</td>
       <td><code style="font-size:0.8rem">${e.username || '-'}</code></td>
       <td>${statusBadge}</td>
-      <td><code style="font-size:0.8rem;user-select:all">${e.ip}</code></td>
-      <td style="font-size:0.82rem">${location}</td>
+      <td style="font-size:0.75rem;color:var(--text3)">Not stored in browser</td>
+      <td style="font-size:0.75rem;color:var(--text3)">Server audit required</td>
     </tr>`;
   }).join('');
 }
@@ -177,14 +151,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 /* ══ block 14 (origin 837837-857732, 19878 B) ══ */
-const AUDIT_API_BASE = 'https://auditdebuging.onrender.com/api/audit';
+const AUDIT_API_BASE = '/api/admin/audit';
 let acCurrentRange = 7;
 let _acTrendChart = null;
 
 async function auditApi(path, options = {}) {
-  const res = await fetch(`${AUDIT_API_BASE}${path}`, {
+  const res = await apiFetch(`${AUDIT_API_BASE}${path}`, {
     ...options,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}`, ...(options.headers || {}) },
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -561,7 +535,7 @@ if (typeof _auditOrigShowPage === 'function') {
   if (window.__unifiedPulse) return;
   window.__unifiedPulse = true;
 
-  var AUDIT_API_BASE = 'https://auditdebuging.onrender.com/api/audit';
+  var AUDIT_API_BASE = '/api/admin/audit';
   var _pulseCharts = {};
 
   function upMoney(n) {
@@ -653,15 +627,13 @@ if (typeof _auditOrigShowPage === 'function') {
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; });
 
-    var auditPromise = fetch(AUDIT_API_BASE + '/health-scores/latest', {
-      headers: { 'Authorization': 'Bearer ' + (typeof authToken !== 'undefined' ? authToken : '') },
+    var auditPromise = apiFetch(AUDIT_API_BASE + '/health-scores/latest', {
       signal: ctrl.signal,
     })
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; });
 
-    var findingsPromise = fetch(AUDIT_API_BASE + '/findings?status=open', {
-      headers: { 'Authorization': 'Bearer ' + (typeof authToken !== 'undefined' ? authToken : '') },
+    var findingsPromise = apiFetch(AUDIT_API_BASE + '/findings?status=open', {
       signal: ctrl.signal,
     })
       .then(function (r) { return r.ok ? r.json() : []; })
@@ -738,7 +710,7 @@ if (typeof _auditOrigShowPage === 'function') {
 
   function tokenExp() {
     try {
-      var t = localStorage.getItem('ascovita_token');
+      var t = sessionStorage.getItem('ascovita_token');
       if (!t) return 0;
       // JWT payloads are base64URL (- and _, no padding), not plain base64
       // (+ and /, padded). atob() on a raw JWT segment can throw — or on
@@ -793,7 +765,7 @@ if (typeof _auditOrigShowPage === 'function') {
   }
 
   function tick() {
-    if (!localStorage.getItem('ascovita_token')) return;
+    if (!sessionStorage.getItem('ascovita_token')) return;
 
     var idleLeft = IDLE_MS - (Date.now() - lastAct);
     var exp      = tokenExp();
@@ -1089,7 +1061,7 @@ async function azLoadPerms() {
     }
     return r;
   };
-  if (localStorage.getItem('ascovita_token')) azLoadPerms();
+  if (sessionStorage.getItem('ascovita_token')) azLoadPerms();
 })();
 
 

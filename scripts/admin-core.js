@@ -21,7 +21,7 @@ if (!AbortSignal.timeout) {
 // CONFIG
 // ═══════════════════════════════════════════════
 const API = 'https://ascovitahealthcare-cell-github-io.onrender.com';
-let authToken = localStorage.getItem('ascovita_token') || '';
+let authToken = sessionStorage.getItem('ascovita_token') || '';
 let allOrders = [], allProducts = [], allCustomers = [], allDiscounts = [], allPayments = [];
 
 // XSS-safe HTML escaping for all user/API data rendered into innerHTML
@@ -236,8 +236,8 @@ async function otpResend() {
 // burned two of the five allowed attempts on every single typo.
 // Shared success path entered after a successful password login.
 function __loginSuccess(d) {
-  localStorage.setItem('ascovita_token', d.token); // persist the fresh token
-  localStorage.setItem('ascovita_role', d.role || 'admin');
+  sessionStorage.setItem('ascovita_token', d.token); // persist the fresh token
+  sessionStorage.setItem('ascovita_role', d.role || 'admin');
   // Cache the session identity so the UI can hide owner/staff features
   // instantly, without a round trip on every render.
   try { apiFetch('/api/admin/me').then(m => {
@@ -258,8 +258,8 @@ function __loginSuccess(d) {
 }
 
 function doLogout() {
-  localStorage.removeItem('ascovita_token');
-  localStorage.removeItem('ascovita_role');
+  sessionStorage.removeItem('ascovita_token');
+  sessionStorage.removeItem('ascovita_role');
   try { localStorage.removeItem('ascovita_session'); } catch (e) {}
   authToken = '';
   document.getElementById('app').style.display = 'none';
@@ -281,7 +281,7 @@ function doLogout() {
 // normalise before atob() or the decode throws on some payloads.
 function tokenExpiryMs(t) {
   try {
-    var raw = t || localStorage.getItem('ascovita_token');
+    var raw = t || sessionStorage.getItem('ascovita_token');
     if (!raw) return 0;
     var b64 = raw.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     while (b64.length % 4) b64 += '=';
@@ -382,7 +382,7 @@ async function apiFetch(path, opts={}) {
     //     belt-and-braces).
     // So: re-read the token from storage, and if it still looks valid,
     // try the request ONCE more before giving up.
-    var stored = localStorage.getItem('ascovita_token') || '';
+    var stored = sessionStorage.getItem('ascovita_token') || '';
     if (!authToken && stored && !tokenIsExpired(stored)) {
       authToken = stored;
       opts.headers = Object.assign({}, opts.headers || {});
@@ -443,7 +443,7 @@ async function apiFetch(path, opts={}) {
 async function adminProofUpload(path, formData, promptText) {
   if (typeof confirmCriticalAction !== 'function') throw new Error('Save-password confirmation is unavailable — reload the admin panel');
   return confirmCriticalAction(promptText || 'Authorize this design upload?', async function(proof) {
-    const token = authToken || localStorage.getItem('ascovita_token') || '';
+    const token = authToken || sessionStorage.getItem('ascovita_token') || '';
     return fetch(`${API}${path}`, {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + token, 'X-Password-Proof': proof },
@@ -573,7 +573,7 @@ async function checkServerStatus() {
 // owner to 'admin' — the server is the real enforcer, so default to
 // owner-visible until positively proven otherwise.
 function applyRole(role) {
-  const r = role || localStorage.getItem('ascovita_role');
+  const r = role || sessionStorage.getItem('ascovita_role');
   document.body.classList.remove('role-owner','role-admin');
   document.body.classList.add('role-' + r);
   // Update topbar indicator
@@ -613,13 +613,13 @@ function applyRole(role) {
 //   honest "your session expired, please sign in again".
 if (authToken && tokenIsExpired(authToken)) {
   try { localStorage.setItem('ascovita_logout_reason', 'expired'); } catch(e) {}
-  localStorage.removeItem('ascovita_token');
+  sessionStorage.removeItem('ascovita_token');
   authToken = '';
 }
 if(authToken) {
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
-  applyRole(localStorage.getItem('ascovita_role'));
+  applyRole(sessionStorage.getItem('ascovita_role'));
   initApp();
 }
 
@@ -3100,7 +3100,7 @@ function renderProducts(list) {
           </div>
         </div>
       </td>
-      <td><img class="prod-img" src="${adminCdnImg(p.image)||'https://via.placeholder.com/44'}" onerror="this.src='https://via.placeholder.com/44'" alt=""></td>
+      <td><img class="prod-img" src="${adminCdnImg(p.image)||'/assets/ozylix-icon-192.png'}" onerror="this.src='/assets/ozylix-icon-192.png'" alt=""></td>
       <td>
         <div class="prod-tbl-name">${esc(p.name)}</div>
         <div class="prod-tbl-brand">${p.brand||'Ozylix'} · ${p.category||'–'}</div>
@@ -3156,8 +3156,8 @@ function renderProductCards(list) {
     return `
     <div class="prod-card${p.deleted_at?' deleted':''}" id="prodcard_${p.id}">
       <div class="prod-status-ribbon">${statusBadge}</div>
-      <img class="prod-card-img" src="${adminCdnImg(p.image)||'https://via.placeholder.com/280x160/EDE3D2/547177?text=No+Image'}"
-        onerror="this.src='https://via.placeholder.com/280x160/EDE3D2/547177?text=No+Image'" alt="${p.name}"
+      <img class="prod-card-img" src="${adminCdnImg(p.image)||'/assets/ozylix-icon-192.png'}"
+        onerror="this.src='/assets/ozylix-icon-192.png'" alt="${p.name}"
         onclick="openProductDrawer(${p.id})">
       <div class="prod-card-body">
         <div class="prod-card-name" title="${p.name}">${p.name}</div>
@@ -4001,8 +4001,8 @@ function filterInventory() {
     return `
     <tr>
       <td style="width:60px;">
-        <img src="${adminCdnImg(p.image)||'https://via.placeholder.com/52/EDE3D2/547177?text=?'}"
-          onerror="this.src='https://via.placeholder.com/52/EDE3D2/547177?text=?'" alt="${p.name}"
+        <img src="${adminCdnImg(p.image)||'/assets/ozylix-icon-192.png'}"
+          onerror="this.src='/assets/ozylix-icon-192.png'" alt="${p.name}"
           style="width:52px;height:52px;border-radius:10px;object-fit:contain;background:var(--bg2);padding:4px;border:1px solid var(--border);cursor:pointer;display:block;"
           onclick="openProductModal(${p.id})" title="Click to edit product">
       </td>
@@ -5110,7 +5110,7 @@ let miItems = [];
 let miRowSeq = 0;
 
 function openManualInvoice() {
-  const role = localStorage.getItem('ascovita_role') || 'admin';
+  const role = sessionStorage.getItem('ascovita_role') || 'admin';
   if (role !== 'owner') { toast('🔒 Owner access only','error'); return; }
   miItems = [];
   miRowSeq = 0;
@@ -7523,7 +7523,7 @@ async function saveSettingsCore() {
       // authenticate silently with the NEW credentials instead, so the
       // change of password never looks like a forced logout.
       try {
-        var who = String(localStorage.getItem('ascovita_session') ? JSON.parse(localStorage.getItem('ascovita_session')).username : (localStorage.getItem('ascovita_role') === 'owner' ? 'owner' : 'admin'));
+        var who = String(localStorage.getItem('ascovita_session') ? JSON.parse(localStorage.getItem('ascovita_session')).username : (sessionStorage.getItem('ascovita_role') === 'owner' ? 'owner' : 'admin'));
         var lr = await fetch(`${API}/api/admin/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -33,6 +33,7 @@ const SPA_ROUTES = new Set([
   '/contact',
   '/faq',
   '/advisor',
+  '/account',
   '/b2b', // index.html forwards this on to the Ascovita corporate site
   '/wishlist',
   '/subscriptions',
@@ -60,12 +61,21 @@ function isSpaPath(pathname) {
 // complete copy of the storefront — duplicate content for Google, under a name
 // that is meant to be private.
 const ADMIN_HOST = 'back.ozylix.com';
-const ADMIN_ENTRY = new Set(['/', '/admin', '/admin.html']);
+const ADMIN_ENTRY = new Set(['/','/admin','/admin.html']);
+const ADMIN_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://frwsjgrrtzhjfflcdjjs.supabase.co https://wyvpuafzirwlwweifzao.supabase.co https://i.ibb.co https://ascovita.imgbb.com https://images.unsplash.com; connect-src 'self' https://ascovitahealthcare-cell-github-io.onrender.com https://frwsjgrrtzhjfflcdjjs.supabase.co https://wyvpuafzirwlwweifzao.supabase.co https://accounts.google.com https://www.googleapis.com https://analytics.google.com https://sdk.cashfree.com http://localhost:* http://127.0.0.1:*; frame-src 'self' about:blank https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';";
 
 // Never let the admin hostname into a search index, whatever it serves.
 function noIndex(res) {
   const headers = new Headers(res.headers);
   headers.set('X-Robots-Tag', 'noindex, nofollow');
+  headers.set('Cache-Control', 'no-store, private, max-age=0');
+  headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  headers.set('X-Frame-Options', 'DENY');
+  headers.set('Content-Security-Policy', ADMIN_CSP);
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Referrer-Policy', 'no-referrer');
+  headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   return new Response(res.body, { status: res.status, headers });
 }
 
@@ -77,7 +87,7 @@ async function serveAdmin(request, env, url) {
     return noIndex(new Response(page.body, { status: 200, headers: page.headers }));
   }
 
-  // Real files still resolve, because admin.html pulls in invoice-template.js,
+  // Real files still resolve, because admin.html pulls in scripts/invoice-template.js,
   // the logo and so on. Anything else — storefront routes in particular — is
   // left to 404 here rather than serving the shop under the admin name.
   return noIndex(await env.ASSETS.fetch(request));
@@ -103,6 +113,21 @@ const SITE_MEDIA_EDGE_TTL = 60; // seconds — admin changes visible within 1 mi
 const SITE_MEDIA_STALE_TTL = 31536000; // serve stale up to 1 year while refreshing
 const SITE_MEDIA_CACHE_KEY = new Request('https://ozylix-cdn/edge/site-media', { method: 'GET' });
 
+// Response-level protections for Worker-generated public pages and JSON. The
+// matching _headers file covers static assets that bypass this Worker.
+const PUBLIC_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://connect.facebook.net https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.googletagmanager.com https://www.facebook.com https://connect.facebook.net https://frwsjgrrtzhjfflcdjjs.supabase.co https://ascovitahealthcare-cell-github-io.onrender.com https://marketing-automation-rmcb.onrender.com https://*.gokwik.co https://gkx.gokwik.co https://www.google-analytics.com https://region1.google-analytics.com https://www.googleapis.com https://oauth2.googleapis.com https://openidconnect.googleapis.com https://accounts.google.com https://api.cashfree.com https://sandbox.cashfree.com; frame-src 'self' https://www.googletagmanager.com https://accounts.google.com https://content.googleapis.com https://oauth2.googleapis.com https://*.gokwik.co https://sdk.cashfree.com https://api.cashfree.com https://sandbox.cashfree.com https://payments.cashfree.com https://payments-test.cashfree.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';";
+
+function publicHeaders(res) {
+  const headers = new Headers(res.headers);
+  headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  headers.set('X-Frame-Options', 'SAMEORIGIN');
+  headers.set('Content-Security-Policy', PUBLIC_CSP);
+  return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+}
+
 // In-memory map cache: survives for the lifetime of the isolate, which is
 // where almost all repeat traffic actually lands (one isolate serves thousands
 // of requests). Measured in production: the Cloudflare Cache API entries this
@@ -114,7 +139,7 @@ const smInMem = { body: null, headers: null, expiry: 0 };
 async function handleSiteMedia() {
   const now = Date.now();
   if (smInMem.body !== null && smInMem.expiry > now) {
-    return new Response(smInMem.body, {
+    return publicHeaders(new Response(smInMem.body, {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -122,7 +147,7 @@ async function handleSiteMedia() {
         'Access-Control-Allow-Origin': '*',
         'X-Edge-Age': String(Math.floor((now - smInMem.storedAt) / 1000)),
       },
-    });
+    }));
   }
 
   // Cold isolate — fetch from Render (may include cold-start time, but only
@@ -151,14 +176,14 @@ async function handleSiteMedia() {
     };
     smInMem.storedAt = now;
     smInMem.expiry = now + SITE_MEDIA_EDGE_TTL * 1000;
-    return new Response(body, { status: 200, headers: smInMem.headers });
+    return publicHeaders(new Response(body, { status: 200, headers: smInMem.headers }));
   } catch (e) {
     // Render is down or slow — fail loudly so the storefront keeps its
     // hard-coded defaults instead of painting broken banner URLs.
-    return new Response(JSON.stringify({ error: 'site-media unavailable', detail: String(e) }), {
+    return publicHeaders(new Response(JSON.stringify({ error: 'site-media unavailable' }), {
       status: 502,
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-    });
+    }));
   }
 }
 
@@ -188,12 +213,12 @@ export default {
       // page is indexable. index.html reads location.pathname on boot and opens
       // the matching page or product.
       const shell = await env.ASSETS.fetch(new URL('/index.html', url));
-      return new Response(shell.body, { status: 200, headers: shell.headers });
+      return publicHeaders(new Response(shell.body, { status: 200, headers: shell.headers }));
     }
 
     // Real asset, or nothing — in which case not_found_handling serves 404.html
     // with a genuine 404 status.
-    return env.ASSETS.fetch(request);
+    return publicHeaders(await env.ASSETS.fetch(request));
   },
 };
 
