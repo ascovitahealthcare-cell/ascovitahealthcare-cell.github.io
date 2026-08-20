@@ -3204,6 +3204,27 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <div class="mkt-sub">Segments are calculated from behaviour on every engine tick — nobody is assigned to one by hand, and people leave a segment automatically when their behaviour changes.</div>
     </div>
     <div id="seg-grid"><p class="mkt-empty">Loading…</p></div>
+    <div class="card" style="padding:14px 16px;margin-top:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <div>
+          <h3 style="margin:0 0 3px;">Customer activity directory</h3>
+          <div class="mkt-sub">Real identity, recent behaviour, segment membership, and every outbound contact decision.</div>
+        </div>
+        <span id="seg-customer-status" class="mkt-sub">Loading…</span>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(180px,1.5fr) repeat(4,minmax(120px,1fr));gap:8px;align-items:center;">
+        <input id="seg-customer-query" type="search" placeholder="Search name, email, phone, customer ID…" onkeydown="if(event.key==='Enter')mktLoadCustomerDirectory()">
+        <select id="seg-customer-window" onchange="mktLoadCustomerDirectory()">
+          <option value="1">Today</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option><option value="90">Last 3 months</option><option value="365">Last year</option><option value="0">All time</option>
+        </select>
+        <select id="seg-customer-segment" onchange="mktLoadCustomerDirectory()"><option value="">All segments</option></select>
+        <select id="seg-customer-channel" onchange="mktLoadCustomerDirectory()"><option value="">All channels</option><option value="email">Has email</option><option value="whatsapp">Has WhatsApp</option></select>
+        <button class="btn btn-primary btn-sm" onclick="mktLoadCustomerDirectory()">Refresh customers</button>
+      </div>
+      <div id="seg-customer-table" style="margin-top:12px;"><p class="mkt-empty">Loading…</p></div>
+      <div id="seg-customer-history" style="margin-top:16px;"></div>
+    </div>
     <div id="seg-members" style="margin-top:20px;"></div>
   </div>
 

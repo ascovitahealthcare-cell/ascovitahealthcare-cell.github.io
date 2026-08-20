@@ -1192,7 +1192,94 @@ if (typeof _mktOrigShowPage === 'function') {
               'avg intent ' + Math.round(s.avg_intent) +
             '</div></div>';
         }).join('') + '</div>';
+      var filter = document.getElementById('seg-customer-segment');
+      if (filter) {
+        var selected = filter.value;
+        filter.innerHTML = '<option value="">All segments</option>' + d.segments.map(function (s) {
+          return '<option value="' + esc(s.key) + '">' + esc(s.name) + '</option>';
+        }).join('');
+        filter.value = selected;
+      }
+      mktLoadCustomerDirectory();
     })['catch'](function (e) { fail('seg-grid', e); });
+  };
+
+  function contactLinks(profile) {
+    var email = profile && profile.email;
+    var phone = profile && profile.phone;
+    var html = '<div style="display:flex;gap:5px;flex-wrap:wrap;">';
+    if (email) html += '<a class="btn btn-secondary btn-sm" href="mailto:' + encodeURIComponent(email) + '">✉ Email</a>';
+    if (phone) {
+      var digits = String(phone).replace(/\D/g, '');
+      if (digits) html += '<a class="btn btn-secondary btn-sm" target="_blank" rel="noopener" href="https://wa.me/' + digits + '">WhatsApp</a>';
+    }
+    return html + '</div>';
+  }
+
+  function renderCustomerDirectory(rows) {
+    if (!rows || !rows.length) return '<p class="mkt-empty">No identified customers match these filters.</p>';
+    return '<table class="mkt-table"><thead><tr><th>Customer / identity</th><th>Stage</th><th>Segments</th>' +
+      '<th>Last activity</th><th>Messages</th><th>Contact</th><th></th></tr></thead><tbody>' +
+      rows.map(function (c) {
+        var identity = c.customer_name || c.email || c.phone || 'Anonymous visitor';
+        var ids = [c.customer_id ? 'ID: ' + c.customer_id : '', c.email || '', c.phone || ''].filter(Boolean).join('<br>');
+        var segs = Array.isArray(c.segments) ? c.segments.map(esc).join(', ') : '—';
+        return '<tr>' +
+          '<td><strong>' + esc(identity) + '</strong><br><span class="mkt-sub">' + ids + '</span></td>' +
+          '<td>' + esc(c.lifecycle_stage || 'visitor') + '<br>' + scoreChip(c.intent_score) + '</td>' +
+          '<td>' + (segs || '—') + '</td>' +
+          '<td>' + ago(c.last_seen) + (c.last_product_viewed ? '<br><span class="mkt-sub">viewed: ' + esc(c.last_product_viewed) + '</span>' : '') + '</td>' +
+          '<td><strong>' + num(c.messages_sent) + '</strong> sent<br><span class="mkt-sub">' + num(c.email_total) + ' email · ' + num(c.whatsapp_total) + ' WhatsApp</span></td>' +
+          '<td>' + contactLinks(c) + '</td>' +
+          '<td><button class="btn btn-primary btn-sm" onclick="mktOpenJourney(\'' + esc(c.profile_id) + '\')">Activity</button> ' +
+            '<button class="btn btn-secondary btn-sm" onclick="mktLoadCustomerMessages(\'' + esc(c.profile_id) + '\',\'' + esc(identity) + '\')">Messages</button></td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  window.mktLoadCustomerMessages = function (profileId, name) {
+    var host = document.getElementById('seg-customer-history');
+    if (!host) return;
+    host.innerHTML = '<p class="mkt-empty">Loading communication history for ' + esc(name || 'customer') + '…</p>';
+    api('/customers/' + encodeURIComponent(profileId) + '/messages?limit=200').then(function (d) {
+      var t = d.totals || {};
+      var rows = d.messages || [];
+      var header = '<div class="card" style="padding:14px 16px;">' +
+        '<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;">' +
+        '<h3 style="margin:0;">Communication history: ' + esc((d.profile && (d.profile.display_name || d.profile.email)) || name || 'Customer') + '</h3>' +
+        '<span class="mkt-sub">' + num(t.sent) + ' sent · ' + num(t.skipped) + ' skipped · ' + num(t.failed) + ' failed · ' + num(t.clicked) + ' clicked</span></div>' +
+        '<div class="mkt-sub" style="margin-top:5px;">Email: ' + num(t.email) + ' · WhatsApp: ' + num(t.whatsapp) + ' · Total records: ' + num(t.all) + '</div>';
+      if (!rows.length) return host.innerHTML = header + '<p class="mkt-empty" style="margin-top:12px;">No outbound communication records for this customer.</p></div>';
+      var table = '<div style="overflow:auto;margin-top:12px;"><table class="mkt-table"><thead><tr><th>When</th><th>Channel</th><th>Template / subject</th><th>Status</th><th>Provider</th><th>Engagement</th></tr></thead><tbody>' +
+        rows.map(function (m) {
+          var engagement = [m.delivered_at ? 'delivered ' + ago(m.delivered_at) : '', m.opened_at ? 'opened ' + ago(m.opened_at) : '', m.clicked_at ? 'clicked ' + ago(m.clicked_at) : ''].filter(Boolean).join('<br>') || '—';
+          return '<tr><td>' + ago(m.created_at) + '</td><td>' + esc(m.channel || '—') + '</td><td>' + esc(m.template_key || m.subject || '—') + '</td><td>' + esc(m.status || '—') + (m.skip_reason ? '<br><span class="mkt-sub">' + esc(m.skip_reason) + '</span>' : '') + '</td><td>' + esc(m.provider || '—') + '</td><td>' + engagement + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+      host.innerHTML = header + table;
+    })['catch'](function (e) { host.innerHTML = '<p class="mkt-empty">Communication history unavailable: ' + esc(e.message) + '</p>'; });
+  };
+
+  window.mktLoadCustomerDirectory = function () {
+    var host = document.getElementById('seg-customer-table');
+    if (!host) return;
+    var status = document.getElementById('seg-customer-status');
+    var days = (document.getElementById('seg-customer-window') || {}).value || '30';
+    var q = ((document.getElementById('seg-customer-query') || {}).value || '').trim();
+    var segment = (document.getElementById('seg-customer-segment') || {}).value || '';
+    var channel = (document.getElementById('seg-customer-channel') || {}).value || '';
+    host.innerHTML = '<p class="mkt-empty">Loading identified customers…</p>';
+    if (status) status.textContent = 'Loading…';
+    var qs = '?days=' + encodeURIComponent(days) + '&limit=250' +
+      (q ? '&q=' + encodeURIComponent(q) : '') +
+      (segment ? '&segment=' + encodeURIComponent(segment) : '') +
+      (channel ? '&channel=' + encodeURIComponent(channel) : '');
+    api('/customers' + qs).then(function (d) {
+      host.innerHTML = renderCustomerDirectory(d.customers || []);
+      if (status) status.textContent = num(d.total || 0) + ' customer(s) shown';
+    })['catch'](function (e) {
+      host.innerHTML = '<p class="mkt-empty">Customer directory unavailable: ' + esc(e.message) + '</p>';
+      if (status) status.textContent = 'Error';
+    });
   };
 
   window.mktLoadSegmentMembers = function (key, name) {
@@ -1305,7 +1392,9 @@ if (typeof _mktOrigShowPage === 'function') {
       el.innerHTML =
         '<div class="card" style="padding:18px;">' +
           '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:flex-start;">' +
-            '<div><h3 style="margin:0 0 4px;">' + esc(p.email || 'Anonymous visitor') + '</h3>' +
+            '<div><h3 style="margin:0 0 4px;">' + esc(p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' ') || p.email || 'Anonymous visitor') + '</h3>' +
+            '<div class="mkt-sub">' + (p.email ? esc(p.email) : '') + (p.phone ? ' · ' + esc(p.phone) : '') + (p.customer_id ? ' · customer ID ' + esc(p.customer_id) : '') + '</div>' +
+            '<div style="margin:8px 0;">' + contactLinks(p) + '</div>' +
             '<div class="mkt-sub">' + esc(p.lifecycle_stage) + ' · first seen ' + ago(p.first_seen) +
             ' · ' + num(p.total_sessions) + ' sessions · ' + num(p.total_orders) + ' orders · ' +
             money(p.total_revenue) + ' lifetime</div>' +
@@ -1323,7 +1412,12 @@ if (typeof _mktOrigShowPage === 'function') {
             '<div>' + breakdown(p.intent_breakdown, 'Why this intent score') +
                       breakdown(p.value_breakdown, 'Why this value score') + '</div>' +
             '<div>' +
-              '<strong style="font-size:13px;">Messages sent</strong>' +
+              '<strong style="font-size:13px;">Communication history</strong>' +
+              '<div class="mkt-sub" style="margin:5px 0 7px;">' +
+                num(d.messages.filter(function (m) { return m.status === 'sent'; }).length) + ' sent · ' +
+                num(d.messages.filter(function (m) { return m.channel === 'email'; }).length) + ' email records · ' +
+                num(d.messages.filter(function (m) { return m.channel === 'whatsapp'; }).length) + ' WhatsApp records · ' +
+                num(d.messages.filter(function (m) { return m.status === 'skipped'; }).length) + ' skipped</div>' +
               (d.messages.length
                 ? '<table class="mkt-table" style="margin-top:6px;"><tbody>' + d.messages.slice(0, 12).map(function (m) {
                     return '<tr><td>' + esc(m.channel) + '</td><td>' + esc(m.subject || m.template_key || '') + '</td>' +
