@@ -2947,6 +2947,15 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="campaigns" onclick="mktShowTab('campaigns')">Campaigns</button>
       <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="reports" onclick="mktShowTab('reports')">Reports</button>
       <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="opportunities" onclick="mktShowTab('opportunities')">Opportunities</button>
+      <!-- ── Behaviour engine tabs (added Aug 2026) — the seven buttons
+           above are unchanged and still call the same handlers. ── -->
+      <span style="width:1px;height:22px;background:var(--border,#e2e2e2);margin:0 4px;"></span>
+      <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="behaviour" onclick="mktShowTab('behaviour')">🧠 Behaviour</button>
+      <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="segments" onclick="mktShowTab('segments')">Segments</button>
+      <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="journeys" onclick="mktShowTab('journeys')">Journeys</button>
+      <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="recovery" onclick="mktShowTab('recovery')">Recovery</button>
+      <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="automations" onclick="mktShowTab('automations')">Automations</button>
+      <button class="btn btn-secondary btn-sm mkt-navbtn" data-tab="attribution" onclick="mktShowTab('attribution')">Attribution</button>
     </div>
   </div>
 
@@ -3143,6 +3152,116 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
     </div>
     <div id="mkt-opp-result"></div>
   </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       BEHAVIOUR ENGINE TABS (added Aug 2026)
+       Appended inside #page-marketing. Nothing above is edited — the seven
+       existing tabs, their markup and their handlers are untouched.
+
+       Data comes from two places, both already wired in admin-api.js:
+         · reads  → the marketing Supabase anon client (mktSupabase), which
+                    RLS keeps read-only
+         · calls  → MARKETING_BACKEND_URL, the main backend's admin-JWT-gated
+                    /api/marketing/* passthrough proxy. That proxy forwards
+                    any suffix, so /api/dash/* needed no backend change.
+       ═══════════════════════════════════════════════════════════════════ -->
+
+  <!-- BEHAVIOUR TAB -->
+  <div id="mkt-tab-behaviour" class="mkt-tab" style="display:none;">
+    <div class="mkt-kpi-row">
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Active now</div><div class="mkt-kpi-value" id="beh-kpi-live">–</div></div>
+      <div class="mkt-kpi"><div class="mkt-kpi-label">High intent</div><div class="mkt-kpi-value" id="beh-kpi-intent">–</div></div>
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Sessions (30d)</div><div class="mkt-kpi-value" id="beh-kpi-sessions">–</div></div>
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Conversion rate</div><div class="mkt-kpi-value" id="beh-kpi-cvr">–</div></div>
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Revenue (30d)</div><div class="mkt-kpi-value" id="beh-kpi-revenue">–</div></div>
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Recovered</div><div class="mkt-kpi-value" id="beh-kpi-recovered">–</div></div>
+    </div>
+
+    <div id="beh-health" class="mkt-hint" style="margin-bottom:16px;"></div>
+
+    <div class="mkt-split" style="margin-bottom:20px;">
+      <div>
+        <h3 style="margin-bottom:8px;">Conversion funnel <span class="mkt-sub">last 30 days</span></h3>
+        <div id="beh-funnel"><p class="mkt-empty">Loading…</p></div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:8px;">Where people drop off</h3>
+        <div id="beh-dropoff"><p class="mkt-empty">Loading…</p></div>
+      </div>
+    </div>
+
+    <h3 style="margin-bottom:8px;">Live visitors <span class="mkt-sub">active in the last 5 minutes</span></h3>
+    <div id="beh-live"><p class="mkt-empty">Loading…</p></div>
+
+    <h3 style="margin:22px 0 8px;">Product demand <span class="mkt-sub">views vs purchases — a big gap is a page or price problem, not a traffic problem</span></h3>
+    <div id="beh-products"><p class="mkt-empty">Loading…</p></div>
+  </div>
+
+  <!-- SEGMENTS TAB -->
+  <div id="mkt-tab-segments" class="mkt-tab" style="display:none;">
+    <div class="card" style="padding:12px 16px;margin-bottom:16px;">
+      <div class="mkt-sub">Segments are calculated from behaviour on every engine tick — nobody is assigned to one by hand, and people leave a segment automatically when their behaviour changes.</div>
+    </div>
+    <div id="seg-grid"><p class="mkt-empty">Loading…</p></div>
+    <div id="seg-members" style="margin-top:20px;"></div>
+  </div>
+
+  <!-- JOURNEYS TAB -->
+  <div id="mkt-tab-journeys" class="mkt-tab" style="display:none;">
+    <div class="card" style="padding:14px 16px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <input type="text" id="jrn-search" placeholder="Search by email…"
+             style="flex:1;min-width:220px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;"
+             onkeydown="if(event.key==='Enter')mktSearchJourneys()">
+      <button class="btn btn-primary btn-sm" onclick="mktSearchJourneys()">Search</button>
+      <button class="btn btn-secondary btn-sm" onclick="mktLoadTopIntent()">Top intent</button>
+    </div>
+    <div id="jrn-results"><p class="mkt-empty">Search for a customer, or list the highest-intent visitors.</p></div>
+    <div id="jrn-detail" style="margin-top:20px;"></div>
+  </div>
+
+  <!-- RECOVERY TAB -->
+  <div id="mkt-tab-recovery" class="mkt-tab" style="display:none;">
+    <div class="mkt-kpi-row" style="grid-template-columns:repeat(5,1fr);">
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Active carts</div><div class="mkt-kpi-value" id="rec-kpi-active">–</div><div class="mkt-sub" id="rec-kpi-active-v"></div></div>
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Abandoned</div><div class="mkt-kpi-value" id="rec-kpi-abandoned">–</div><div class="mkt-sub" id="rec-kpi-abandoned-v"></div></div>
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Recovered</div><div class="mkt-kpi-value" id="rec-kpi-recovered">–</div><div class="mkt-sub" id="rec-kpi-recovered-v"></div></div>
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Recovery rate</div><div class="mkt-kpi-value" id="rec-kpi-rate">–</div></div>
+      <div class="mkt-kpi"><div class="mkt-kpi-label">Converted</div><div class="mkt-kpi-value" id="rec-kpi-converted">–</div><div class="mkt-sub" id="rec-kpi-converted-v"></div></div>
+    </div>
+    <div id="rec-carts"><p class="mkt-empty">Loading…</p></div>
+  </div>
+
+  <!-- AUTOMATIONS TAB -->
+  <div id="mkt-tab-automations" class="mkt-tab" style="display:none;">
+    <div class="card" style="padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h3 style="margin:0 0 4px;">Marketing automations</h3>
+        <div class="mkt-sub">Every workflow ships switched OFF. Review what one would have sent in the Outbox below, then switch it on.</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="mktRunTick()">⚡ Run engine now</button>
+        <button class="btn btn-secondary btn-sm" onclick="mktLoadOutbox()">📬 Refresh outbox</button>
+      </div>
+    </div>
+    <div id="aut-list"><p class="mkt-empty">Loading…</p></div>
+    <h3 style="margin:22px 0 8px;">Outbox <span class="mkt-sub">every message the engine decided on, sent or not, and why</span></h3>
+    <div id="aut-outbox"><p class="mkt-empty">Loading…</p></div>
+  </div>
+
+  <!-- ATTRIBUTION TAB -->
+  <div id="mkt-tab-attribution" class="mkt-tab" style="display:none;">
+    <div class="card" style="padding:12px 16px;margin-bottom:16px;">
+      <div class="mkt-sub">An order is credited to an automation only when the customer actually <strong>clicked</strong> that message first. Crediting on send would flatter the numbers and mean nothing.</div>
+    </div>
+    <div class="mkt-split" style="margin-bottom:20px;">
+      <div><h3 style="margin-bottom:8px;">Revenue by source</h3><div id="att-source"><p class="mkt-empty">Loading…</p></div></div>
+      <div><h3 style="margin-bottom:8px;">Revenue by campaign</h3><div id="att-campaign"><p class="mkt-empty">Loading…</p></div></div>
+    </div>
+    <div class="mkt-split">
+      <div><h3 style="margin-bottom:8px;">Revenue by automation</h3><div id="att-automation"><p class="mkt-empty">Loading…</p></div></div>
+      <div><h3 style="margin-bottom:8px;">New vs repeat</h3><div id="att-newrepeat"><p class="mkt-empty">Loading…</p></div></div>
+    </div>
+  </div>
 </div>
 
 <style>#page-marketing .mkt-navbtn.mkt-active{ background:var(--accent,#1F7A6C); color:#fff; border-color:var(--accent,#1F7A6C); }
@@ -3167,6 +3286,37 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 #page-marketing .mkt-table td{ padding:10px 12px; border-bottom:1px solid var(--border,#e2e2e2); font-size:13px; vertical-align:middle; }
 #page-marketing .mkt-table tr:last-child td{ border-bottom:none; }
 #page-marketing .mkt-budget-input{ width:90px; padding:5px 8px; font-size:12px; border:1px solid var(--border,#e2e2e2); border-radius:6px; }
+/* ── Behaviour engine tabs (added) — new class names only, so no existing
+      marketing style is overridden. ── */
+#page-marketing .mkt-sub{ font-size:12px; color:var(--text2); font-weight:400; }
+#page-marketing .mkt-hint{ font-size:12.5px; color:var(--text2); background:var(--card-bg,#fff); border:1px solid var(--border,#e2e2e2); border-radius:10px; padding:10px 14px; }
+#page-marketing .mkt-hint.warn{ background:rgba(194,67,79,.08); border-color:rgba(194,67,79,.3); color:#963848; }
+#page-marketing .mkt-hint.ok{ background:rgba(31,122,108,.08); border-color:rgba(31,122,108,.3); }
+#page-marketing .mkt-funnel-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+#page-marketing .mkt-funnel-bar{ height:26px; background:var(--accent,#1F7A6C); border-radius:5px; min-width:2px; transition:width .3s; }
+#page-marketing .mkt-funnel-label{ font-size:12.5px; min-width:150px; color:var(--text2); }
+#page-marketing .mkt-funnel-val{ font-size:12.5px; font-weight:700; white-space:nowrap; }
+#page-marketing .mkt-seg-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+#page-marketing .mkt-seg-card{ background:var(--card-bg,#fff); border:1px solid var(--border,#e2e2e2); border-radius:12px; padding:14px 16px; cursor:pointer; transition:border-color .15s,transform .15s; }
+#page-marketing .mkt-seg-card:hover{ border-color:var(--accent,#1F7A6C); transform:translateY(-1px); }
+#page-marketing .mkt-seg-count{ font-size:24px; font-weight:700; }
+#page-marketing .mkt-score{ display:inline-block; min-width:34px; text-align:center; font-weight:700; font-size:12px; padding:3px 7px; border-radius:6px; }
+#page-marketing .mkt-score.hot{ background:rgba(194,67,79,.14); color:#963848; }
+#page-marketing .mkt-score.warm{ background:#faeeda; color:#854f0b; }
+#page-marketing .mkt-score.cold{ background:#efefef; color:#666; }
+#page-marketing .mkt-timeline{ border-left:2px solid var(--border,#e2e2e2); padding-left:16px; margin-left:6px; }
+#page-marketing .mkt-tl-item{ position:relative; padding-bottom:14px; font-size:13px; }
+#page-marketing .mkt-tl-item::before{ content:''; position:absolute; left:-21px; top:5px; width:8px; height:8px; border-radius:50%; background:var(--accent,#1F7A6C); }
+#page-marketing .mkt-tl-time{ font-size:11px; color:var(--text2); }
+#page-marketing .mkt-toggle{ position:relative; width:42px; height:23px; border-radius:99px; background:#ccc; border:none; cursor:pointer; transition:background .2s; flex-shrink:0; }
+#page-marketing .mkt-toggle.on{ background:var(--accent,#1F7A6C); }
+#page-marketing .mkt-toggle::after{ content:''; position:absolute; top:2px; left:2px; width:19px; height:19px; border-radius:50%; background:#fff; transition:transform .2s; }
+#page-marketing .mkt-toggle.on::after{ transform:translateX(19px); }
+#page-marketing .mkt-skip{ font-size:11px; color:var(--text2); }
+@media (max-width:900px){
+  #page-marketing .mkt-kpi-row{ grid-template-columns:repeat(2,1fr) !important; }
+  #page-marketing .mkt-split{ grid-template-columns:1fr; }
+}
 #page-marketing .mkt-winner-card{ background:var(--card-bg,#fff); border:1px solid #b9e3d4; border-left:4px solid #3F565B; border-radius:10px; padding:14px 16px; margin-bottom:10px; }
 #page-marketing .mkt-winner-card .mkt-wc-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
 #page-marketing .mkt-winner-card .mkt-wc-roas{ font-size:20px; font-weight:700; color:#3F565B; }

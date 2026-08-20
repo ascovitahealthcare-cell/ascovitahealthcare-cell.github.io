@@ -972,3 +972,563 @@ if (typeof _mktOrigShowPage === 'function') {
   };
 })();
 
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OZYLIX BEHAVIOUR ENGINE — admin panel tabs  (Aug 2026)
+
+   Appended at the end of the file. Nothing above is edited, matching the
+   convention the rest of this file already uses.
+
+   Two data paths, both already configured earlier in this file:
+     · mktSupabase            — marketing Supabase anon client, read-only via
+                                RLS. Used for plain list reads.
+     · MARKETING_BACKEND_URL  — the main backend's /api/marketing/* proxy,
+                                which checks a real admin JWT and the
+                                marketing.manage permission, then attaches
+                                INTERNAL_API_KEY server-side. That proxy
+                                forwards any suffix unchanged, so /api/dash/*
+                                works with no change to the main backend.
+
+   The fetch auth shim above already stamps the bearer token onto anything
+   whose URL contains /api/marketing, so these calls inherit it for free.
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+  if (window.__ozyBehaviourTabs) return;
+  window.__ozyBehaviourTabs = true;
+
+  var BEH_TABS = ['behaviour', 'segments', 'journeys', 'recovery', 'automations', 'attribution'];
+
+  function api(path, opts) {
+    return fetch(window.MARKETING_BACKEND_URL + '/api/dash' + path, opts)
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      });
+  }
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s)
+      .replace(/[&<>"]/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+      });
+  }
+  function money(n) { return '₹' + Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }); }
+  function pct(n)   { return (Number(n || 0) * 100).toFixed(1) + '%'; }
+  function num(n)   { return Number(n || 0).toLocaleString('en-IN'); }
+  function ago(t) {
+    if (!t) return '—';
+    var s = Math.round((Date.now() - new Date(t)) / 1000);
+    if (s < 60) return s + 's ago';
+    if (s < 3600) return Math.round(s / 60) + 'm ago';
+    if (s < 86400) return Math.round(s / 3600) + 'h ago';
+    return Math.round(s / 86400) + 'd ago';
+  }
+  function scoreChip(v) {
+    var cls = v >= 60 ? 'hot' : v >= 30 ? 'warm' : 'cold';
+    return '<span class="mkt-score ' + cls + '">' + Math.round(v || 0) + '</span>';
+  }
+  function fail(elId, e) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    // A specific, honest error beats a spinner that never resolves. The most
+    // common causes here are a cold Render dyno and a missing migration, so
+    // both are named rather than left for the reader to guess.
+    el.innerHTML = '<div class="mkt-hint warn">Could not load: ' + esc(e.message) +
+      '<br><span class="mkt-sub">Usually either the marketing service is still waking up (free Render dynos cold-start), ' +
+      'or <code>supabase/002_behaviour_engine.sql</code> has not been run in the marketing Supabase project yet.</span></div>';
+  }
+
+  /* ── tab routing ───────────────────────────────────────────────────────
+     mktShowTab is wrapped rather than edited so the seven existing tabs keep
+     working through exactly the same code path they always did. */
+  var origShowTab = window.mktShowTab;
+  window.mktShowTab = function (tab) {
+    if (BEH_TABS.indexOf(tab) === -1) {
+      return origShowTab.apply(this, arguments);
+    }
+    document.querySelectorAll('.mkt-tab').forEach(function (t) { t.style.display = 'none'; });
+    var el = document.getElementById('mkt-tab-' + tab);
+    if (el) el.style.display = 'block';
+    document.querySelectorAll('.mkt-navbtn').forEach(function (b) {
+      b.classList.toggle('mkt-active', b.dataset.tab === tab);
+    });
+    if (tab === 'behaviour')   mktLoadBehaviour();
+    if (tab === 'segments')    mktLoadSegments();
+    if (tab === 'journeys')    mktLoadTopIntent();
+    if (tab === 'recovery')    mktLoadRecovery();
+    if (tab === 'automations') { mktLoadAutomations(); mktLoadOutbox(); }
+    if (tab === 'attribution') mktLoadAttribution();
+  };
+
+  /* ── BEHAVIOUR ─────────────────────────────────────────────────────── */
+
+  window.mktLoadBehaviour = function () {
+    api('/overview?days=30').then(function (d) {
+      document.getElementById('beh-kpi-live').textContent      = num(d.live.active_visitors);
+      document.getElementById('beh-kpi-intent').textContent    = num(d.live.high_intent_visitors);
+      document.getElementById('beh-kpi-sessions').textContent  = num(d.traffic.sessions);
+      document.getElementById('beh-kpi-cvr').textContent       = pct(d.funnel.conversion_rate);
+      document.getElementById('beh-kpi-revenue').textContent   = money(d.revenue.total);
+      document.getElementById('beh-kpi-recovered').textContent = money(d.revenue.recovered);
+
+      var f = d.funnel;
+      var steps = [
+        { label: 'Sessions',          value: f.sessions },
+        { label: 'Product views',     value: d.traffic.product_views },
+        { label: 'Carts created',     value: f.carts_created },
+        { label: 'Checkouts started', value: f.checkouts_started },
+        { label: 'Orders',            value: f.orders }
+      ];
+      var top = Math.max.apply(null, steps.map(function (s) { return s.value || 0; })) || 1;
+      document.getElementById('beh-funnel').innerHTML = steps.map(function (s, i) {
+        var prev = i > 0 ? steps[i - 1].value : null;
+        var drop = prev ? ' <span class="mkt-sub">(' + pct(prev ? s.value / prev : 0) + ' of previous)</span>' : '';
+        return '<div class="mkt-funnel-row">' +
+          '<div class="mkt-funnel-label">' + esc(s.label) + '</div>' +
+          '<div class="mkt-funnel-bar" style="width:' + Math.max(2, (s.value / top) * 100) + '%"></div>' +
+          '<div class="mkt-funnel-val">' + num(s.value) + drop + '</div></div>';
+      }).join('');
+
+      document.getElementById('beh-dropoff').innerHTML =
+        '<table class="mkt-table"><tbody>' +
+        '<tr><td>Cart abandonment</td><td style="text-align:right"><strong>' + pct(f.cart_abandon_rate) + '</strong></td></tr>' +
+        '<tr><td>Checkout abandonment</td><td style="text-align:right"><strong>' + pct(f.checkout_abandon_rate) + '</strong></td></tr>' +
+        '<tr><td>Add-to-cart rate</td><td style="text-align:right">' + pct(f.add_to_cart_rate) + '</td></tr>' +
+        '<tr><td>Checkout rate</td><td style="text-align:right">' + pct(f.checkout_rate) + '</td></tr>' +
+        '<tr><td>Abandoned cart value</td><td style="text-align:right">' + money(d.recovery.abandoned_value) + '</td></tr>' +
+        '<tr><td>Recovered so far</td><td style="text-align:right"><strong>' + money(d.recovery.recovered_value) + '</strong></td></tr>' +
+        '<tr><td>Automation-attributed revenue</td><td style="text-align:right"><strong>' + money(d.revenue.automation_attributed) + '</strong></td></tr>' +
+        '</tbody></table>';
+    })['catch'](function (e) { fail('beh-funnel', e); fail('beh-dropoff', e); });
+
+    api('/health').then(function (h) {
+      var cls = h.status === 'healthy' ? 'ok' : h.status === 'degraded' || h.status === 'stale' ? 'warn' : '';
+      var chan = Object.keys(h.channels).map(function (k) {
+        var c = h.channels[k];
+        return (c.enabled ? '✅ ' : '⚪ ') + k + (c.note ? ' <span class="mkt-sub">(' + esc(c.note) + ')</span>' : '');
+      }).join(' &nbsp;·&nbsp; ');
+      document.getElementById('beh-health').className = 'mkt-hint ' + cls;
+      document.getElementById('beh-health').innerHTML =
+        '<strong>Engine:</strong> ' + esc(h.status) +
+        (h.minutes_since_tick != null ? ' — last tick ' + h.minutes_since_tick + 'm ago' : ' — has never run') +
+        ' · ' + num(h.events_last_hour) + ' events in the last hour' +
+        ' · outbox ' + num(h.outbox.queued) + ' queued, ' + num(h.outbox.failed) + ' failed<br>' +
+        '<strong>Channels:</strong> ' + chan +
+        '<br><strong>Server-side events:</strong> ' +
+        (h.integrations.meta_capi ? '✅' : '⚪') + ' Meta CAPI &nbsp;·&nbsp; ' +
+        (h.integrations.ga4_mp ? '✅' : '⚪') + ' GA4 Measurement Protocol' +
+        (h.last_tick_error ? '<br><strong>Last error:</strong> ' + esc(h.last_tick_error) : '');
+    })['catch'](function (e) { fail('beh-health', e); });
+
+    api('/live').then(function (d) {
+      if (!d.visitors.length) {
+        document.getElementById('beh-live').innerHTML = '<p class="mkt-empty">Nobody on the site right now.</p>';
+        return;
+      }
+      document.getElementById('beh-live').innerHTML =
+        '<table class="mkt-table"><thead><tr><th>Intent</th><th>Visitor</th><th>On page</th>' +
+        '<th>Source</th><th>Device</th><th>Views</th><th>Time</th><th></th></tr></thead><tbody>' +
+        d.visitors.map(function (v) {
+          return '<tr>' +
+            '<td>' + scoreChip(v.intent_score) + '</td>' +
+            '<td>' + esc(v.email || 'Anonymous') +
+              (v.total_orders ? ' <span class="mkt-pill approved">' + v.total_orders + ' orders</span>' : '') +
+              (v.in_checkout ? ' <span class="mkt-pill pending_approval">in checkout</span>' : '') + '</td>' +
+            '<td>' + esc(v.on_page || '—') + '</td>' +
+            '<td>' + esc(v.source || '—') + (v.campaign ? '<br><span class="mkt-sub">' + esc(v.campaign) + '</span>' : '') + '</td>' +
+            '<td>' + esc(v.device || '—') + '</td>' +
+            '<td>' + num(v.page_views) + '</td>' +
+            '<td>' + Math.round(v.seconds_on_site / 60) + 'm</td>' +
+            '<td><button class="btn btn-secondary btn-sm" onclick="mktOpenJourney(\'' + esc(v.profile_id) + '\')">View</button></td>' +
+          '</tr>';
+        }).join('') + '</tbody></table>';
+    })['catch'](function (e) { fail('beh-live', e); });
+
+    api('/products').then(function (d) {
+      if (!d.products.length) {
+        document.getElementById('beh-products').innerHTML = '<p class="mkt-empty">No product interest recorded yet.</p>';
+        return;
+      }
+      document.getElementById('beh-products').innerHTML =
+        '<table class="mkt-table"><thead><tr><th>Product</th><th>People</th><th>Views</th><th>Carts</th>' +
+        '<th>Purchases</th><th>View→Cart</th><th>Cart→Buy</th></tr></thead><tbody>' +
+        d.products.slice(0, 25).map(function (p) {
+          // A low view→cart rate on a well-viewed product is the clearest
+          // signal in this whole panel: the traffic is there, the page or
+          // the price is not converting it.
+          var weak = p.views >= 20 && p.view_to_cart < 0.05;
+          return '<tr>' +
+            '<td>' + esc(p.product_name || p.product_id) +
+              (weak ? ' <span class="mkt-pill pause">low conversion</span>' : '') + '</td>' +
+            '<td>' + num(p.interested_people) + '</td>' +
+            '<td>' + num(p.views) + '</td>' +
+            '<td>' + num(p.carts) + '</td>' +
+            '<td>' + num(p.purchases) + '</td>' +
+            '<td>' + pct(p.view_to_cart) + '</td>' +
+            '<td>' + pct(p.cart_to_purchase) + '</td>' +
+          '</tr>';
+        }).join('') + '</tbody></table>';
+    })['catch'](function (e) { fail('beh-products', e); });
+  };
+
+  /* ── SEGMENTS ──────────────────────────────────────────────────────── */
+
+  window.mktLoadSegments = function () {
+    api('/segments').then(function (d) {
+      if (!d.segments.length) {
+        document.getElementById('seg-grid').innerHTML =
+          '<p class="mkt-empty">No segments yet — run the migration and let the engine tick once.</p>';
+        return;
+      }
+      document.getElementById('seg-grid').innerHTML = '<div class="mkt-seg-grid">' +
+        d.segments.map(function (s) {
+          return '<div class="mkt-seg-card" onclick="mktLoadSegmentMembers(\'' + esc(s.key) + '\',\'' + esc(s.name) + '\')">' +
+            '<div class="mkt-seg-count">' + num(s.member_count) + '</div>' +
+            '<div style="font-weight:700;font-size:13.5px;margin-bottom:3px;">' + esc(s.name) + '</div>' +
+            '<div class="mkt-sub">' + esc(s.description || '') + '</div>' +
+            '<div class="mkt-sub" style="margin-top:6px;">' +
+              (s.total_revenue ? money(s.total_revenue) + ' lifetime · ' : '') +
+              'avg intent ' + Math.round(s.avg_intent) +
+            '</div></div>';
+        }).join('') + '</div>';
+    })['catch'](function (e) { fail('seg-grid', e); });
+  };
+
+  window.mktLoadSegmentMembers = function (key, name) {
+    var el = document.getElementById('seg-members');
+    el.innerHTML = '<p class="mkt-empty">Loading ' + esc(name) + '…</p>';
+    api('/segments/' + encodeURIComponent(key) + '/members?limit=100').then(function (d) {
+      if (!d.members.length) {
+        el.innerHTML = '<h3>' + esc(name) + '</h3><p class="mkt-empty">Nobody in this segment right now.</p>';
+        return;
+      }
+      el.innerHTML = '<h3 style="margin-bottom:8px;">' + esc(name) +
+        ' <span class="mkt-sub">' + d.members.length + ' shown, highest intent first</span></h3>' +
+        '<table class="mkt-table"><thead><tr><th>Intent</th><th>Value</th><th>Customer</th><th>Stage</th>' +
+        '<th>Orders</th><th>Lifetime</th><th>Last seen</th><th>Acquired via</th><th></th></tr></thead><tbody>' +
+        d.members.map(function (m) {
+          return '<tr>' +
+            '<td>' + scoreChip(m.intent_score) + '</td>' +
+            '<td>' + scoreChip(m.value_score) + '</td>' +
+            '<td>' + esc(m.email || 'Anonymous') +
+              (m.last_product_viewed ? '<br><span class="mkt-sub">last viewed: ' + esc(m.last_product_viewed) + '</span>' : '') + '</td>' +
+            '<td>' + esc(m.lifecycle_stage) + '</td>' +
+            '<td>' + num(m.total_orders) + '</td>' +
+            '<td>' + money(m.total_revenue) + '</td>' +
+            '<td>' + ago(m.last_seen) + '</td>' +
+            '<td>' + esc(m.first_utm_source || m.first_utm_campaign || 'direct') + '</td>' +
+            '<td><button class="btn btn-secondary btn-sm" onclick="mktOpenJourney(\'' + esc(m.id) + '\')">Journey</button></td>' +
+          '</tr>';
+        }).join('') + '</tbody></table>';
+    })['catch'](function (e) { fail('seg-members', e); });
+  };
+
+  /* ── JOURNEYS ──────────────────────────────────────────────────────── */
+
+  window.mktLoadTopIntent = function () {
+    var el = document.getElementById('jrn-results');
+    el.innerHTML = '<p class="mkt-empty">Loading…</p>';
+    api('/scores').then(function (d) {
+      if (!d.top_intent.length) {
+        el.innerHTML = '<p class="mkt-empty">No scored profiles yet.</p>';
+        return;
+      }
+      el.innerHTML = renderPeople(d.top_intent);
+    })['catch'](function (e) { fail('jrn-results', e); });
+  };
+
+  window.mktSearchJourneys = function () {
+    var q = (document.getElementById('jrn-search').value || '').trim().toLowerCase();
+    var el = document.getElementById('jrn-results');
+    if (!q) return mktLoadTopIntent();
+    if (!mktSupabase) { el.innerHTML = '<p class="mkt-empty">Marketing Supabase not configured.</p>'; return; }
+    el.innerHTML = '<p class="mkt-empty">Searching…</p>';
+    mktSupabase.from('mkt_profiles')
+      .select('id,email,intent_score,value_score,lifecycle_stage,total_orders,total_revenue,last_seen,last_product_viewed')
+      .ilike('email', '%' + q + '%').eq('is_test', false).limit(50)
+      .then(function (r) {
+        if (r.error) throw new Error(r.error.message);
+        if (!r.data.length) { el.innerHTML = '<p class="mkt-empty">No match for “' + esc(q) + '”.</p>'; return; }
+        el.innerHTML = renderPeople(r.data);
+      })['catch'](function (e) { fail('jrn-results', e); });
+  };
+
+  function renderPeople(rows) {
+    return '<table class="mkt-table"><thead><tr><th>Intent</th><th>Value</th><th>Customer</th><th>Stage</th>' +
+      '<th>Orders</th><th>Lifetime</th><th>Last seen</th><th></th></tr></thead><tbody>' +
+      rows.map(function (m) {
+        return '<tr>' +
+          '<td>' + scoreChip(m.intent_score) + '</td>' +
+          '<td>' + scoreChip(m.value_score) + '</td>' +
+          '<td>' + esc(m.email || 'Anonymous visitor') + '</td>' +
+          '<td>' + esc(m.lifecycle_stage) + '</td>' +
+          '<td>' + num(m.total_orders) + '</td>' +
+          '<td>' + money(m.total_revenue) + '</td>' +
+          '<td>' + ago(m.last_seen) + '</td>' +
+          '<td><button class="btn btn-primary btn-sm" onclick="mktOpenJourney(\'' + esc(m.id) + '\')">Open</button></td>' +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  window.mktOpenJourney = function (profileId) {
+    mktShowTab('journeys');
+    var el = document.getElementById('jrn-detail');
+    el.innerHTML = '<p class="mkt-empty">Loading journey…</p>';
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    api('/journey/' + encodeURIComponent(profileId)).then(function (d) {
+      var p = d.profile;
+      var c = d.consent;
+
+      // The score breakdown is the point of this panel. A number with no
+      // explanation is not actionable — this shows exactly which behaviours
+      // produced it and how much each contributed.
+      function breakdown(list, title) {
+        if (!list || !list.length) return '';
+        return '<div style="margin-bottom:12px;"><strong style="font-size:13px;">' + esc(title) + '</strong>' +
+          '<table class="mkt-table" style="margin-top:6px;"><tbody>' +
+          list.map(function (b) {
+            return '<tr><td style="width:60px;font-weight:700;color:' +
+              (b.points < 0 ? '#963848' : 'var(--accent,#1F7A6C)') + '">' +
+              (b.points > 0 ? '+' : '') + b.points + '</td>' +
+              '<td>' + esc(b.why) + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+      }
+
+      var consentHtml = c
+        ? ['email', 'whatsapp', 'push'].map(function (ch) {
+            return (c[ch + '_ok'] ? '✅ ' : '⛔ ') + ch;
+          }).join(' &nbsp; ') + (c.unsubscribed_all ? ' &nbsp; <strong style="color:#963848">UNSUBSCRIBED</strong>' : '')
+        : '<span style="color:#963848">No consent record — this person cannot be messaged.</span>';
+
+      el.innerHTML =
+        '<div class="card" style="padding:18px;">' +
+          '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;align-items:flex-start;">' +
+            '<div><h3 style="margin:0 0 4px;">' + esc(p.email || 'Anonymous visitor') + '</h3>' +
+            '<div class="mkt-sub">' + esc(p.lifecycle_stage) + ' · first seen ' + ago(p.first_seen) +
+            ' · ' + num(p.total_sessions) + ' sessions · ' + num(p.total_orders) + ' orders · ' +
+            money(p.total_revenue) + ' lifetime</div>' +
+            '<div class="mkt-sub" style="margin-top:4px;">Acquired via ' +
+              esc(p.first_utm_source || p.first_source || 'direct') +
+              (p.first_utm_campaign ? ' / ' + esc(p.first_utm_campaign) : '') + '</div>' +
+            '<div class="mkt-sub" style="margin-top:4px;">Segments: ' +
+              ((p.segments || []).map(esc).join(', ') || 'none') + '</div></div>' +
+            '<div style="text-align:right;"><div class="mkt-sub">Intent</div>' +
+            '<div style="font-size:30px;font-weight:700;">' + Math.round(p.intent_score || 0) + '</div>' +
+            '<div class="mkt-sub">Value ' + Math.round(p.value_score || 0) + '</div></div>' +
+          '</div>' +
+          '<div class="mkt-hint" style="margin:14px 0;"><strong>Consent:</strong> ' + consentHtml + '</div>' +
+          '<div class="mkt-split">' +
+            '<div>' + breakdown(p.intent_breakdown, 'Why this intent score') +
+                      breakdown(p.value_breakdown, 'Why this value score') + '</div>' +
+            '<div>' +
+              '<strong style="font-size:13px;">Messages sent</strong>' +
+              (d.messages.length
+                ? '<table class="mkt-table" style="margin-top:6px;"><tbody>' + d.messages.slice(0, 12).map(function (m) {
+                    return '<tr><td>' + esc(m.channel) + '</td><td>' + esc(m.subject || m.template_key || '') + '</td>' +
+                      '<td><span class="mkt-pill ' + (m.status === 'sent' ? 'approved' : m.status === 'skipped' ? 'hold' : 'pause') + '">' +
+                      esc(m.status) + '</span>' +
+                      (m.skip_reason ? '<br><span class="mkt-skip">' + esc(m.skip_reason) + '</span>' : '') +
+                      (m.clicked_at ? '<br><span class="mkt-skip">clicked</span>' : '') + '</td></tr>';
+                  }).join('') + '</tbody></table>'
+                : '<p class="mkt-empty">None yet.</p>') +
+              '<strong style="font-size:13px;display:block;margin-top:14px;">Carts</strong>' +
+              (d.carts.length
+                ? d.carts.slice(0, 5).map(function (ct) {
+                    return '<div class="mkt-angle"><div style="display:flex;justify-content:space-between;">' +
+                      '<span class="mkt-pill ' + (ct.status === 'recovered' || ct.status === 'converted' ? 'approved' : 'pause') + '">' +
+                      esc(ct.status) + '</span><strong>' + money(ct.total_value) + '</strong></div>' +
+                      '<div class="mkt-sub">' + (ct.items || []).map(function (i) {
+                        return esc(i.product_name || i.product_id) + ' ×' + i.quantity;
+                      }).join(', ') + '</div></div>';
+                  }).join('')
+                : '<p class="mkt-empty">No carts.</p>') +
+            '</div>' +
+          '</div>' +
+          '<strong style="font-size:13px;display:block;margin:16px 0 8px;">Timeline</strong>' +
+          '<div class="mkt-timeline">' + d.events.slice(0, 60).map(function (ev) {
+            return '<div class="mkt-tl-item"><div class="mkt-tl-time">' + ago(ev.at) + '</div>' +
+              '<strong>' + esc(ev.event_name.replace(/_/g, ' ')) + '</strong>' +
+              (ev.product_name ? ' — ' + esc(ev.product_name) : '') +
+              (ev.search_term ? ' — “' + esc(ev.search_term) + '”' : '') +
+              (ev.value ? ' — ' + money(ev.value) : '') +
+              (ev.page ? '<div class="mkt-sub">' + esc(ev.page) + '</div>' : '') + '</div>';
+          }).join('') + '</div>' +
+        '</div>';
+    })['catch'](function (e) { fail('jrn-detail', e); });
+  };
+
+  /* ── RECOVERY ──────────────────────────────────────────────────────── */
+
+  window.mktLoadRecovery = function () {
+    api('/recovery?days=30').then(function (d) {
+      var s = d.summary;
+      var set = function (id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+      set('rec-kpi-active', num(s.active.count));      set('rec-kpi-active-v', money(s.active.value));
+      set('rec-kpi-abandoned', num(s.abandoned.count)); set('rec-kpi-abandoned-v', money(s.abandoned.value));
+      set('rec-kpi-recovered', num(s.recovered.count)); set('rec-kpi-recovered-v', money(s.recovered.value));
+      set('rec-kpi-rate', pct(s.recovery_rate));
+      set('rec-kpi-converted', num(s.converted.count)); set('rec-kpi-converted-v', money(s.converted.value));
+
+      if (!d.carts.length) {
+        document.getElementById('rec-carts').innerHTML = '<p class="mkt-empty">No carts in the last 30 days.</p>';
+        return;
+      }
+      document.getElementById('rec-carts').innerHTML =
+        '<table class="mkt-table"><thead><tr><th>Status</th><th>Customer</th><th>Items</th><th>Value</th>' +
+        '<th>Intent</th><th>Last activity</th><th></th></tr></thead><tbody>' +
+        d.carts.map(function (c) {
+          var cls = (c.status === 'recovered' || c.status === 'converted') ? 'approved'
+                  : c.status === 'abandoned' ? 'pause' : 'hold';
+          return '<tr>' +
+            '<td><span class="mkt-pill ' + cls + '">' + esc(c.status) + '</span>' +
+              (c.reached_checkout ? '<br><span class="mkt-skip">reached checkout</span>' : '') + '</td>' +
+            '<td>' + esc((c.profile && c.profile.email) || 'Anonymous') + '</td>' +
+            '<td>' + (c.items || []).map(function (i) {
+              return esc(i.product_name || i.product_id) + ' ×' + i.quantity;
+            }).join('<br>') + '</td>' +
+            '<td><strong>' + money(c.total_value) + '</strong></td>' +
+            '<td>' + scoreChip(c.profile && c.profile.intent_score) + '</td>' +
+            '<td>' + ago(c.updated_at) + '</td>' +
+            '<td>' + (c.profile ? '<button class="btn btn-secondary btn-sm" onclick="mktOpenJourney(\'' +
+              esc(c.profile_id) + '\')">Journey</button>' : '') + '</td>' +
+          '</tr>';
+        }).join('') + '</tbody></table>';
+    })['catch'](function (e) { fail('rec-carts', e); });
+  };
+
+  /* ── AUTOMATIONS ───────────────────────────────────────────────────── */
+
+  window.mktLoadAutomations = function () {
+    api('/automations').then(function (d) {
+      if (!d.workflows.length) {
+        document.getElementById('aut-list').innerHTML = '<p class="mkt-empty">No workflows found — run the migration first.</p>';
+        return;
+      }
+      document.getElementById('aut-list').innerHTML = d.workflows.map(function (w) {
+        var s = w.stats;
+        // Skip reasons are shown prominently. A workflow with runs but no
+        // sends is almost always a missing consent record or an unconfigured
+        // channel — without this the owner just sees "0 sent" and no reason.
+        var skips = Object.keys(s.skip_reasons || {}).map(function (k) {
+          return esc(k.replace(/_/g, ' ')) + ' ×' + s.skip_reasons[k];
+        }).join(', ');
+
+        return '<div class="mkt-angle">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">' +
+            '<div style="flex:1;min-width:220px;">' +
+              '<strong>' + esc(w.name) + '</strong>' +
+              ' <span class="mkt-pill ' + (w.active ? 'approved' : 'hold') + '">' + (w.active ? 'live' : 'off') + '</span>' +
+              '<div class="mkt-sub">' + esc(w.description || '') + '</div>' +
+              '<div class="mkt-sub">' + w.steps.length + ' step(s) · trigger: ' +
+                esc(w.trigger_event || w.trigger_type) +
+                (w.segment_key ? ' · segment: ' + esc(w.segment_key) : '') + '</div>' +
+            '</div>' +
+            '<button class="mkt-toggle ' + (w.active ? 'on' : '') + '" title="' +
+              (w.active ? 'Switch off' : 'Switch on') + '" ' +
+              'onclick="mktToggleWorkflow(\'' + esc(w.id) + '\',' + (!w.active) + ')"></button>' +
+          '</div>' +
+          '<table class="mkt-table" style="margin-top:10px;"><tbody><tr>' +
+            '<td>Runs<br><strong>' + num(s.runs_total) + '</strong> <span class="mkt-sub">(' + num(s.runs_active) + ' active)</span></td>' +
+            '<td>Sent<br><strong>' + num(s.messages_sent) + '</strong></td>' +
+            '<td>Clicks<br><strong>' + num(s.clicks) + '</strong> <span class="mkt-sub">' + pct(s.click_rate) + '</span></td>' +
+            '<td>Conversions<br><strong>' + num(s.conversions) + '</strong> <span class="mkt-sub">' + pct(s.conversion_rate) + '</span></td>' +
+            '<td>Revenue<br><strong>' + money(s.revenue) + '</strong></td>' +
+          '</tr></tbody></table>' +
+          (skips ? '<div class="mkt-skip" style="margin-top:6px;"><strong>Not sent:</strong> ' + skips + '</div>' : '') +
+        '</div>';
+      }).join('');
+    })['catch'](function (e) { fail('aut-list', e); });
+  };
+
+  window.mktToggleWorkflow = function (id, active) {
+    if (active && !confirm('Switch this automation ON? It will start sending real messages to real customers on the next engine tick (within 10 minutes).')) return;
+    api('/automations/' + encodeURIComponent(id) + '/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: active })
+    }).then(function () { mktLoadAutomations(); })
+      ['catch'](function (e) { alert('Failed: ' + e.message); });
+  };
+
+  window.mktLoadOutbox = function () {
+    api('/outbox?limit=100').then(function (d) {
+      if (!d.messages.length) {
+        document.getElementById('aut-outbox').innerHTML = '<p class="mkt-empty">Nothing in the outbox yet.</p>';
+        return;
+      }
+      document.getElementById('aut-outbox').innerHTML =
+        '<table class="mkt-table"><thead><tr><th>Status</th><th>Channel</th><th>To</th><th>Subject</th>' +
+        '<th>Created</th><th>Sent</th></tr></thead><tbody>' +
+        d.messages.map(function (m) {
+          var cls = m.status === 'sent' ? 'approved' : m.status === 'queued' ? 'pending_approval'
+                  : m.status === 'skipped' ? 'hold' : 'pause';
+          return '<tr>' +
+            '<td><span class="mkt-pill ' + cls + '">' + esc(m.status) + '</span>' +
+              (m.skip_reason ? '<br><span class="mkt-skip">' + esc(m.skip_reason.replace(/_/g, ' ')) + '</span>' : '') +
+              (m.error ? '<br><span class="mkt-skip">' + esc(m.error).slice(0, 60) + '</span>' : '') + '</td>' +
+            '<td>' + esc(m.channel) + '</td>' +
+            '<td>' + esc(m.recipient || '—') + '</td>' +
+            '<td>' + esc(m.subject || m.template_key || '') +
+              (m.clicked_at ? ' <span class="mkt-pill approved">clicked</span>' : '') + '</td>' +
+            '<td>' + ago(m.created_at) + '</td>' +
+            '<td>' + (m.sent_at ? ago(m.sent_at) : '—') + '</td>' +
+          '</tr>';
+        }).join('') + '</tbody></table>';
+    })['catch'](function (e) { fail('aut-outbox', e); });
+  };
+
+  window.mktRunTick = function () {
+    var el = document.getElementById('aut-list');
+    el.innerHTML = '<p class="mkt-empty">Running the engine… this takes a few seconds.</p>';
+    api('/tick', { method: 'POST' }).then(function (r) {
+      var s = r.stats || {};
+      alert('Engine run complete.\n\n' +
+        'Sessions closed: ' + (s.sessions_closed || 0) + '\n' +
+        'Carts marked abandoned: ' + (s.carts_abandoned || 0) + '\n' +
+        'Profiles scored: ' + (s.profiles_scored || 0) + '\n' +
+        'Workflow runs started: ' + (s.runs_started || 0) + '\n' +
+        'Messages queued: ' + (s.messages_queued || 0) + '\n' +
+        'Messages sent: ' + (s.messages_sent || 0) + '\n' +
+        'Messages skipped: ' + (s.messages_skipped || 0) +
+        ((r.errors && r.errors.length) ? '\n\nErrors:\n' + r.errors.join('\n') : ''));
+      mktLoadAutomations(); mktLoadOutbox();
+    })['catch'](function (e) { fail('aut-list', e); });
+  };
+
+  /* ── ATTRIBUTION ───────────────────────────────────────────────────── */
+
+  window.mktLoadAttribution = function () {
+    api('/attribution?days=30').then(function (d) {
+      function table(rows, label, extra) {
+        if (!rows || !rows.length) return '<p class="mkt-empty">No data yet.</p>';
+        return '<table class="mkt-table"><thead><tr><th>' + label + '</th><th>Orders</th><th>Revenue</th>' +
+          (extra ? '<th>' + extra + '</th>' : '') + '</tr></thead><tbody>' +
+          rows.slice(0, 15).map(function (r) {
+            return '<tr><td>' + esc(r.name || r.key) + '</td><td>' + num(r.count) + '</td>' +
+              '<td><strong>' + money(r.revenue) + '</strong></td>' +
+              (extra ? '<td>' + (r.conversion_rate != null ? pct(r.conversion_rate) : '—') + '</td>' : '') +
+            '</tr>';
+          }).join('') + '</tbody></table>';
+      }
+
+      document.getElementById('att-source').innerHTML     = table(d.by_source, 'Source', 'Conv. rate');
+      document.getElementById('att-campaign').innerHTML   = table(d.by_campaign, 'Campaign');
+      document.getElementById('att-automation').innerHTML = table(d.by_automation, 'Automation');
+
+      var nr = d.new_vs_repeat;
+      document.getElementById('att-newrepeat').innerHTML =
+        '<table class="mkt-table"><tbody>' +
+        '<tr><td>First orders</td><td>' + num(nr.first_orders) + '</td><td><strong>' + money(nr.first_revenue) + '</strong></td></tr>' +
+        '<tr><td>Repeat orders</td><td>' + num(nr.repeat_orders) + '</td><td><strong>' + money(nr.repeat_revenue) + '</strong></td></tr>' +
+        '<tr><td>Repeat purchase rate</td><td colspan="2"><strong>' +
+          pct(d.total_orders ? nr.repeat_orders / d.total_orders : 0) + '</strong></td></tr>' +
+        '<tr><td>Total (30d)</td><td>' + num(d.total_orders) + '</td><td><strong>' + money(d.total_revenue) + '</strong></td></tr>' +
+        '</tbody></table>';
+    })['catch'](function (e) {
+      fail('att-source', e); fail('att-campaign', e);
+      fail('att-automation', e); fail('att-newrepeat', e);
+    });
+  };
+})();
