@@ -29,6 +29,11 @@
     // The site is served from the repository root — there is no build step.
     "directory": ".",
 
+    // Run the Worker before asset lookup. This is required for the admin
+    // hostname’s root path: otherwise the static asset server can resolve /
+    // directly to index.html and bypass serveAdmin() and noIndex().
+    "run_worker_first": true,
+
     // Required so worker/index.js can hand requests back to the asset server.
     "binding": "ASSETS",
 
