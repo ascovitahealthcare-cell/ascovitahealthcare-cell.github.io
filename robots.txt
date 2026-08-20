@@ -1,71 +1,17 @@
-# ═══════════════════════════════════════════════════════════════════
-# Ozylix — robots.txt
-# Search crawlers, and the answer engines that increasingly sit in
-# front of them, are both welcome on everything except admin and
-# utility pages.
-# ═══════════════════════════════════════════════════════════════════
+# Ozylix crawler policy
+# This file is guidance only; access control is enforced by the application and edge.
 
 User-agent: *
 Allow: /
-
 Disallow: /admin
 Disallow: /admin.html
 Disallow: /offline.html
 Disallow: /free/
-# The SPA shim bounces unknown paths through /?p=<path>; those are
-# duplicates of the clean URLs already in the sitemap.
+Disallow: /_page_staff.html
+Disallow: /_page_customer360.html
+Disallow: /platform_review_report.md
+Disallow: /invoice-template.js
+Disallow: /tools/
 Disallow: /*?p=
-
-# ── Answer / generative engines ──────────────────────────────────
-# Allowed deliberately: for a brand this size, being quotable in an AI
-# answer is worth more than the traffic a blocked crawler would send.
-User-agent: GPTBot
-Allow: /
-
-User-agent: OAI-SearchBot
-Allow: /
-
-User-agent: ChatGPT-User
-Allow: /
-
-User-agent: PerplexityBot
-Allow: /
-
-User-agent: Perplexity-User
-Allow: /
-
-User-agent: Google-Extended
-Allow: /
-
-User-agent: ClaudeBot
-Allow: /
-
-User-agent: Claude-User
-Allow: /
-
-User-agent: Claude-SearchBot
-Allow: /
-
-User-agent: Applebot
-Allow: /
-
-User-agent: Applebot-Extended
-Allow: /
-
-User-agent: CCBot
-Allow: /
-
-# ── Commercial SEO scrapers: bandwidth, no upside ────────────────
-User-agent: AhrefsBot
-Disallow: /
-
-User-agent: SemrushBot
-Disallow: /
-
-User-agent: MJ12bot
-Disallow: /
-
-User-agent: DotBot
-Disallow: /
 
 Sitemap: https://www.ozylix.com/sitemap.xml

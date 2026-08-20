@@ -2414,7 +2414,7 @@ async function loadReviewsBatch() {
     // the whole fix.
     const sb = await sbClientWhenReady(8000); if (!sb) return [];
     const { data, error, count } = await sb
-      .from('reviews')
+      .from('public_reviews')
       .select('id, product_id, product_name, user_name, rating, review_text, created_at', { count: 'exact' })
       .order('rating', { ascending: false })
       .order('created_at', { ascending: false })
@@ -2815,7 +2815,7 @@ function bootApp() {
   // wishlist/subscriptions have real page sections but were missing here, so a
   // direct hit on /wishlist rendered the HOME page at 200 — a soft 404. Keep
   // this list in step with SPA_ROUTES in worker/index.js.
-  const _validPages = ['home','shop','blog','about','contact','faq','advisor','product','wishlist','notifications','subscriptions','privacy','terms','shipping','refund','accessibility','download'];
+  const _validPages = ['home','shop','blog','about','contact','faq','advisor','account','product','wishlist','notifications','subscriptions','privacy','terms','shipping','refund','accessibility','download'];
   // Legacy /b2b links now redirect to the Ascovita corporate B2B page
   if (_initPage === 'b2b') { window.location.href = 'https://www.ascovita.com/#/capabilities'; }
   if (_initPage && (_validPages.includes(_initPage) || _initPage === 'blog')) {
@@ -2827,6 +2827,13 @@ function bootApp() {
           if (prod) { showPage('product'); openProduct(prod.id); }
           else showPage('shop');
         }
+      }, 300);
+    } else if (_initPage === 'account') {
+      // /account is a deliberate login gate: loadAccountPage() never fetches
+      // account data until getCurrentUser() returns a verified local session.
+      setTimeout(function() {
+        showPage('account');
+        if (typeof loadAccountPage === 'function') loadAccountPage();
       }, 300);
     } else if (_initPage === 'blog' && _pathSlug) {
       // /blog/<slug> deep link — open the blog page, then the matching
@@ -2853,7 +2860,10 @@ function bootApp() {
     if (_validPages.includes(pg)) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       const el = document.getElementById('page-' + pg);
-      if (el) { el.classList.add('active'); window.scrollTo({top:0}); currentPage = pg; }
+      if (el) {
+        el.classList.add('active'); window.scrollTo({top:0}); currentPage = pg;
+        if (pg === 'account' && typeof loadAccountPage === 'function') loadAccountPage();
+      }
       document.querySelectorAll('.nav-links a').forEach(a => a.classList.toggle('active', a.dataset.page === pg));
     }
   });
@@ -7804,9 +7814,31 @@ function vitaMatchResults() {
   try { if (typeof showPtsToast === 'function') showPtsToast('Every order earns VitaPoints'); } catch (e) {}
 }
 
+const VITA_CONSENT_KEY = 'ozylix.vita.advisor-consent.v1';
+function vitaHasConsent() {
+  try { return sessionStorage.getItem(VITA_CONSENT_KEY) === '1'; } catch (e) { return false; }
+}
+function vitaAdvisorConsent() {
+  try { sessionStorage.setItem(VITA_CONSENT_KEY, '1'); } catch (e) {}
+  const gate = document.getElementById('vitaPrivacyGate');
+  if (gate) gate.style.display = 'none';
+  vitaShowMatch();
+}
+function vitaRequireConsent() {
+  if (vitaHasConsent()) return true;
+  const gate = document.getElementById('vitaPrivacyGate');
+  const match = document.getElementById('vitaMatchWrap');
+  const chat = document.getElementById('vitaChatWrap');
+  if (gate) gate.style.display = '';
+  if (match) match.style.display = 'none';
+  if (chat) chat.style.display = 'none';
+  return false;
+}
+
 // Reveals the Gemini chat for anyone who would rather type. Kept opt-in
 // because it is the path that can fail.
 function vitaShowChat() {
+  if (!vitaRequireConsent()) return;
   const chat = document.getElementById('vitaChatWrap');
   const quiz = document.getElementById('vitaMatchWrap');
   if (!chat) return;
@@ -7817,6 +7849,7 @@ function vitaShowChat() {
 }
 
 function vitaShowMatch() {
+  if (!vitaRequireConsent()) return;
   const chat = document.getElementById('vitaChatWrap');
   const quiz = document.getElementById('vitaMatchWrap');
   if (chat) chat.style.display = 'none';
@@ -8119,7 +8152,7 @@ function vitaInit() {
   if (box) box.innerHTML = '';
 
   setTimeout(() => {
-    vitaAddMsg("Namaste! 🌿 I'm **Vita**, your personal health advisor at Ozylix.\n\nI'm here to help you find the right supplements for your goals. May I know your name first? 😊", 'bot');
+    vitaAddMsg("Namaste! 🌿 I'm **Vita**, Ozylix's general wellness guide.\n\nTell me about a wellness goal or routine you would like help comparing — please do not share your name, contact details, diagnosis, symptoms or medicines. 😊", 'bot');
   }, 400);
 }
 
@@ -8129,6 +8162,7 @@ function vitaRestart() {
 }
 
 async function vitaSend() {
+  if (!vitaHasConsent()) { vitaRequireConsent(); return; }
   const input = document.getElementById('vitaInput');
   const btn = document.getElementById('vitaSendBtn');
   if (!input) return;

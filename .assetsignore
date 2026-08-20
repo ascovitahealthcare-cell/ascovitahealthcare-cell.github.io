@@ -34,5 +34,13 @@ CNAME
 node_modules
 **/.DS_Store
 
-# Build tooling — not part of the published site.
-tools
+# Internal pages, reports, scripts, templates, and build tooling — never publish.
+_page_staff.html
+_page_customer360.html
+platform_review_report.md
+invoice-template.js
+llms.txt
+scripts/dedupe_staff.py
+scripts/sanity_check.py
+scripts/insert_customer360.py
+tools/
