@@ -8,6 +8,9 @@
     dashboard: ['Overview','Signals','Priorities','Actions','Measure'], analytics: ['Events','Sessions','Funnel','Attribution','Report'], livevisitors: ['Visit','View','Cart','Checkout','Convert'], calendar: ['Plan','Schedule','Execute','Notify','Review'], orders: ['Placed','Paid','Packed','Shipped','Delivered'], returns: ['Requested','Review','Approved','Refund','Closed'], products: ['Catalog','Pricing','Visibility','Sales','Feedback'], inventory: ['Stock','Reserve','Pick','Dispatch','Restock'], discounts: ['Rule','Eligible','Applied','Redeemed','Measured'], customers: ['Identity','Consent','Activity','Journey','Retention'], marketing: ['Signal','Segment','Review','Deliver','Learn'], banners: ['Draft','Review','Publish','Reach','Refresh'], photolibrary: ['Upload','Tag','Approve','Use','Archive'], siteimages: ['Asset','Placement','Publish','Cache','Refresh'], storeeditor: ['Edit','Preview','Review','Publish','Rollback'], payments: ['Initiated','Authorized','Captured','Settled','Reconciled'], finance: ['Data','Costs','Revenue','Margin','Control'], invoices: ['Issued','Sent','Viewed','Paid','Reconciled'], whatsapp: ['Consent','Queue','Send','Delivery','Reply'], aiassistant: ['Request','Guardrail','Model','Response','Audit'], aiteam: ['Intake','Route','Agent','Review','Outcome'], database: ['Connect','Query','Verify','Backup','Monitor'], integrations: ['Connect','Health','Sync','Retry','Confirm'], geoanalytics: ['Region','Demand','Orders','Revenue','Action'], performance: ['Request','API','Database','Render','Monitor'], auditdebugger: ['Collect','Verify','Classify','Resolve','Evidence'], automation: ['Trigger','Consent','Wait','Dispatch','Measure'], staff: ['Invite','2FA','Permissions','Session','Audit']
   };
   const ICONS = ['◉','◌','◇','↗','✓'];
+  // Only pages that are genuinely dashboard-like receive the injected range,
+  // signal, and flow surfaces. Native workspaces keep their own controls.
+  const SHARED_DASHBOARD_PAGES = new Set(['dashboard','analytics','livevisitors','marketing','performance','auditdebugger','automation']);
   const RANGE_OPTIONS = [['today','Today'],['7d','7 days'],['month','Month'],['year','Year'],['custom','Custom']];
   const RANGE_LABELS = { today:'Today','7d':'7 days',month:'Month',year:'Year',custom:'Custom range' };
 
@@ -93,9 +96,17 @@
 
   function decorate(root) {
     if(!root || root.dataset.ozAdvancedDecorated==='1') return;
-    root.dataset.ozAdvancedDecorated='1'; root.classList.add('oz-advanced-page'); root.setAttribute('data-dashboard-surface',pageKey(root)); makeRangeBar(root); makeFreshness(root); makeSignals(root); makeFlow(root);
+    root.dataset.ozAdvancedDecorated='1';
+    const key=pageKey(root);
+    root.setAttribute('data-dashboard-surface',key);
+    if(!SHARED_DASHBOARD_PAGES.has(key)) {
+      root.classList.add('oz-native-workspace');
+      return;
+    }
+    root.classList.add('oz-advanced-page');
+    makeRangeBar(root); makeFreshness(root); makeSignals(root); makeFlow(root);
   }
   function decorateVisiblePage(){ document.querySelectorAll('.page').forEach(function(root){ if(root.classList.contains('active') || root.id==='page-dashboard') decorate(root); }); }
-  function init(){ decorateVisiblePage(); document.querySelectorAll('.page').forEach(decorate); const observer=new MutationObserver(function(records){records.forEach(function(record){if(record.attributeName==='class' && record.target.classList.contains('active')) decorate(record.target);});}); document.querySelectorAll('.page').forEach(function(root){observer.observe(root,{attributes:true});}); window.OzylixAdvancedDashboard={decorate:decorate,setRange:setRange,flowMap:FLOW_MAP,version:'1.0.0'}; }
+  function init(){ decorateVisiblePage(); document.querySelectorAll('.page').forEach(decorate); const observer=new MutationObserver(function(records){records.forEach(function(record){if(record.attributeName==='class' && record.target.classList.contains('active')) decorate(record.target);});}); document.querySelectorAll('.page').forEach(function(root){observer.observe(root,{attributes:true});}); window.OzylixAdvancedDashboard={decorate:decorate,setRange:setRange,flowMap:FLOW_MAP,sharedPages:Array.from(SHARED_DASHBOARD_PAGES),version:'1.1.0'}; }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
