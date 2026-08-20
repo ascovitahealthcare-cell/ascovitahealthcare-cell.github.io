@@ -5989,6 +5989,21 @@ function loadAccountPage() {
 
 // ══════════════════════════════════════════════════════════════
 // RETURNS & REFUNDS (My Account)
+// The returns panel is also usable on pages where invoice-template.js is not
+// loaded. Keep a local global fallback so a missing optional template helper
+// cannot leave the customer-facing panel on an infinite loading state.
+var _esc = (typeof window !== 'undefined' && typeof window._esc === 'function')
+  ? window._esc
+  : function(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    };
+if (typeof window !== 'undefined') window._esc = _esc;
+
 //
 // Every rule that matters — 7-day window, ownership, item validity —
 // is enforced server-side in returns-routes.js and SQL. This is the
