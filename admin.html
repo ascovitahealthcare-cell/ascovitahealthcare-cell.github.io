@@ -1352,6 +1352,67 @@ body.theme-navy ::-webkit-scrollbar-track{background:rgba(29,53,87,0.06);}
   body.theme-navy .ring-glow,body.theme-navy .feed-item,body.theme-navy .live-dotanimation:none;
 }</style>
 
+<style>
+/* Ozylix populated-dashboard system — additive, ID-safe, and data-honest. */
+.oz-dashboard{--oz-ink:#182b2e;--oz-muted:#687477;--oz-line:rgba(84,113,119,.16);--oz-soft:#f4f8f5;--oz-teal:#0b806d;--oz-teal-2:#126455;--oz-lime:#9fcf5d;--oz-amber:#c27a17;--oz-red:#c2434f;}
+.oz-dashboard .page-hdr{margin-bottom:20px;align-items:center;}
+.oz-dashboard .page-title{font-size:clamp(1.35rem,2vw,1.85rem);letter-spacing:-.02em;color:var(--oz-ink);}
+.oz-dashboard .page-sub{max-width:760px;line-height:1.5;color:var(--oz-muted);}
+.oz-dashboard .page-actions{align-items:center;}
+.oz-status-banner{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin:0 0 16px;border:1px solid var(--oz-line);border-radius:12px;background:linear-gradient(90deg,#f7fbf7,#fff);font-size:.74rem;color:var(--oz-muted);}
+.oz-status-banner strong{color:var(--oz-teal-2);}
+.oz-status-banner.warn{background:#fff9ee;border-color:rgba(194,122,23,.22);}
+.oz-status-banner.error{background:#fff5f6;border-color:rgba(194,67,79,.22);}
+.oz-status-dot{width:8px;height:8px;border-radius:50%;background:#38a169;box-shadow:0 0 0 4px rgba(56,161,105,.12);display:inline-block;margin-right:7px;vertical-align:middle;}
+.oz-status-dot.warn{background:var(--oz-amber);box-shadow:0 0 0 4px rgba(194,122,23,.12);}
+.oz-status-dot.error{background:var(--oz-red);box-shadow:0 0 0 4px rgba(194,67,79,.12);}
+.oz-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px;}
+.oz-kpi-card{position:relative;min-height:112px;padding:17px 18px 15px;border:1px solid var(--oz-line);border-radius:14px;background:var(--surface);box-shadow:0 3px 13px rgba(44,67,62,.05);overflow:hidden;}
+.oz-kpi-card::after{content:"";position:absolute;right:-24px;top:-28px;width:94px;height:94px;border-radius:50%;background:radial-gradient(circle,rgba(159,207,93,.24),transparent 69%);pointer-events:none;}
+.oz-kpi-label{display:flex;align-items:center;gap:8px;font-size:.7rem;color:var(--oz-muted);font-weight:700;letter-spacing:.02em;}
+.oz-kpi-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:#edf7ef;color:var(--oz-teal);font-size:1rem;}
+.oz-kpi-value{margin-top:10px;font-family:var(--display);font-size:1.6rem;font-weight:800;letter-spacing:-.03em;color:var(--oz-ink);}
+.oz-kpi-meta{margin-top:4px;font-size:.7rem;color:var(--oz-muted);}
+.oz-kpi-meta.up{color:#23845f}.oz-kpi-meta.warn{color:var(--oz-amber)}.oz-kpi-meta.down{color:var(--oz-red)}
+.oz-section-card{background:var(--surface);border:1px solid var(--oz-line);border-radius:14px;padding:0;overflow:hidden;box-shadow:0 3px 13px rgba(44,67,62,.04);}
+.oz-section-card .card-hdr{padding:15px 18px;margin:0;border-bottom:1px solid rgba(84,113,119,.10);}
+.oz-section-card .card-body{padding:16px 18px;}
+.oz-section-note{font-size:.72rem;color:var(--oz-muted);line-height:1.5;}
+.oz-chart-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,1fr);gap:16px;margin-bottom:16px;}
+.oz-chart-card{min-height:250px;}
+.oz-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:.7rem;color:var(--oz-muted);}
+.oz-legend i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;vertical-align:middle;}
+.oz-flow{display:flex;align-items:flex-start;gap:0;padding:20px 16px 15px;overflow-x:auto;}
+.oz-flow-node{min-width:112px;flex:1;text-align:center;position:relative;}
+.oz-flow-node:not(:last-child)::after{content:'→';position:absolute;right:-9px;top:24px;color:var(--oz-teal);font-weight:800;font-size:1.1rem;}
+.oz-flow-icon{width:48px;height:48px;margin:0 auto 8px;border:1px solid rgba(11,128,109,.20);border-radius:14px;background:#f1faf5;color:var(--oz-teal);display:grid;place-items:center;font-size:1.25rem;box-shadow:0 3px 10px rgba(11,128,109,.08);}
+.oz-flow-node strong{display:block;font-size:.72rem;color:var(--oz-ink);}
+.oz-flow-node small{display:block;margin-top:4px;font-size:.63rem;color:var(--oz-muted);line-height:1.35;}
+.oz-flow-state{display:inline-flex;margin-top:7px;padding:3px 7px;border-radius:99px;background:#edf7ef;color:#227b59;font-size:.6rem;font-weight:700;}
+.oz-flow-state.wait{background:#fff5e3;color:var(--oz-amber)}.oz-flow-state.off{background:#f1f3f4;color:#778184}.oz-flow-state.fail{background:#fff0f1;color:var(--oz-red)}
+.oz-table-scroll{overflow:auto;}
+.oz-data-table{width:100%;border-collapse:collapse;font-size:.74rem;min-width:620px;}
+.oz-data-table th{padding:9px 12px;text-align:left;background:#fbfcfb;border-bottom:1px solid var(--oz-line);color:var(--oz-muted);font-size:.62rem;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.oz-data-table td{padding:10px 12px;border-bottom:1px solid rgba(84,113,119,.10);vertical-align:middle;}
+.oz-data-table tr:last-child td{border-bottom:0}.oz-data-table tr:hover td{background:#fbfdfb;}
+.oz-pill{display:inline-flex;align-items:center;gap:4px;border-radius:99px;padding:4px 8px;font-size:.62rem;font-weight:700;white-space:nowrap;background:#edf7ef;color:#267455;}
+.oz-pill.warn{background:#fff5e3;color:var(--oz-amber)}.oz-pill.error{background:#fff0f1;color:var(--oz-red)}.oz-pill.neutral{background:#f1f3f4;color:#6c7679}.oz-pill.info{background:#eef5fb;color:#326a8b}
+.oz-filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:11px 12px;background:#fbfcfb;border:1px solid var(--oz-line);border-radius:12px;margin-bottom:14px;}
+.oz-filter-bar .ep-chip,.oz-filter-bar .filter-select,.oz-filter-bar .filter-input{border-color:var(--oz-line);background:#fff;}
+.oz-empty{padding:30px 18px;text-align:center;color:var(--oz-muted);font-size:.8rem;line-height:1.6;}
+.oz-empty strong{display:block;color:var(--oz-ink);font-size:.92rem;margin-bottom:4px;}
+.oz-demo-label{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid rgba(194,122,23,.22);border-radius:99px;background:#fff8ec;color:#916217;font-size:.62rem;font-weight:700;letter-spacing:.02em;}
+.oz-safety-row{display:flex;gap:7px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid rgba(84,113,119,.10);background:#fbfdfb;}
+.oz-safety-row span{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:8px;background:#f0f8f0;color:#347758;font-size:.64rem;font-weight:600;}
+.oz-safety-row span.warn{background:#fff8eb;color:#95651a}.oz-safety-row span.error{background:#fff2f3;color:#a13f49}
+.oz-meter{height:8px;overflow:hidden;border-radius:99px;background:#edf1ef;}.oz-meter i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--oz-teal),var(--oz-lime));}
+.oz-dashboard canvas{max-width:100%;}
+@media (max-width:1100px){.oz-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.oz-chart-grid{grid-template-columns:1fr;}}
+@media (max-width:700px){.oz-dashboard .page-hdr{align-items:flex-start;}.oz-status-banner{align-items:flex-start;flex-direction:column;}.oz-kpi-grid{grid-template-columns:1fr 1fr;gap:10px;}.oz-kpi-card{min-height:100px;padding:13px;}.oz-kpi-value{font-size:1.3rem;}.oz-flow{padding-inline:8px;}.oz-flow-node{min-width:96px;}.oz-flow-node:not(:last-child)::after{right:-7px;font-size:.9rem;}.oz-section-card .card-hdr,.oz-section-card .card-body{padding-inline:13px;}}
+@media (max-width:450px){.oz-kpi-grid{grid-template-columns:1fr;}.oz-kpi-card{min-height:88px;}.oz-kpi-value{margin-top:7px;}.oz-filter-bar{align-items:stretch;}.oz-filter-bar>*{max-width:none!important;width:100%;}}
+@media (prefers-reduced-motion:reduce){.oz-dashboard *,.oz-dashboard *::before,.oz-dashboard *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important;}}
+</style>
+
 <style>.card{transition:box-shadow 0.25s cubic-bezier(.22,1,.36,1), transform 0.25s cubic-bezier(.22,1,.36,1);}
 .card:hover{box-shadow:0 10px 28px rgba(0,0,0,0.18);}
 body.theme-neo .card:hover{box-shadow:8px 8px 20px var(--neo-dark,rgba(27,67,50,0.16)), -8px -8px 20px var(--neo-light,#fff);}
@@ -2936,7 +2997,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 </div>
 
 <!-- ═════════════ MARKETING AUTOMATION ═════════════ -->
-<div class="page" id="page-marketing">
+<div class="page oz-dashboard" id="page-marketing">
   <div class="page-hdr">
     <div><div class="page-title">Marketing</div><div class="page-sub">Live ad performance, budget control, campaign generation, and reporting</div></div>
     <div class="page-actions">
@@ -3222,7 +3283,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
         </div>
         <span id="seg-customer-status" class="mkt-sub">Loading…</span>
       </div>
-      <div style="display:grid;grid-template-columns:minmax(180px,1.5fr) repeat(4,minmax(120px,1fr));gap:8px;align-items:center;">
+      <div class="oz-filter-bar" style="display:grid;grid-template-columns:minmax(180px,1.5fr) repeat(4,minmax(120px,1fr));gap:8px;align-items:center;">
         <input id="seg-customer-query" type="search" placeholder="Search name, email, phone, customer ID…" onkeydown="if(event.key==='Enter')mktLoadCustomerDirectory()">
         <select id="seg-customer-window" onchange="mktLoadCustomerDirectory()">
           <option value="1">Today</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option>
@@ -3264,7 +3325,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   </div>
 
   <!-- AUTOMATIONS TAB -->
-  <div id="mkt-tab-automations" class="mkt-tab" style="display:none;">
+  <div id="mkt-tab-automations" class="mkt-tab oz-dashboard" style="display:none;">
     <div class="card" style="padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
       <div>
         <h3 style="margin:0 0 4px;">Marketing automations</h3>
@@ -3782,7 +3843,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 </div>
 
 <!-- ═════════════ FINANCE ═════════════ -->
-<div class="page" id="page-finance">
+<div class="page oz-dashboard" id="page-finance">
   <div class="page-hdr">
     <div><div class="page-title">💰 Finance</div><div class="page-sub">Collections from couriers + payment gateway · net of platform charges · live from Shiprocket / Delhivery / Cashfree</div></div>
     <div class="page-actions">
@@ -3794,22 +3855,23 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <button class="btn btn-secondary" onclick="loadFinance(true)">↺ Refresh</button>
     </div>
   </div>
+  <div class="oz-status-banner"><div><span class="oz-status-dot"></span><strong>Finance evidence view</strong> · values are read from courier, gateway, and settlement responses.</div><span class="oz-demo-label">Live data / empty state when unavailable</span></div>
   <div style="font-size:0.78rem;color:var(--text3);margin-bottom:14px;">
     💡 COD money collected by the courier ≠ money in your bank — the platform first deducts its own shipping / RTO charges from the remittance. This dashboard splits both sides out per partner so you always see the true realizable revenue.
   </div>
   <!-- ══ API STATUS STRIP ══ -->
   <div id="financeApiStatus" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;"></div>
   <!-- ══ KPI ROW ══ -->
-  <div class="grid-4" id="financeKpis" style="margin-bottom:20px">
+  <div class="oz-kpi-grid" id="financeKpis" style="margin-bottom:20px">
     <div class="kpi skel" style="height:108px"></div><div class="kpi skel" style="height:108px"></div><div class="kpi skel" style="height:108px"></div><div class="kpi skel" style="height:108px"></div>
   </div>
   <!-- ══ PER-SOURCE CARDS ══ -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-    <div class="card" style="padding:0;overflow:hidden;">
+  <div class="oz-chart-grid">
+    <div class="oz-section-card" style="padding:0;overflow:hidden;">
       <div class="card-hdr"><span class="card-title">🚚 Shiprocket</span><span class="badge" id="finSrStatus">…</span></div>
       <div style="padding:16px 20px;" id="finSrBody"></div>
     </div>
-    <div class="card" style="padding:0;overflow:hidden;">
+    <div class="oz-section-card" style="padding:0;overflow:hidden;">
       <div class="card-hdr"><span class="card-title">📮 Delhivery</span><span class="badge badge-blue" id="finDlStatus">…</span></div>
       <div style="padding:16px 20px;" id="finDlBody"></div>
     </div>
@@ -4359,27 +4421,40 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 
 <!-- ═════════════ GEO ANALYTICS ═════════════ -->
 <!-- ═════════════ AUTOMATION (Aug 2026) ═════════════ -->
-<div class="page" id="page-automation">
+  <div class="page oz-dashboard" id="page-automation">
   <div class="page-hdr">
     <div><div class="page-title">Automation</div><div class="page-sub">Returns run themselves, finance reconciles itself, orders ship themselves — manual stays as the safe override</div></div>
     <div class="page-actions"><button class="btn btn-secondary" onclick="loadAutomation()">↺ Refresh</button></div>
   </div>
+  <div class="oz-status-banner"><div><span class="oz-status-dot"></span><strong>Automation engine</strong> · operational controls, queues, and manual overrides remain visible together.</div><span class="oz-demo-label">Provider state from live endpoints</span></div>
   <!-- Status chips -->
-  <div class="grid-4" style="margin-bottom:16px;">
+  <div class="oz-kpi-grid" style="margin-bottom:16px;">
     <div class="kpi"><div class="kpi-label">Auto-Returns Cycle</div><div class="kpi-val" style="font-size:0.85rem" id="autReturnsCycle">–</div><span class="kpi-ico">🔄</span></div>
     <div class="kpi"><div class="kpi-label">Last Finance Recon</div><div class="kpi-val" style="font-size:0.85rem" id="autRecon">–</div><span class="kpi-ico">🧾</span></div>
     <div class="kpi"><div class="kpi-label">Auto-Ship (last run)</div><div class="kpi-val" style="font-size:0.85rem" id="autShip">–</div><span class="kpi-ico">🚚</span></div>
     <div class="kpi"><div class="kpi-label">Next Cycle</div><div class="kpi-val" style="font-size:0.85rem" id="autNext">–</div><span class="kpi-ico">⏭️</span></div>
   </div>
+  <!-- Execution map -->
+  <div class="oz-section-card" style="margin-bottom:16px;">
+    <div class="card-hdr"><span class="card-title">Workflow execution map</span><span class="oz-pill info" id="autEngineState">Checking engine…</span></div>
+    <div class="oz-flow" id="autExecutionFlow">
+      <div class="oz-flow-node"><div class="oz-flow-icon">◉</div><strong>Trigger</strong><small>Scheduled engine tick</small><span class="oz-flow-state off">waiting</span></div>
+      <div class="oz-flow-node"><div class="oz-flow-icon">✓</div><strong>Validate</strong><small>Consent and configuration</small><span class="oz-flow-state off">waiting</span></div>
+      <div class="oz-flow-node"><div class="oz-flow-icon">◷</div><strong>Queue</strong><small>Safe next action</small><span class="oz-flow-state off">waiting</span></div>
+      <div class="oz-flow-node"><div class="oz-flow-icon">✈</div><strong>Dispatch</strong><small>Provider hand-off</small><span class="oz-flow-state off">waiting</span></div>
+      <div class="oz-flow-node"><div class="oz-flow-icon">↗</div><strong>Reconcile</strong><small>Evidence and audit log</small><span class="oz-flow-state off">waiting</span></div>
+    </div>
+    <div class="oz-safety-row"><span>✓ Manual override available</span><span>✓ Queue is bounded</span><span class="warn">! Provider actions remain reversible where supported</span></div>
+  </div>
   <!-- Returns auto-queue -->
-  <div class="card" style="margin-bottom:16px;">
+  <div class="oz-section-card" style="margin-bottom:16px;">
     <div class="card-hdr"><span class="card-title">🔁 Returns Auto-Queue</span>
       <button class="btn btn-secondary btn-sm" onclick="autRunCycleNow()" style="margin-left:auto;">▶ Run cycle now</button></div>
     <div style="font-size:0.78rem;color:var(--text3);margin-bottom:10px;" id="autQueueIntro">Live preview of what the auto-engine will do next — every item here also has its manual button in the Returns panel.</div>
     <div id="autQueueTable" style="font-size:0.8rem;color:var(--text3);">Loading…</div>
   </div>
   <!-- Config -->
-  <div class="card" style="margin-bottom:16px;">
+  <div class="oz-section-card" style="margin-bottom:16px;">
     <div class="card-hdr"><span class="card-title">⚙️ Delays &amp; Toggles</span>
       <button class="btn btn-primary btn-sm" onclick="autSaveConfig()" style="margin-left:auto;">💾 Save</button></div>
     <div class="grid-3" style="margin-top:12px;gap:12px;">
@@ -4409,7 +4484,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
     <div id="autConfigMsg" style="font-size:0.75rem;color:var(--green-text);margin-top:8px;min-height:14px;"></div>
   </div>
   <!-- Reconciliation history -->
-  <div class="card" style="margin-bottom:16px;">
+  <div class="oz-section-card" style="margin-bottom:16px;">
     <div class="card-hdr"><span class="card-title">🧾 Finance Reconciliation History</span>
       <button class="btn btn-secondary btn-sm" onclick="autReconNow()">▶ Reconcile now</button></div>
     <div id="autReconTable" style="font-size:0.8rem;color:var(--text3);">Loading…</div>

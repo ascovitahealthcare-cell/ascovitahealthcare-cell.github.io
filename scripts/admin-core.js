@@ -810,7 +810,10 @@ function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const pg = document.getElementById(`page-${name}`);
-  if(pg) pg.classList.add('active');
+  if(pg) {
+    pg.classList.add('active', 'oz-dashboard');
+    pg.setAttribute('data-dashboard-surface', name);
+  }
   // Match nav item by its onclick attribute exactly
   document.querySelectorAll('.nav-item').forEach(n => {
     const oc = n.getAttribute('onclick') || '';
@@ -4642,10 +4645,10 @@ async function loadFinance(force = false) {
 
   // ── KPI row ──
   el('financeKpis').innerHTML = [
-    `<div class="kpi"><div class="kpi-label">💵 Collected in window</div><div class="kpi-val">${FIN_IN(totals.collected)}</div><div class="kpi-change">COD ${FIN_IN(totals.codCollected)} + online ${FIN_IN(totals.onlinePaid)}</div><div class="kpi-ico">💵</div></div>`,
-    `<div class="kpi"><div class="kpi-label">🕐 With couriers, pending</div><div class="kpi-val">${FIN_IN(totals.courierPending)}</div><div class="kpi-change">collected from customer, not yet remitted</div><div class="kpi-ico">🕐</div></div>`,
-    `<div class="kpi"><div class="kpi-label">📉 Platform + gateway charges</div><div class="kpi-val">${FIN_IN(totals.charges)}</div><div class="kpi-change">deducted before money reaches bank</div><div class="kpi-ico">📉</div></div>`,
-    `<div class="kpi"><div class="kpi-label">✅ Realizable revenue</div><div class="kpi-val">${FIN_IN(totals.netRealizable)}</div><div class="kpi-change">collected minus charges</div><div class="kpi-ico">✅</div></div>`,
+    `<div class="oz-kpi-card"><div class="oz-kpi-label"><span class="oz-kpi-icon">₹</span>Collected in window</div><div class="oz-kpi-value">${FIN_IN(totals.collected)}</div><div class="oz-kpi-meta up">COD ${FIN_IN(totals.codCollected)} · online ${FIN_IN(totals.onlinePaid)}</div></div>`,
+    `<div class="oz-kpi-card"><div class="oz-kpi-label"><span class="oz-kpi-icon">◷</span>With couriers, pending</div><div class="oz-kpi-value">${FIN_IN(totals.courierPending)}</div><div class="oz-kpi-meta warn">Collected, not yet remitted</div></div>`,
+    `<div class="oz-kpi-card"><div class="oz-kpi-label"><span class="oz-kpi-icon">−</span>Platform + gateway charges</div><div class="oz-kpi-value">${FIN_IN(totals.charges)}</div><div class="oz-kpi-meta down">Deducted before bank settlement</div></div>`,
+    `<div class="oz-kpi-card"><div class="oz-kpi-label"><span class="oz-kpi-icon">✓</span>Realizable revenue</div><div class="oz-kpi-value">${FIN_IN(totals.netRealizable)}</div><div class="oz-kpi-meta up">Collected minus charges</div></div>`,
   ].join('');
 
   // ── Shiprocket card ──
@@ -4689,6 +4692,7 @@ async function loadFinance(force = false) {
   el('finTimeRange').textContent = timeline.length ? `${timeline[0].month} → ${timeline[timeline.length - 1].month}` : '—';
   if (timeline.length) {
     const canvas = el('financeTimelineCanvas');
+    if (!canvas || !canvas.getContext) return;
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
     canvas.width = canvas.clientWidth * dpr;
