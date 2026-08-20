@@ -640,13 +640,18 @@ function updateSaleUIVisibility() {
 }
 
 // Live coupon validation against backend (used in applyPromoCode below)
-async function validateCouponWithBackend(code, subtotal) {
+async function validateCouponWithBackend(code, subtotal, items) {
   try {
     const u = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+    const previewItems = Array.isArray(items) ? items :
+      ((typeof STORE !== 'undefined' && Array.isArray(STORE.cart)) ? STORE.cart.map(function (item) {
+        const p = (typeof PRODUCTS !== 'undefined' ? PRODUCTS : []).find(function (x) { return x.id === item.id; });
+        return { id: item.id, name: p?.name || '', price: item.tierRate !== undefined ? item.tierRate : (p?.salePrice || p?.price || 0), qty: item.qty, tierTabs: item.tierTabs };
+      }) : []);
     const r = await fetchWithTimeout(`${API_BASE}/api/coupons/validate`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({code, subtotal, email: u?.email || null})
+      body: JSON.stringify({code, subtotal, email: u?.email || null, items: previewItems})
     }, 5000);
     if (!r.ok) return null;
     const d = await r.json();
