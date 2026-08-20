@@ -7415,15 +7415,18 @@ async function loadSettings() {
     const freeShipping = asObj(d.free_shipping);
     const boolValue = (value, fallback) => value === undefined ? fallback : (value === true || value === 'true');
     if(d.store_online !== undefined || policy.store_online !== undefined) document.getElementById('storeOnline').checked = boolValue(d.store_online ?? policy.store_online, true);
-    if(d.shipping_mode !== undefined || policy.shipping_mode !== undefined) { const sm = document.getElementById('shippingMode'); if (sm) sm.value = d.shipping_mode ?? policy.shipping_mode; }
-    if(d.shipping_fee !== undefined || policy.shipping_fee !== undefined) { const sf = document.getElementById('shippingFee'); if (sf) sf.value = d.shipping_fee ?? policy.shipping_fee; }
-    const codEnabled = d.cod_available ?? d.cod_enabled ?? policy.cod_enabled;
+    if(d.shipping_mode !== undefined || policy.shipping_mode !== undefined) { const sm = document.getElementById('shippingMode'); if (sm) sm.value = policy.shipping_mode ?? d.shipping_mode; }
+    if(d.shipping_fee !== undefined || policy.shipping_fee !== undefined) { const sf = document.getElementById('shippingFee'); if (sf) sf.value = policy.shipping_fee ?? d.shipping_fee; }
+    // delivery_policy is the canonical source. Legacy top-level keys are only
+    // fallbacks so an old, conflicting row cannot make the panel show a state
+    // different from the policy enforced by checkout.
+    const codEnabled = policy.cod_enabled ?? d.cod_enabled ?? d.cod_available;
     if(codEnabled !== undefined) document.getElementById('codAvailable').checked = boolValue(codEnabled, false);
-    if(d.cod_min_order !== undefined || policy.cod_min_order !== undefined) { const cm = document.getElementById('codMinOrder'); if (cm) cm.value = d.cod_min_order ?? policy.cod_min_order; }
-    if(d.cod_max_order !== undefined || policy.cod_max_order !== undefined) { const cx = document.getElementById('codMaxOrder'); if (cx) cx.value = d.cod_max_order ?? policy.cod_max_order; }
-    const codAll = d.cod_allowed_all_orders ?? policy.cod_allowed_all_orders;
+    if(d.cod_min_order !== undefined || policy.cod_min_order !== undefined) { const cm = document.getElementById('codMinOrder'); if (cm) cm.value = policy.cod_min_order ?? d.cod_min_order; }
+    if(d.cod_max_order !== undefined || policy.cod_max_order !== undefined) { const cx = document.getElementById('codMaxOrder'); if (cx) cx.value = policy.cod_max_order ?? d.cod_max_order; }
+    const codAll = policy.cod_allowed_all_orders ?? d.cod_allowed_all_orders;
     if(codAll !== undefined) document.getElementById('codAllowedAllOrders').checked = boolValue(codAll, true);
-    const freeThreshold = d.free_shipping_threshold ?? policy.free_shipping_threshold ?? freeShipping.threshold;
+    const freeThreshold = policy.free_shipping_threshold ?? d.free_shipping_threshold ?? freeShipping.threshold;
     if(freeThreshold !== undefined) document.getElementById('freeShippingThreshold').value = freeThreshold;
     if(d.whatsapp_number) document.getElementById('whatsappNumber').value = d.whatsapp_number;
     if(d.gst_rate) { document.getElementById('cgstRate').value = d.gst_rate.cgst||2.5; document.getElementById('sgstRate').value = d.gst_rate.sgst||2.5; }
@@ -7456,16 +7459,31 @@ async function saveSettingsCore() {
   if (!Number.isFinite(ceilingGlutathioneAcv) || ceilingGlutathioneAcv < 0 || ceilingGlutathioneAcv > 50 || !Number.isFinite(ceilingStandard) || ceilingStandard < 0 || ceilingStandard > 50) {
     toast('Discount ceilings must be between 0% and 50%', 'error'); return;
   }
+  const readNonNegative = (id, fallback) => {
+    const n = Number(document.getElementById(id)?.value);
+    return Number.isFinite(n) && n >= 0 ? n : fallback;
+  };
+  const deliveryPolicy = {
+    shipping_mode: (document.getElementById('shippingMode')||{}).value || 'paid',
+    shipping_fee: readNonNegative('shippingFee', 79),
+    free_shipping_threshold: readNonNegative('freeShippingThreshold', 599),
+    cod_enabled: document.getElementById('codAvailable').checked,
+    cod_min_order: readNonNegative('codMinOrder', 0),
+    cod_max_order: readNonNegative('codMaxOrder', 0),
+    cod_allowed_all_orders: document.getElementById('codAllowedAllOrders').checked,
+  };
   const settings = {
     store_online: document.getElementById('storeOnline').checked,
-    shipping_mode: (document.getElementById('shippingMode')||{}).value || 'paid',
-    shipping_fee: parseInt((document.getElementById('shippingFee')||{}).value)||79,
-    cod_available: document.getElementById('codAvailable').checked,
-    cod_min_order: parseInt((document.getElementById('codMinOrder')||{}).value)||0,
-    cod_max_order: parseInt((document.getElementById('codMaxOrder')||{}).value)||0,
-    cod_allowed_all_orders: document.getElementById('codAllowedAllOrders').checked,
-    cod_available: document.getElementById('codAvailable').checked,
-    free_shipping: {threshold: parseInt(document.getElementById('freeShippingThreshold').value)||599},
+    shipping_mode: deliveryPolicy.shipping_mode,
+    shipping_fee: deliveryPolicy.shipping_fee,
+    free_shipping_threshold: deliveryPolicy.free_shipping_threshold,
+    cod_available: deliveryPolicy.cod_enabled,
+    cod_enabled: deliveryPolicy.cod_enabled,
+    cod_min_order: deliveryPolicy.cod_min_order,
+    cod_max_order: deliveryPolicy.cod_max_order,
+    cod_allowed_all_orders: deliveryPolicy.cod_allowed_all_orders,
+    delivery_policy: deliveryPolicy,
+    free_shipping: {threshold: deliveryPolicy.free_shipping_threshold},
     whatsapp_number: document.getElementById('whatsappNumber').value,
     gst_rate: {cgst: parseFloat(document.getElementById('cgstRate').value)||2.5, sgst: parseFloat(document.getElementById('sgstRate').value)||2.5},
     razorpay_mode: document.getElementById('pgMode').value,

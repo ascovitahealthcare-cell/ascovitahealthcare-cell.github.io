@@ -2142,10 +2142,14 @@ function updateCodBtnNote() {
   const sticky = document.querySelector('#ozPayBar .opb-cod');
   const { paidSubtotal } = getOrderTotal();
   const net = paidSubtotal;
+  // The server validates COD against the payable amount after shipping (and
+  // performs the final VitaPoints-aware check). Use the same pre-Vita amount
+  // here so shipping thresholds do not make the tile disagree with checkout.
+  const payableBeforeVita = net + calcShipping(net);
   const codAllowed = DELIVERY_POLICY.cod_enabled === true || DELIVERY_POLICY.cod_enabled === 'true';
   const min = Math.max(0, Number(DELIVERY_POLICY.cod_min_order) || 0);
   const max = Math.max(0, Number(DELIVERY_POLICY.cod_max_order) || 0);
-  const within = net >= min && (!max || net <= max);
+  const within = payableBeforeVita >= min && (!max || payableBeforeVita <= max);
   const visible = codAllowed && within;
   const selectedGateway = getSelectedGateway();
   [btn, tile, sticky].forEach(function(el) {
@@ -2971,6 +2975,10 @@ function validateCheckoutForm() {
 
 // ── MAIN ENTRY — called by "Pay Online" button ──
 function initiatePayment() {
+  if (DELIVERY_POLICY && DELIVERY_POLICY.store_online === false) {
+    showToast('The store is temporarily unavailable for new orders. Please try again shortly.', 'error');
+    return;
+  }
   if (STORE.cart.length === 0) { showToast('🛒 Your cart is empty!', 'error'); return; }
   // 2026-08: never open a payment session for a PIN Delhivery cannot serve —
   // a courier failure discovered AFTER payment is India's #1 frustration.
@@ -3338,6 +3346,10 @@ async function handleCashfreeReturn(orderId) {
   }
 }
 async function initiateCOD() {
+  if (DELIVERY_POLICY && DELIVERY_POLICY.store_online === false) {
+    showToast('The store is temporarily unavailable for new orders. Please try again shortly.', 'error');
+    return;
+  }
   const codEnabled = DELIVERY_POLICY && (DELIVERY_POLICY.cod_enabled === true || DELIVERY_POLICY.cod_enabled === 'true');
   if (!codEnabled) { showToast('COD is currently unavailable. Please choose online payment.', 'error'); updateCodBtnNote(); return; }
   if (STORE.cart.length === 0) { showToast('🛒 Your cart is empty!', 'error'); return; }

@@ -116,7 +116,7 @@ function calcShipping(netSubtotal) {
   return (Number(netSubtotal) || 0) >= SHIP_THRESHOLD ? 0 : SHIP_FEE;
 }
 function shippingIsAlwaysFree() { return !SHIP_FEE; }
-var DELIVERY_POLICY = { shipping_mode: 'paid', shipping_fee: 79, free_shipping_threshold: 599, cod_enabled: false, cod_min_order: 0, cod_max_order: 0, cod_allowed_all_orders: true };
+var DELIVERY_POLICY = { store_online: true, shipping_mode: 'paid', shipping_fee: 79, free_shipping_threshold: 599, cod_enabled: false, cod_min_order: 0, cod_max_order: 0, cod_allowed_all_orders: true };
 function applyDeliveryPolicy(policy) {
   if (!policy || typeof policy !== 'object') return;
   DELIVERY_POLICY = Object.assign({}, DELIVERY_POLICY, {
