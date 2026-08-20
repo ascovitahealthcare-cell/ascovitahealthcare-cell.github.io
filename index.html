@@ -6349,7 +6349,7 @@ button, [role="button"] {
   <a href="/advisor" onclick="showPage('advisor');toggleMobile();return false;" style="color:var(--green);font-weight:700;background:var(--green-pale)">🌿 AI Health Advisor</a>
   <a href="#" onclick="openSideCart();toggleMobile()">🛒 Cart</a>
   <a href="/wishlist" onclick="showPage('wishlist');toggleMobile();return false;">♡ Wishlist</a>
-  <a href="/subscriptions" onclick="showPage('subscriptions');toggleMobile();return false;">🔔 Subscribe & Save</a>
+
   <a href="#" onclick="handleAccountNavClick();toggleMobile()">👤 My Account</a>
   <a href="#" onclick="openVitaPopup();toggleMobile();return false;"><span class="vp3d" aria-hidden="true"><picture><source srcset="/assets/vitapoint-3d/vitapoint-coin-still.webp" media="(prefers-reduced-motion: reduce)"><img src="/assets/vitapoint-3d/vitapoint-coin.webp" alt="" width="176" height="176" loading="lazy" decoding="async"></picture></span>VitaPoints</a>
 </div>
@@ -6908,19 +6908,6 @@ button, [role="button"] {
 
 <!-- BLOG PREVIEW — moved after the Vita AI section, last thing on the
      home page before the shared footer -->
-<section class="section">
-  <div class="container">
-    <div class="text-center" style="margin-bottom:36px">
-      <div class="section-label">Health Insights</div>
-      <h2 class="section-title">From the Ozylix Blog</h2>
-      <p class="section-sub">Science-backed articles on superfoods, vitamins, and optimal wellness.</p>
-    </div>
-    <div class="blog-grid" id="homeBlogGrid"></div>
-    <div class="text-center" style="margin-top:32px">
-      <button class="btn-outline" onclick="showPage('blog')">Read All Articles →</button>
-    </div>
-  </div>
-</section>
 
 </div>
 <!-- ══════════ END HOME ══════════ -->
@@ -7217,9 +7204,8 @@ button, [role="button"] {
           of dispatch.</p></div>
       <div style="margin-bottom:10px"><strong>How do subscriptions work?</strong>
         <p style="color:var(--gray);line-height:1.7;margin:4px 0">
-          Subscriptions let you set a schedule so your supplement arrives automatically — skip, pause or cancel
-          anytime from your account, with extra savings on every renewal cycle. Prefer pay-as-you-go? Every
-          delivered order also earns VitaPoints (1 point per ₹1, 150 points = ₹1 off).</p></div>
+          Recurring subscriptions are currently unavailable. You can still place one-time orders, and every
+          delivered order earns VitaPoints (1 point per ₹1, 150 points = ₹1 off).</p></div>
     </section>
   </div>
 </div>
@@ -8133,113 +8119,7 @@ button, [role="button"] {
 <!-- ══════════ END ACCESSIBILITY ══════════ -->
 
 
-<!-- ══════════ SUBSCRIPTIONS PAGE ══════════ -->
-<div class="page" id="page-subscriptions" style="padding-top:90px">
-  <div class="page-header">
-    <div class="section-label">Never Run Out</div>
-    <h1>Subscribe &amp; Save</h1>
-    <p>Get your favourite Ozylix supplements delivered automatically. Save more, stress less.</p>
-  </div>
-  <section class="section"><div class="container">
-
-    <div style="background:linear-gradient(135deg,var(--green-wash),var(--st-ok-bg));border-radius:var(--radius);padding:24px 28px;margin-bottom:36px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-      <div style="font-size:2.5rem">🔔</div>
-      <div>
-        <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px">Subscription Benefits</div>
-        <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:0.82rem;color:var(--gray)">
-          <span>✅ Up to 20% savings vs one-time price</span>
-          <span><svg class="ann-svg" width="16" height="16"><use href="#ico-truck"/></svg> Free shipping on every order</span>
-          <span>🔒 Cancel anytime, no lock-in</span>
-          <span>⚡ Priority dispatch</span>
-          <span>🎁 Subscriber-only offers</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="text-center" style="margin-bottom:28px">
-      <h2 class="section-title">Choose Your Plan</h2>
-      <p class="section-sub">Select the frequency that works best for your wellness routine.</p>
-    </div>
-
-    <div class="sub-grid">
-      <div class="sub-card">
-        <div class="sub-name">Monthly</div>
-        <div style="font-size:0.78rem;color:var(--gray);margin-bottom:8px">Delivered every 30 days</div>
-        <div class="sub-price">from ₹<span id="subPrice1">108</span> <span>/month</span></div>
-        <div class="sub-saving">Save 10% vs one-time purchase</div>
-        <ul class="sub-features">
-          <li>Auto-delivery every 30 days</li>
-          <li>Free delivery on every order</li>
-          <li>Easy pause or cancel anytime</li>
-          <li>Email reminder 3 days before dispatch</li>
-        </ul>
-        <button class="btn-outline" style="width:100%" onclick="startSubscription('monthly')">Subscribe Monthly</button>
-      </div>
-
-      <div class="sub-card featured">
-        <div class="sub-popular">⭐ Most Popular</div>
-        <div class="sub-name">Quarterly</div>
-        <div style="font-size:0.78rem;color:var(--gray);margin-bottom:8px">Delivered every 90 days</div>
-        <div class="sub-price">from ₹<span id="subPrice3">306</span> <span>/quarter</span></div>
-        <div class="sub-saving">Save 15% vs one-time purchase</div>
-        <ul class="sub-features">
-          <li>Auto-delivery every 90 days</li>
-          <li>Free express shipping</li>
-          <li>Priority customer support</li>
-          <li>Exclusive subscriber discount codes</li>
-          <li>Easy swap products anytime</li>
-        </ul>
-        <button class="btn-primary" style="width:100%" onclick="startSubscription('quarterly')">Subscribe Quarterly</button>
-      </div>
-
-      <div class="sub-card">
-        <div class="sub-name">Half-Yearly</div>
-        <div style="font-size:0.78rem;color:var(--gray);margin-bottom:8px">Delivered every 6 months</div>
-        <div class="sub-price">from ₹<span id="subPrice6">576</span> <span>/6 months</span></div>
-        <div class="sub-saving">Save 20% — Best value plan</div>
-        <ul class="sub-features">
-          <li>Auto-delivery every 180 days</li>
-          <li>Free express shipping</li>
-          <li>Highest savings tier</li>
-          <li>First access to new products</li>
-          <li>Dedicated subscription dashboard</li>
-        </ul>
-        <button class="btn-outline" style="width:100%" onclick="startSubscription('halfyearly')">Subscribe 6-Monthly</button>
-      </div>
-    </div>
-
-    <!-- Choose Product for subscription -->
-    <div style="background:var(--sub-1);border-radius:var(--radius);border:1px solid rgba(0,0,0,0.08);padding:28px;margin-bottom:32px">
-      <h3 style="font-family:var(--font-display);font-size:1.2rem;margin-bottom:16px">Choose Your Subscription Product</h3>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px" id="subProductGrid"></div>
-      <p style="font-size:0.78rem;color:var(--gray);margin-top:14px">Selected product: <strong id="subSelectedProduct" style="color:var(--green)">None selected</strong></p>
-    </div>
-
-    <!-- FAQ -->
-    <div style="max-width:640px">
-      <h3 style="font-family:var(--font-display);font-size:1.2rem;margin-bottom:16px">Subscription FAQs</h3>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <details style="background:var(--sub-1);border-radius:var(--radius-sm);border:1px solid var(--light-gray);padding:14px 16px">
-          <summary style="font-weight:700;font-size:0.86rem;cursor:pointer">Can I cancel my subscription anytime?</summary>
-          <p style="font-size:0.82rem;color:var(--gray);margin-top:8px;line-height:1.6">Yes, absolutely. You can cancel, pause, or modify your subscription at any time from your Account Dashboard with zero penalties. Cancellations take effect before the next scheduled delivery.</p>
-        </details>
-        <details style="background:var(--sub-1);border-radius:var(--radius-sm);border:1px solid var(--light-gray);padding:14px 16px">
-          <summary style="font-weight:700;font-size:0.86rem;cursor:pointer">How do subscription payments work?</summary>
-          <p style="font-size:0.82rem;color:var(--gray);margin-top:8px;line-height:1.6">Payment is charged automatically via your saved payment method (card/UPI) before each scheduled delivery. You'll receive a reminder email 3 days before each charge.</p>
-        </details>
-        <details style="background:var(--sub-1);border-radius:var(--radius-sm);border:1px solid var(--light-gray);padding:14px 16px">
-          <summary style="font-weight:700;font-size:0.86rem;cursor:pointer">Can I change my product between deliveries?</summary>
-          <p style="font-size:0.82rem;color:var(--gray);margin-top:8px;line-height:1.6">Yes. Log in to your account dashboard and update your subscription product selection at least 5 days before the next scheduled delivery date.</p>
-        </details>
-        <details style="background:var(--sub-1);border-radius:var(--radius-sm);border:1px solid var(--light-gray);padding:14px 16px">
-          <summary style="font-weight:700;font-size:0.86rem;cursor:pointer">Is the subscription discount applied immediately?</summary>
-          <p style="font-size:0.82rem;color:var(--gray);margin-top:8px;line-height:1.6">Yes. The discount applies from your very first subscription order and every order thereafter as long as your subscription remains active.</p>
-        </details>
-      </div>
-    </div>
-  </div></section>
-</div>
-<!-- ══════════ END SUBSCRIPTIONS ══════════ -->
+<!-- SUBSCRIPTIONS DISABLED: recurring delivery plans are not currently active. -->
 
 
 
@@ -8542,7 +8422,6 @@ button, [role="button"] {
             <li><a href="#" onclick="showPage('discount-policy')">Discount Policy</a></li>
             <li><a href="#" onclick="showPage('conduct')">Conduct &amp; Violation Policy</a></li>
             <li><a href="#" onclick="showPage('accessibility')">Accessibility Statement</a></li>
-            <li><a href="#" onclick="showPage('subscriptions')">Subscribe &amp; Save</a></li>
           </ul>
         </details>
         <details class="footer-col" open>
@@ -8636,12 +8515,6 @@ button, [role="button"] {
     <span class="app-more-arrow">›</span>
   </button>
 
-  <button class="app-more-item" onclick="showPage('subscriptions');closeMoreDrawer();setAppNav('more')">
-    <div class="app-more-icon">🔔</div>
-    <span class="app-more-label">Subscribe & Save</span>
-    <span class="app-more-arrow">›</span>
-  </button>
-
   <div style="height:8px;"></div>
 </div>
 
@@ -8677,7 +8550,6 @@ button, [role="button"] {
   <button class="app-menu-item" onclick="showPage('advisor');closeAppMenu();setAppNav('advisor')"><div class="app-menu-icon">🌿</div><span class="app-menu-item-label">AI Health Advisor</span><span class="app-menu-item-badge">NEW</span><span class="app-menu-item-arrow">›</span></button>
   <button class="app-menu-item" onclick="showPage('wishlist');closeAppMenu();setAppNav('more')"><div class="app-menu-icon">♡</div><span class="app-menu-item-label">Wishlist</span><span class="app-menu-item-arrow">›</span></button>
   <button class="app-menu-item" onclick="openNotificationCenter();closeAppMenu();setAppNav('more')"><div class="app-menu-icon">🔔</div><span class="app-menu-item-label">Notification Center</span><span class="app-menu-item-badge">UPDATES</span><span class="app-menu-item-arrow">›</span></button>
-  <button class="app-menu-item" onclick="showPage('subscriptions');closeAppMenu();setAppNav('more')"><div class="app-menu-icon">🔔</div><span class="app-menu-item-label">Subscribe &amp; Save</span><span class="app-menu-item-badge">Save 15%</span><span class="app-menu-item-arrow">›</span></button>
   <button class="app-menu-item" onclick="closeAppMenu();openVitaPopup()"><div class="app-menu-icon vp3d-slot"><span class="vp3d" aria-hidden="true"><picture><source srcset="/assets/vitapoint-3d/vitapoint-coin-still.webp" media="(prefers-reduced-motion: reduce)"><img src="/assets/vitapoint-3d/vitapoint-coin.webp" alt="" width="176" height="176" loading="lazy" decoding="async"></picture></span></div><span class="app-menu-item-label">VitaPoints</span><span class="app-menu-item-arrow">›</span></button>
 
   <div class="app-menu-section-title">Company</div>

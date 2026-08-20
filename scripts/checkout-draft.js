@@ -41,7 +41,7 @@
   };
 
   // Pages that exist in the SPA route list.
-  const VALID_PAGES = ['home','shop','product','cart','checkout','orders','account','login','thankyou','wishlist','notifications','subscriptions','about','contact','faq','advisor','blog','privacy','terms','shipping','refund','accessibility','download'];
+  const VALID_PAGES = ['home','shop','product','cart','checkout','orders','account','login','thankyou','wishlist','notifications','about','contact','faq','advisor','blog','privacy','terms','shipping','refund','accessibility','download'];
 
   // The shop category switcher (filterCat) changes the section without going
   // through showPage, so wrap it to persist the picked category immediately.

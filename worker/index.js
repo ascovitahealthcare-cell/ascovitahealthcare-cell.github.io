@@ -36,7 +36,6 @@ const SPA_ROUTES = new Set([
   '/account',
   '/b2b', // index.html forwards this on to the Ascovita corporate site
   '/wishlist',
-  '/subscriptions',
 ]);
 
 // /product/<slug> only. Bare /product/ has no product to open, and
