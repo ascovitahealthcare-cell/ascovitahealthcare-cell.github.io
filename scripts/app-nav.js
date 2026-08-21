@@ -83,5 +83,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // (already handled by CSS fixed positioning)
 });
 
-// Poll cart every 2s to keep badge in sync
-setInterval(function() { syncAppCartBadge(); syncAppWishBadge(); }, 2000);
+// Same-tab cart changes are observed through the original badge MutationObserver;
+// cross-tab changes use the storage listener above. Avoid a perpetual polling
+// loop on every storefront page, especially on battery-constrained phones.

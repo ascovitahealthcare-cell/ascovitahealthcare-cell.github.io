@@ -37,17 +37,17 @@
 
        This is a client-side backstop. The real fix is Settings → Pages →
        Enforce HTTPS, which redirects before a byte of this file is sent. -->
-    <script src="scripts/security.js?v=20260819-3"></script>
-  <script src="scripts/tracking.js?v=20260819-3"></script>
-  <script src="scripts/seo-core.js?v=20260819-3"></script>
+    <script src="/scripts/security.js?v=20260819-3"></script>
+  <script src="/scripts/tracking.js?v=20260819-3"></script>
+  <script src="/scripts/seo-core.js?v=20260819-3"></script>
 
   <!-- Shared A4 GST tax invoice. Same file is loaded by admin.html, so the
        invoice a customer downloads and the one staff print are one document,
        not two lookalikes that drift apart. Defines OZYLIX_LEGAL,
        IN_STATE_CODES, normaliseOrderForInvoice() and buildInvoiceHTML(). -->
-  <script defer src="scripts/invoice-renderer.js?v=20260821-1"></script>
+  <script defer src="/scripts/invoice-renderer.js?v=20260821-1"></script>
   <!-- 🛒 Fly-to-cart animation (reel-inspired): flying thumbnail arc + badge bump + ✓ Added button flip -->
-  <script defer src="scripts/fly-to-cart.js?v=20260815-2"></script>
+  <script defer src="/scripts/fly-to-cart.js?v=20260815-2"></script>
   <!-- ✅ Indexing directives — placed first so Googlebot reads them before any script loads -->
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <meta name="googlebot" content="index, follow, max-image-preview:large">
@@ -279,9 +279,9 @@
   
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/ozylix-icon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/ozylix-icon-16.png">
-  <link rel="apple-touch-icon" href="assets/ozylix-icon-180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/ozylix-icon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/ozylix-icon-16.png">
+  <link rel="apple-touch-icon" href="/assets/ozylix-icon-180.png">
   <link rel="manifest" href="/manifest.json">
   <link rel="sitemap" type="application/xml" href="https://www.ozylix.com/sitemap.xml">
   <!-- GoKwik Payment — no SDK required -->
@@ -312,8 +312,8 @@
 <!-- Supabase client — used for direct-from-browser review reads/writes (no Render backend involved) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
-<script defer src="scripts/shop.js?v=20260819-3"></script>
-<script defer src="scripts/promo-data.js?v=20260819-3"></script>
+<script defer src="/scripts/shop.js?v=20260819-3"></script>
+<script defer src="/scripts/promo-data.js?v=20260819-3"></script>
 
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -347,7 +347,7 @@
      ═══════════════════════════════════════════════════════════════ -->
 
   <!-- Effervescent Bloom — type -->
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;600&family=Schibsted+Grotesk:wght@400..700&display=swap">
   <!-- media="print" makes this non-blocking; the onload promotes it to all.
        A blocking cross-origin stylesheet in <head> delays first paint by a
@@ -5559,7 +5559,8 @@ button, [role="button"] {
 .edu-tab {
   background: var(--paper, #FBF3E8); border: 1px solid rgba(125,98,89,.22);
   border-radius: 999px; padding: 8px 16px; font-size: .78rem; font-weight: 600;
-  color: var(--t-mid, #3d4a44); cursor: pointer; transition: all .2s ease;
+  color: var(--t-mid, #3d4a44); cursor: pointer;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
 .edu-tab.active { background: var(--green, #4d6a4e); color: #fff; border-color: var(--green, #4d6a4e); box-shadow: 0 4px 12px rgba(77,106,78,.3); }
 .edu-panel { display: none; animation: fz-in .4s var(--rise, ease-out) both; }
@@ -5764,7 +5765,6 @@ button, [role="button"] {
 <style id="ozylix-nav-upgrades">
 .app-topbar-brand-name{font-family:var(--font-display);font-size:1.02rem;font-weight:800;letter-spacing:-.04em;color:var(--t-hi);white-space:nowrap}
 .notification-center-page{min-height:78vh;padding-top:90px}.notification-center-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:18px}.notification-center-actions{display:flex;gap:8px;flex-wrap:wrap}.notification-center-list{display:grid;gap:10px;max-width:820px}.notification-center-card{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:15px 16px;border-radius:16px;background:var(--paper);box-shadow:var(--neo-1);border:1px solid var(--edge)}.notification-center-card.unread{border-color:rgba(61,117,90,.45)}.notification-center-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:12px;background:var(--green-lo,#e8f2eb)}.notification-center-message{color:var(--t-mid);line-height:1.55;font-size:.88rem}.notification-center-message strong{color:var(--t-hi);display:block;margin-bottom:3px}.notification-center-time{display:block;margin-top:5px;font-size:.7rem;color:var(--t-dim)}.notification-center-empty{padding:30px 20px;text-align:center;border-radius:16px;background:var(--paper);box-shadow:var(--neo-1);color:var(--t-low)}.notification-center-empty h3{margin:0 0 7px;color:var(--t-hi)}.notification-center-badge{position:absolute;top:2px;right:1px;min-width:16px;height:16px;padding:0 4px;display:none;place-items:center;border-radius:99px;background:#b84242;color:#fff;font-size:.58rem;font-weight:800}.footer-compact .footer-top{padding-top:16px;padding-bottom:14px}.footer-compact .footer-grid{grid-template-columns:minmax(210px,1.45fr) repeat(4,minmax(112px,1fr));gap:12px 16px}.footer-compact .footer-col summary{list-style:none;cursor:pointer;font-size:.58rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:7px}.footer-compact .footer-col summary::-webkit-details-marker{display:none}.footer-compact .footer-col summary:after{content:'⌄';float:right}.footer-compact .footer-col:not([open]) summary:after{transform:rotate(-90deg)}.footer-compact .footer-col ul{gap:3px}.footer-compact .footer-col a{font-size:.7rem}.footer-compact .footer-bottom{padding-top:8px;padding-bottom:8px;font-size:.66rem}@media(min-width:701px){.footer-compact .footer-col summary:after{display:none}}@media(max-width:700px){.app-topbar-brand-name{font-size:.98rem}.notification-center-page{padding-top:82px}.notification-center-head{align-items:flex-start;flex-direction:column}.notification-center-card{grid-template-columns:auto 1fr}.notification-center-card .notification-center-time{grid-column:2}.footer-compact .footer-grid{grid-template-columns:1fr;gap:7px}.footer-compact .footer-col{padding:10px 0;border-top:1px solid var(--edge)}.footer-compact .footer-col ul{margin-top:9px}.footer-compact .footer-col:not([open]) ul{display:none}}</style><!-- Static SEO identity graph (dynamic Product/Offer appended by scripts/seo-core.js) -->
-<script type="application/ld+json">[{"@type": ["Organization", "OnlineStore"], "@id": "https://www.ozylix.com/#organization", "name": "Ozylix", "alternateName": ["Ozylix", "Ozylix India", "Ozylix Effervescent", "ozylix.com"], "url": "https://www.ozylix.com/", "logo": {"@type": "ImageObject", "@id": "https://www.ozylix.com/#logo", "url": "assets/ozylix-icon-512.png", "caption": "Ozylix Logo — Empower Your Health", "width": 346, "height": 166}, "image": {"@type": "ImageObject", "url": "https://static.wixstatic.com/media/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg/v1/fill/w_1200,h_630,al_c,q_85,enc_avif,quality_auto/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg", "caption": "Ozylix — Premium Effervescent Vitamin Supplements, Anand Gujarat India"}, "description": "Ozylix is the direct-to-consumer supplement brand of Ascovita Healthcare. It sells effervescent vitamin tablets online across India — L-Glutathione for skin, Vitamin C with Amla, Apple Cider Vinegar, Ashwagandha, rehydration, bone health, men's and women's multivitamins, and the Multidiata 19-nutrient multivitamin. Products are made in Ascovita Healthcare's FSSAI approved facility in Anand, Gujarat, and shipped direct from the maker with no reseller markup.", "slogan": "Empower Your Health", "foundingDate": "2022", "foundingLocation": {"@type": "Place", "name": "Anand, Gujarat, India"}, "address": {"@type": "PostalAddress", "streetAddress": "R.S.Cinema, 5, Rajeshree Society Rd, behind R & S Cinemas, Vivekanand Wadi", "addressLocality": "Anand", "addressRegion": "Gujarat", "postalCode": "388001", "addressCountry": "IN"}, "email": "ascovitahealthcare@gmail.com", "contactPoint": [{"@type": "ContactPoint", "contactType": "customer service", "areaServed": "IN", "availableLanguage": ["English", "Hindi", "Gujarati"]}, {"@type": "ContactPoint", "contactType": "sales", "areaServed": "IN", "availableLanguage": ["English", "Hindi", "Gujarati"]}], "sameAs": ["https://www.ozylix.com", "https://www.instagram.com/ozylixlife", "https://www.linkedin.com/company/ascovita-healthcare", "https://www.facebook.com/Ozylix", "https://www.indiamart.com/ascovita-healthcare", "https://www.1mg.com/otc/Ozylix-multidiata-tablet", "https://www.ascovita.com"], "hasCredential": [{"@type": "EducationalOccupationalCredential", "credentialCategory": "FSSAI Licensed", "recognizedBy": {"@type": "GovernmentOrganization", "name": "Food Safety and Standards Authority of India"}}, {"@type": "EducationalOccupationalCredential", "credentialCategory": "FSSAI Licensed", "recognizedBy": {"@type": "GovernmentOrganization", "name": "World Health Organization"}}], "knowsAbout": ["Effervescent Nutraceutical Manufacturing", "L-Glutathione Supplements for Skin Brightening", "Apple Cider Vinegar Weight Management Supplements", "Organic Spirulina B12 D3 Vegan Supplements", "Magnesium Sleep and Recovery Supplements", "Biotin Hair Growth Supplements", "Calcium Iron Women Wellness Supplements", "Multivitamin Daily Nutrition Supplements", "Moringa Immunity Supplements", "L-Carnitine Fat Burning Supplements", "Vitamin C Effervescent Immunity Boosters", "Private Label Supplement Manufacturing India", "Contract Nutraceutical Manufacturing Gujarat", "FSSAI Licensed Nutraceutical Manufacturing", "FSSAI Licensed Food Supplement Production", "B2B Nutraceutical Manufacturing Low MOQ", "D2C Health Supplement E-commerce India", "Effervescent Tablet Formulation and Manufacturing", "Ayurvedic and Modern Nutraceutical Integration", "Pan-India Supplement Distribution", "Skin Health Antioxidant Supplements", "Women Health Supplements India", "Men Vitality Supplements India", "Vegan Plant-Based Nutrition Supplements", "Sports Nutrition and Recovery Supplements India"], "makesOffer": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": "B2B Private Label Nutraceutical Manufacturing", "description": "FSSAI licensed contract manufacturing of effervescent tablets, capsules, sachets and nutraceutical supplements under client brand names. Low MOQ. Custom formulations. Pan-India and global supply.", "areaServed": {"@type": "Country", "name": "India"}}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Custom Effervescent Tablet Formulation", "description": "End-to-end custom effervescent tablet manufacturing with proprietary and custom formulations. Suitable for vitamins, minerals, amino acids, herbal blends.", "areaServed": {"@type": "Country", "name": "India"}}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "D2C Nutraceutical Supplement Sales — Pan-India", "description": "Direct-to-consumer sales of Ozylix premium supplements across all Indian states. Free delivery on every order. Delivery to all PIN codes in India.", "areaServed": {"@type": "Country", "name": "India"}}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Regulatory Compliance & FSSAI Support for Supplement Brands", "description": "Complete regulatory documentation, FSSAI licensing support, and quality compliance for supplement brands launching in India.", "areaServed": {"@type": "Country", "name": "India"}}}], "numberOfEmployees": {"@type": "QuantitativeValue", "value": "11-50"}, "legalName": "Ascovita Healthcare", "areaServed": [{"@type": "Country", "name": "India"}, {"@type": "AdministrativeArea", "name": "Gujarat"}, {"@type": "AdministrativeArea", "name": "Maharashtra"}, {"@type": "AdministrativeArea", "name": "Rajasthan"}, {"@type": "AdministrativeArea", "name": "Karnataka"}, {"@type": "AdministrativeArea", "name": "Tamil Nadu"}, {"@type": "AdministrativeArea", "name": "Telangana"}, {"@type": "AdministrativeArea", "name": "Uttar Pradesh"}, {"@type": "AdministrativeArea", "name": "West Bengal"}, {"@type": "AdministrativeArea", "name": "Delhi"}, {"@type": "AdministrativeArea", "name": "Kerala"}, {"@type": "AdministrativeArea", "name": "Madhya Pradesh"}, {"@type": "AdministrativeArea", "name": "Punjab"}, {"@type": "AdministrativeArea", "name": "Haryana"}, {"@type": "AdministrativeArea", "name": "Bihar"}, {"@type": "AdministrativeArea", "name": "Andhra Pradesh"}, {"@type": "City", "name": "Mumbai"}, {"@type": "City", "name": "Delhi"}, {"@type": "City", "name": "Bangalore"}, {"@type": "City", "name": "Hyderabad"}, {"@type": "City", "name": "Chennai"}, {"@type": "City", "name": "Kolkata"}, {"@type": "City", "name": "Pune"}, {"@type": "City", "name": "Ahmedabad"}, {"@type": "City", "name": "Surat"}, {"@type": "City", "name": "Jaipur"}, {"@type": "City", "name": "Lucknow"}, {"@type": "City", "name": "Kochi"}, {"@type": "City", "name": "Indore"}, {"@type": "City", "name": "Chandigarh"}, {"@type": "City", "name": "Bhopal"}, {"@type": "City", "name": "Nagpur"}, {"@type": "City", "name": "Visakhapatnam"}, {"@type": "City", "name": "Vadodara"}, {"@type": "City", "name": "Anand"}], "parentOrganization": {"@id": "https://www.ascovita.com/#organization"}, "brand": {"@type": "Brand", "name": "Ozylix"}}, {"@type": "Organization", "@id": "https://www.ascovita.com/#organization", "name": "Ascovita Healthcare", "url": "https://www.ascovita.com/", "description": "Ascovita Healthcare is the parent company behind Ozylix. It handles manufacturing, product formulation, R&D, packaging and label design, distribution, private label and white label production, B2B services, and export partnerships from its FSSAI approved facility in Anand, Gujarat, India.", "subOrganization": {"@id": "https://www.ozylix.com/#organization"}, "knowsAbout": ["Effervescent tablet manufacturing", "Nutraceutical formulation", "Private label supplements", "White label supplements", "Contract manufacturing", "Supplement export"], "address": {"@type": "PostalAddress", "addressLocality": "Anand", "addressRegion": "Gujarat", "addressCountry": "IN"}}, {"@type": "Person", "@id": "https://www.ozylix.com/#founder", "name": "Aamin Ghachivahora", "jobTitle": "Co-Founder", "affiliation": {"@id": "https://www.ozylix.com/#organization"}, "worksFor": {"@id": "https://www.ozylix.com/#organization"}, "knowsAbout": ["Nutraceuticals", "Health Supplements", "Pharmaceutical Manufacturing", "Effervescent Vitamins", "B2B Private Label"], "sameAs": "https://www.linkedin.com/in/aamin-ghachivahora-416985332", "url": "https://www.linkedin.com/in/aamin-ghachivahora-416985332"}, {"@type": "WebSite", "@id": "https://www.ozylix.com/#website", "url": "https://www.ozylix.com/", "name": "Ozylix", "alternateName": "ozylix.com", "description": "Official website of Ozylix — India's premium FSSAI approved effervescent vitamin and nutraceutical supplement brand, co-founded by Aamin Ghachivahora in Anand, Gujarat.", "publisher": {"@id": "https://www.ozylix.com/#organization"}, "potentialAction": {"@type": "SearchAction", "target": {"@type": "EntryPoint", "urlTemplate": "https://www.ozylix.com/?q={search_term_string}"}, "query-input": "required name=search_term_string"}, "speakable": {"@type": "SpeakableSpecification", "cssSelector": [".hero-title", ".hero-subtitle", ".product-name", ".faq-question", "h1", "h2"]}, "inLanguage": "en-IN"}, {"@type": "WebPage", "@id": "https://www.ozylix.com/#webpage", "url": "https://www.ozylix.com/", "name": "Ozylix | Premium Effervescent Vitamins & Nutraceutical Manufacturer — Anand, Gujarat, India", "isPartOf": {"@id": "https://www.ozylix.com/#website"}, "about": {"@id": "https://www.ozylix.com/#organization"}, "description": "Buy Ozylix effervescent vitamin tablets online in India — Glutathione, Vitamin C + Amla, Apple Cider Vinegar, Ashwagandha and daily multivitamins, shipped direct from the FSSAI approved facility that makes them.", "breadcrumb": {"@id": "https://www.ozylix.com/#breadcrumb"}, "author": {"@id": "https://www.ozylix.com/#organization"}, "primaryImageOfPage": {"@type": "ImageObject", "url": "https://static.wixstatic.com/media/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg/v1/fill/w_1200,h_630,al_c,q_85,enc_avif,quality_auto/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg", "caption": "Ozylix — L-Glutathione Effervescent Tablet, Skin Brightening Supplement, Anand Gujarat India"}, "inLanguage": "en-IN", "specialty": "Nutraceuticals, Effervescent Vitamins, Health Supplements India"}, {"@type": "BreadcrumbList", "@id": "https://www.ozylix.com/#breadcrumb", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.ozylix.com/"}, {"@type": "ListItem", "position": 2, "name": "Shop Supplements", "item": "https://www.ozylix.com/shop"}, {"@type": "ListItem", "position": 3, "name": "About Ozylix", "item": "https://www.ozylix.com/about"}, {"@type": "ListItem", "position": 4, "name": "Blog & Health Tips", "item": "https://www.ozylix.com/blog"}, {"@type": "ListItem", "position": 5, "name": "Contact Us", "item": "https://www.ozylix.com/contact"}]}, {"@type": "LocalBusiness", "@id": "https://www.ozylix.com/#localbusiness", "name": "Ozylix", "alternateName": ["Ozylix", "Ozylix Nutraceuticals"], "image": ["assets/ozylix-icon-512.png", "https://static.wixstatic.com/media/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg/v1/fill/w_1200,h_630,al_c,q_85,enc_avif,quality_auto/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg"], "url": "https://www.ozylix.com/", "email": "ascovitahealthcare@gmail.com", "priceRange": "₹120 – ₹900", "currenciesAccepted": "INR", "paymentAccepted": "UPI, Credit Card, Debit Card, Net Banking, EMI, COD", "address": {"@type": "PostalAddress", "streetAddress": "R.S.Cinema, 5, Rajeshree Society Rd, behind R & S Cinemas, Vivekanand Wadi", "addressLocality": "Anand", "addressRegion": "Gujarat", "postalCode": "388001", "addressCountry": "IN"}, "openingHoursSpecification": {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "opens": "09:00", "closes": "18:00"}, "hasMap": "https://maps.google.com/?q=Ozylix+Healthcare,Anand,Gujarat,India", "areaServed": [{"@type": "Country", "name": "India"}, {"@type": "AdministrativeArea", "name": "Gujarat"}], "serviceArea": {"@type": "AdministrativeArea", "name": "India"}, "category": "Nutraceutical Manufacturer, Health Supplement Brand, Pharmaceutical Manufacturer", "description": "Ozylix is the direct-to-consumer supplement brand of Ascovita Healthcare. It sells effervescent vitamin tablets online across India — L-Glutathione for skin, Vitamin C with Amla, Apple Cider Vinegar, Ashwagandha, rehydration, bone health, men's and women's multivitamins, and the Multidiata 19-nutrient multivitamin. Products are made in Ascovita Healthcare's FSSAI approved facility in Anand, Gujarat, and shipped direct from the maker with no reseller markup.", "sameAs": ["https://www.instagram.com/ozylixlife", "https://www.linkedin.com/company/ascovita-healthcare", "https://www.facebook.com/Ozylix", "https://www.indiamart.com/ascovita-healthcare"]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Ozylix?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix is an Indian direct-to-consumer supplement brand selling effervescent vitamin tablets online. Each tablet drops into a glass of water and dissolves, which absorbs faster than a swallowed pill. The range covers L-Glutathione for skin, Vitamin C with Amla, Apple Cider Vinegar, Ashwagandha, rehydration, bone health and daily multivitamins. Ozylix is the consumer brand of Ascovita Healthcare, which makes every product in its own FSSAI approved facility in Anand, Gujarat."}}, {"@type": "Question", "name": "Who is the co-founder of Ozylix?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix was co-founded by Aamin Ghachivahora. The company is headquartered in Anand, Gujarat, India and manufactures FSSAI approved effervescent nutraceutical supplements."}}, {"@type": "Question", "name": "Where is Ozylix located?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix is located in Anand, Gujarat, India (Pincode 388001). The manufacturing facility is FSSAI licensed. Address: R.S.Cinema Road, Vivekanand Wadi, Anand, Gujarat 388001."}}, {"@type": "Question", "name": "Is Ozylix FSSAI approved?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. All Ozylix supplements are manufactured in a FSSAI-licensed facility in Anand, Gujarat, India. Every batch undergoes quality testing. Ozylix is transparent about its ingredients, certifications, and manufacturing processes."}}, {"@type": "Question", "name": "Who makes Ozylix supplements?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix supplements are made by Ascovita Healthcare, the parent company, in its own FSSAI approved facility in Anand, Gujarat. Ascovita handles formulation, R&D and manufacturing; Ozylix is the consumer brand that sells the finished products online. Because the maker ships direct, there is no distributor markup in the price. B2B, private label and export enquiries are handled by Ascovita Healthcare at ascovita.com."}}, {"@type": "Question", "name": "Which Ozylix supplement is best for skin glow and brightening?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix's L-Glutathione Effervescent (Orange Flavour) is the best product for skin glow. It contains 650mg Reduced Glutathione, Vitamin C 1000mg, L-Cysteine, and Astaxanthin. The effervescent format absorbs 3x faster than capsules. Most users see visible results within 4-6 weeks of daily use."}}, {"@type": "Question", "name": "Which Ozylix supplement is best for weight management?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix's ACV + Moringa Effervescent (Green Apple Flavour) is ideal for weight management. It contains Apple Cider Vinegar, Garcinia Cambogia, and Moringa — taken 15-30 minutes before a meal to manage cravings, blood sugar spikes and support healthy metabolism."}}, {"@type": "Question", "name": "Which is better: Glutathione capsules or effervescent tablets?", "acceptedAnswer": {"@type": "Answer", "text": "Effervescent tablets have significantly higher bioavailability — up to 3x faster absorption than capsules. Ozylix's L-Glutathione Effervescent delivers 650mg Reduced Glutathione with Vitamin C 1000mg for maximum antioxidant protection and skin glow."}}, {"@type": "Question", "name": "Are Ozylix products safe for vegetarians and vegans?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. All Ozylix spirulina-based products — VitaPlus B12+D3, MG+++ Magnesium, and CS++ Calcium+Iron — are 100% vegan, plant-based, made with certified organic spirulina. The effervescent range is also vegetarian. All are free from artificial additives."}}, {"@type": "Question", "name": "Does Ozylix deliver supplements across all of India?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Ozylix offers free delivery pan-India on every order. We deliver to all major cities including Mumbai, Delhi, Bangalore, Hyderabad, Chennai, Kolkata, Pune, Ahmedabad, Surat, Jaipur, Lucknow, Kochi, Indore, Chandigarh, Nagpur, Bhopal, Visakhapatnam, Vadodara, and all other PIN codes across India. Standard delivery takes 2-7 business days."}}, {"@type": "Question", "name": "Which is the best glutathione supplement brand in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix is one of India's most trusted glutathione supplement brands. The Ozylix L-Glutathione Effervescent contains 650mg Reduced Glutathione + 1000mg Vitamin C + L-Cysteine + Astaxanthin in an effervescent format for 3x faster absorption than capsules. FSSAI approved, manufactured in Anand, Gujarat. Available at ozylix.com with pan-India delivery."}}, {"@type": "Question", "name": "What is the best supplement for skin glow and brightening in India?", "acceptedAnswer": {"@type": "Answer", "text": "For skin glow and brightening in India, Ozylix's L-Glutathione Effervescent (Orange Flavour) is the top choice. It contains 650mg Reduced Glutathione, Vitamin C 1000mg, L-Cysteine and Astaxanthin — powerful antioxidants that reduce melanin production, brighten skin tone, and protect against UV damage. Results are visible in 4-6 weeks of daily use."}}, {"@type": "Question", "name": "What is the best supplement for hair growth and hair fall control in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix B12 + Biotin Effervescent (Guava Flavour) is ideal for hair growth and hair fall control. It contains high-dose Biotin, Vitamin B12, and essential nutrients in a fast-absorbing effervescent tablet. Biotin supports keratin production which strengthens hair follicles and reduces hair fall. One tablet daily dissolves in water for a refreshing guava-flavoured drink."}}, {"@type": "Question", "name": "What is the best vegan B12 supplement in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix VitaPlus B12+D3 with Certified Organic Spirulina is India's best vegan B12 supplement. It is 100% plant-based, made with certified organic spirulina, and provides Methylcobalamin B12 + Vitamin D3 in one tablet. Ideal for vegans, vegetarians, and anyone on a plant-based diet who may be deficient in B12. Available at ozylix.com with pan-India delivery."}}, {"@type": "Question", "name": "Which magnesium supplement is best for sleep and muscle recovery in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix MG+++ Magnesium B12+D3 with Organic Spirulina is the best magnesium supplement in India for sleep support and muscle recovery. It combines Magnesium, Vitamin B12, Vitamin D3, and Organic Spirulina for comprehensive nervous system and muscle support. Take one tablet daily for deeper sleep, reduced muscle cramps, and better recovery after exercise."}}, {"@type": "Question", "name": "Which calcium and iron supplement is best for women in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix CS++ Calcium+Iron with B12+D3 and Organic Spirulina is the best calcium and iron supplement for women in India. It addresses the most common deficiencies in Indian women — calcium, iron, B12 and D3 — all in one tablet enriched with organic spirulina. Supports bone health, reduces fatigue from iron deficiency anaemia, and boosts overall energy levels."}}, {"@type": "Question", "name": "What is the best multivitamin for daily nutrition in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix Multidiata is India's premium daily multivitamin with 23 essential vitamins and minerals in one tablet. It includes Vitamins A, B-complex, C, D3, E, K2, Zinc, Selenium, Chromium, and more. It is FSSAI approved and manufactured in Gujarat, India. Available in Box Pack (30 tabs at ₹120) and Bottle Pack (60 tabs at ₹231) at ozylix.com."}}, {"@type": "Question", "name": "What supplements does Ozylix recommend for weight loss in India?", "acceptedAnswer": {"@type": "Answer", "text": "For weight management and fat loss, Ozylix recommends: (1) ACV + Moringa Effervescent — Apple Cider Vinegar with Garcinia Cambogia and Moringa, taken before meals to reduce cravings and support metabolism; (2) L-Carnitine Effervescent — supports fat burning during exercise by transporting fatty acids into mitochondria for energy. Both are FSSAI approved and available at ozylix.com."}}, {"@type": "Question", "name": "Are Ozylix supplements available in Mumbai, Delhi, Bangalore, Hyderabad and other major cities?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Ozylix delivers supplements to all major Indian cities including Mumbai, Delhi, Bangalore, Hyderabad, Chennai, Kolkata, Pune, Ahmedabad, Surat, Jaipur, Lucknow, Kochi, Indore, Chandigarh, Nagpur, Visakhapatnam, Bhopal, Vadodara, Patna, Coimbatore, and all other cities and towns across India. Order at ozylix.com with delivery in 2-7 business days."}}, {"@type": "Question", "name": "Where can I buy Ozylix effervescent tablets online?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix effervescent tablets are sold directly at ozylix.com and ship across India. Orders over Rs 599 ship free, and dispatch is typically within 24 hours from Anand, Gujarat. Buying from the official store means the tablets come straight from the FSSAI approved facility that made them, with full batch traceability."}}, {"@type": "Question", "name": "What is the difference between Ozylix Spirulina range and the Effervescent range?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix has two main supplement ranges: (1) Effervescent Range — fast-dissolving tablets (Glutathione, ACV Moringa, Biotin, Vitamin C, L-Carnitine) for rapid absorption, best for active individuals and those who prefer a drink format. (2) Spirulina Range — solid tablets (VitaPlus B12+D3, MG+++ Magnesium, CS++ Calcium+Iron) made with certified organic spirulina, 100% vegan, best for daily foundational nutrition and plant-based lifestyle."}}, {"@type": "Question", "name": "What makes Ozylix different from other supplement brands in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix stands out for four key reasons: (1) FSSAI approved manufacturing in India; (2) Effervescent format for 3x faster absorption vs capsules; (3) Certified Organic Spirulina in the spirulina range — plant-based, vegan, and free from artificial additives; (4) Transparent ingredients and clinical dosages. Co-founded by Aamin Ghachivahora, Ozylix is a Made-in-India brand committed to science-backed, affordable wellness for every Indian."}}]}, {"@type": "MedicalOrganization", "@id": "https://www.ozylix.com/#medicalorg", "name": "Ozylix", "url": "https://www.ozylix.com", "description": "Ozylix is the direct-to-consumer supplement brand of Ascovita Healthcare. It sells effervescent vitamin tablets online across India — L-Glutathione for skin, Vitamin C with Amla, Apple Cider Vinegar, Ashwagandha, rehydration, bone health, men's and women's multivitamins, and the Multidiata 19-nutrient multivitamin. Products are made in Ascovita Healthcare's FSSAI approved facility in Anand, Gujarat, and shipped direct from the maker with no reseller markup.", "medicalSpecialty": "Nutraceuticals, Dietary Supplements, Vitamins and Minerals", "hasCredential": [{"@type": "EducationalOccupationalCredential", "credentialCategory": "FSSAI Licensed", "recognizedBy": {"@type": "GovernmentOrganization", "name": "Food Safety and Standards Authority of India"}}, {"@type": "EducationalOccupationalCredential", "credentialCategory": "FSSAI Licensed", "recognizedBy": {"@type": "GovernmentOrganization", "name": "World Health Organization"}}], "parentOrganization": {"@id": "https://www.ascovita.com/#organization"}}, {"@type": "ItemList", "@id": "https://www.ozylix.com/#categories", "name": "Ozylix Supplement Categories", "description": "All supplement categories available at Ozylix India", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Effervescent Vitamin Supplements", "url": "https://www.ozylix.com/products/effervescent", "item": {"@type": "Thing", "name": "Effervescent Vitamins India", "description": "Fast-absorbing effervescent vitamin tablets for skin glow, immunity, weight management, hair growth, and fat burning. FSSAI approved."}}, {"@type": "ListItem", "position": 2, "name": "Spirulina Supplement Range", "url": "https://www.ozylix.com/products/spirulina", "item": {"@type": "Thing", "name": "Spirulina Supplements India", "description": "100% vegan supplement tablets made with certified organic spirulina. B12+D3, Magnesium, Calcium+Iron. Plant-based, no artificial additives."}}, {"@type": "ListItem", "position": 3, "name": "Ayurvedic Supplements", "url": "https://www.ozylix.com/products/ayurvedic", "item": {"@type": "Thing", "name": "Ayurvedic Supplements India", "description": "Organic Moringa Tablets — natural immunity booster, anti-inflammatory, rich in vitamins and minerals."}}, {"@type": "ListItem", "position": 4, "name": "Premium Multivitamins", "url": "https://www.ozylix.com/products/premium", "item": {"@type": "Thing", "name": "Premium Multivitamin India", "description": "Multidiata — 19 vitamins and minerals in one daily tablet. India's premium multivitamin supplement."}}, {"@type": "ListItem", "position": 5, "name": "B2B Private Label Manufacturing", "url": "https://www.ascovita.com/#/capabilities", "item": {"@type": "Thing", "name": "Private Label Supplement Manufacturing India", "description": "FSSAI licensed B2B contract manufacturing for supplement brands across India."}}]}]</script>
 </head>
 <!-- Promotional Media Config -->
 
@@ -5788,7 +5788,7 @@ button, [role="button"] {
 <div class="app-topbar" id="appTopBar">
   <!-- Logo -->
   <a href="#" onclick="showPage('home');return false;" style="display:flex;align-items:center;text-decoration:none;flex-shrink:0;gap:8px;">
-    <img class="app-topbar-logo" src="assets/ozylix-mark.svg" alt="Ozylix" onerror="this.onerror=null;this.style.display='none';" decoding="async">
+    <img class="app-topbar-logo" src="/assets/ozylix-mark.svg" alt="Ozylix" onerror="this.onerror=null;this.style.display='none';" decoding="async">
     <span class="app-topbar-brand-name">Ozylix</span>
   </a>
   <!-- B2B pill only -->
@@ -5855,14 +5855,14 @@ button, [role="button"] {
 </nav>
 
 <!-- ═══ APP NAV SYNC SCRIPT ═══ -->
-<script defer src="scripts/app-nav.js?v=20260819-3"></script>
+<script defer src="/scripts/app-nav.js?v=20260819-3"></script>
 
 
 <!-- ── ANIMATION SYSTEM ELEMENTS ── -->
 <div id="scrollBar"></div>
 <div id="pageTransition"></div>
 
-<script defer src="scripts/animations.js?v=20260821-2"></script>
+<script defer src="/scripts/animations.js?v=20260821-2"></script>
 
 <!-- SVG ICON DEFS — reusable 3D illustrated icons -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -6317,7 +6317,7 @@ button, [role="button"] {
 <nav class="navbar">
   <div class="nav-inner">
     <a href="#" class="nav-logo" onclick="showPage('home')">
-      <img data-media-key="site.logo" src="assets/ozylix-logo.png" alt="Ozylix Logo" fetchpriority="high" decoding="sync" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
+      <img data-media-key="site.logo" src="/assets/ozylix-logo.png" alt="Ozylix Logo" fetchpriority="high" decoding="sync" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
       <div id="logoFallback" class="nav-logo-fallback" style="display:none">
         <div class="nav-logo-leaf"><svg width="22" height="22"><use href="#ico-leaf"/></svg></div>
         <div>
@@ -6557,7 +6557,7 @@ button, [role="button"] {
     </div>
   </section>
 
-  <script defer src="scripts/promo-media.js?v=20260819-3"></script>
+  <script defer src="/scripts/promo-media.js?v=20260819-3"></script>
 
   <!-- ══════════ SITE MEDIA LOADER ══════════
        Every <img data-media-key="..." decoding="async" alt=""> and the CSS vars --about-hero-bg /
@@ -6566,7 +6566,7 @@ button, [role="button"] {
        admin-uploaded replacements and swaps them in. If the request
        fails (offline, backend down, key not set) the page simply keeps
        showing the fallback — nothing ever breaks. -->
-  <script defer src="scripts/site-media.js?v=20260819-5"></script>
+  <script defer src="/scripts/site-media.js?v=20260819-5"></script>
 
   <!-- CATEGORIES -->
   <section class="section" style="padding-bottom:32px">
@@ -6731,7 +6731,7 @@ button, [role="button"] {
     </div>
   </section>
 
-<script defer src="scripts/banners.js?v=20260819-6"></script>
+<script defer src="/scripts/banners.js?v=20260819-6"></script>
 
   <!-- FAQ PREVIEW -->
   <section class="section" style="background:var(--green-wash)">
@@ -7267,8 +7267,8 @@ button, [role="button"] {
     <div class="ck-header-card">
       <div class="ck-header-left">
         <div class="ck-header-badge">Secure Checkout</div>
-        <div style="font-size:1.8rem;margin:6px 0 4px;font-weight:700">Almost There!</div>
-        <p style="font-size:.82rem;color:var(--t-low);margin:0">Complete your order in under a minute — free delivery, FSSAI approved, made in India.</p>
+        <h1 style="font-size:1.8rem;margin:6px 0 4px;font-weight:700">Almost There!</h1>
+        <p style="font-size:.82rem;color:var(--t-low);margin:0">Complete your order in under a minute — delivery options are shown before payment.</p>
       </div>
       <div class="ck-header-steps">
         <div class="ck-hstep ck-hstep-done">Cart ✓</div>
@@ -7397,7 +7397,7 @@ button, [role="button"] {
 </div>
 <!-- ══════════ END CHECKOUT ══════════ -->
 
-<script defer src="scripts/cart-utils.js?v=20260819-5"></script>
+<script defer src="/scripts/cart-utils.js?v=20260819-5"></script>
 
 
 <!-- ══════════ THANK YOU PAGE ══════════ -->
@@ -7574,7 +7574,7 @@ button, [role="button"] {
       <div class="about-hero-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:60px;align-items:center">
         <div>
           <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;padding:6px 16px;font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;color:var(--f-mineral)">&#127807; Our Story</div>
-          <div style="font-size:clamp(2.2rem,4.5vw,3.5rem);font-family:var(--font-display);line-height:1.1;margin-bottom:20px;font-weight:800">Rooted in Nature,<br><em style="color:var(--f-mineral);font-style:italic">Powered by Science</em></div>
+          <h1 style="font-size:clamp(2.2rem,4.5vw,3.5rem);font-family:var(--font-display);line-height:1.1;margin-bottom:20px;font-weight:800">Rooted in Nature,<br><em style="color:var(--f-mineral);font-style:italic">Powered by Science</em></h1>
           <p style="font-size:.95rem;color:var(--t-mid);line-height:1.85;margin-bottom:22px">Ozylix is the direct-to-consumer brand of <strong>Ascovita Healthcare</strong>, and every tablet is made in Ascovita's own FSSAI-licensed plant in Anand, Gujarat — India's nutraceutical capital. Nothing is outsourced and nobody stands between the factory and your door.</p>
           <!-- The relationship was stated in the page's schema and meta tags
                but never on the page itself, so a reader had no way to know
@@ -8046,7 +8046,7 @@ button, [role="button"] {
 <div class="page" id="page-payment-failed" style="padding-top:90px;background:var(--off-white);min-height:80vh">
   <div class="pf-page">
     <div class="pf-icon">❌</div>
-    <div class="pf-title">Payment Failed</div>
+    <h1 class="pf-title">Payment Failed</h1>
     <p style="color:var(--gray);font-size:0.9rem;line-height:1.7;margin-bottom:16px" id="pfErrorMsg">Your payment could not be processed. No money has been deducted from your account.</p>
     <div class="pf-steps">
       <div style="font-weight:700;font-size:0.86rem;margin-bottom:12px;color:var(--text)">What you can do:</div>
@@ -8136,9 +8136,9 @@ button, [role="button"] {
 
 
 
-<script defer src="scripts/store-core.js?v=20260819-4"></script>
-<script defer src="scripts/img-hydrator.js?v=20260821-2"></script>
-<script defer src="scripts/product-images.js?v=20260819-3"></script>
+<script defer src="/scripts/store-core.js?v=20260819-4"></script>
+<script defer src="/scripts/img-hydrator.js?v=20260821-2"></script>
+<script defer src="/scripts/product-images.js?v=20260819-3"></script>
 
 <!-- ══════════ SIDE CART DRAWER ══════════ -->
 <div class="side-cart-overlay" id="sideCartOverlay" onclick="closeSideCart()"></div>
@@ -8272,7 +8272,7 @@ button, [role="button"] {
   </div>
 </div>
 
-<script defer src="scripts/pw-strength.js?v=20260819-3"></script>
+<script defer src="/scripts/pw-strength.js?v=20260819-3"></script>
 
 <!-- ══════════ ACCOUNT DASHBOARD PAGE ══════════ -->
 <div class="page" id="page-account" style="padding-top:90px;background:var(--off-white);min-height:100vh">
@@ -8469,7 +8469,7 @@ button, [role="button"] {
   </div>
 </footer>
 
-<script defer src="scripts/auth-core.js?v=20260821-1"></script>
+<script defer src="/scripts/auth-core.js?v=20260821-1"></script>
 
 <div id="stickyCart" style="position:fixed;bottom:0;left:0;right:0;z-index:920;display:none;align-items:center;gap:12px;padding:10px 14px;transform:translateY(100%);background:var(--paper);box-shadow:0 -1px 0 var(--edge),0 -10px 30px rgba(72,62,70,.10)">
   <div style="flex:1;min-width:0">
@@ -8531,7 +8531,7 @@ button, [role="button"] {
   <div style="height:8px;"></div>
 </div>
 
-<script defer src="scripts/drawers.js?v=20260819-3"></script>
+<script defer src="/scripts/drawers.js?v=20260819-3"></script>
 
 
 
@@ -8542,7 +8542,7 @@ button, [role="button"] {
   <!-- Header -->
   <div class="app-menu-header">
     <img class="app-menu-logo" data-media-key="site.logo"
-      src="assets/ozylix-logo.png"
+      src="/assets/ozylix-logo.png"
       alt="Ozylix" onerror="this.style.display='none'" decoding="async">
     <button class="app-menu-close" onclick="closeAppMenu()">✕</button>
   </div>
@@ -8586,7 +8586,7 @@ button, [role="button"] {
 </div>
 
 <!-- ═══ HAMBURGER + MOBILE SLIDE JS ═══ -->
-<script defer src="scripts/app-menu.js?v=20260819-3"></script>
+<script defer src="/scripts/app-menu.js?v=20260819-3"></script>
 
 
   <!-- ═══════════════════════════════════════════════════════════
@@ -8595,7 +8595,7 @@ button, [role="button"] {
        Crawlable by all search engines and AI crawlers
   ═══════════════════════════════════════════════════════════ -->
   
-<script defer src="scripts/tilt-reveal.js?v=20260819-3"></script>
+<script defer src="/scripts/tilt-reveal.js?v=20260819-3"></script>
 
 
 
@@ -8611,19 +8611,19 @@ button, [role="button"] {
 
 <!-- Ozylix — count-up animation for the stat row, fires once when it
      first scrolls into view. -->
-<script defer src="scripts/counters.js?v=20260819-3"></script>
+<script defer src="/scripts/counters.js?v=20260819-3"></script>
 
 <!-- Ozylix — lightweight 3D tilt for product cards & hero visuals.
      Follows the pointer immediately (no lag), reduced-motion safe, and
      does nothing on touch devices where hover has no meaning. -->
-<script defer src="scripts/magnet-deco.js?v=20260819-3"></script>
+<script defer src="/scripts/magnet-deco.js?v=20260819-3"></script>
 
 <!-- Ozylix — button motion (magnetic pull + click ripple) and
      scroll-reveal for every section, not just the hero. -->
-<script defer src="scripts/magnet-observe.js?v=20260819-3"></script>
+<script defer src="/scripts/magnet-observe.js?v=20260819-3"></script>
 
 
-<script defer src="scripts/liquid-bubbles.js?v=20260821-2"></script>
+<script defer src="/scripts/liquid-bubbles.js?v=20260821-2"></script>
 
 <!-- ══ APP LAYER ══ -->
 <style>
@@ -8833,7 +8833,7 @@ button:active, .btn-primary:active, .btn-outline:active,
 }
 
 </style>
-<script defer src="scripts/trust-badges.js?v=20260819-3"></script>
+<script defer src="/scripts/trust-badges.js?v=20260819-3"></script>
 
 
 <!-- ══════════════════════════════════════════════════════════════════════
@@ -9179,12 +9179,12 @@ body:not(.oz-product) #stickyCart { display: none !important; }
 .particle { z-index: -1 !important; pointer-events: none !important; }
 </style>
 
-<script defer src="scripts/cart-footer.js?v=20260819-3"></script>
+<script defer src="/scripts/cart-footer.js?v=20260819-3"></script>
 
-<script defer src="scripts/account-welcome.js?v=20260819-4"></script>
+<script defer src="/scripts/account-welcome.js?v=20260819-4"></script>
 
 
-<script defer src="scripts/platform-copy.js?v=20260819-3"></script>
+<script defer src="/scripts/platform-copy.js?v=20260819-3"></script>
 
 <!-- ══════════════════════════════════════════════════════════════════
      SERVICE WORKER REGISTRATION
@@ -9204,9 +9204,9 @@ body:not(.oz-product) #stickyCart { display: none !important; }
      ══════════════════════════════════════════════════════════════════ -->
 
 
-<script defer src="scripts/scroll-progress.js?v=20260819-3"></script>
+<script defer src="/scripts/scroll-progress.js?v=20260819-3"></script>
 
-<script defer src="scripts/fire-pageview.js?v=20260819-3"></script>
+<script defer src="/scripts/fire-pageview.js?v=20260819-3"></script>
 
 <!-- Ozylix behaviour beacon — sends first-party behaviour events to the
      marketing service so the store owns its own customer data (Meta Pixel
@@ -9214,11 +9214,11 @@ body:not(.oz-product) #stickyCart { display: none !important; }
      store scripts because it WRAPS them rather than duplicating them.
      Fire-and-forget and fully try/catch'd: if the marketing service is down
      or blocked, the shopper sees no difference. -->
-<script defer src="scripts/ozy-track.js?v=20260820-1"></script>
+<script defer src="/scripts/ozy-track.js?v=20260820-1"></script>
 
 <!-- Central contextual popup manager root (max 1 card, never covers CTAs) -->
 <div id="ozylxNotify" aria-live="polite"></div>
-<script defer src="scripts/checkout-draft.js?v=20260819-3"></script>
+<script defer src="/scripts/checkout-draft.js?v=20260819-3"></script>
 
 
 
@@ -9248,7 +9248,7 @@ body:not(.oz-product) #stickyCart { display: none !important; }
 .blog-reader .br-body { font-size:1rem; line-height:1.85; color:#2a2f2a; }
 .blog-reader .br-body p { margin-bottom:16px; }
 </style>
-<script defer src="scripts/blog.js?v=20260819-3"></script>
+<script defer src="/scripts/blog.js?v=20260819-3"></script>
 
 <!-- ═══════════════════════════════════════════════════════════════
      Aug 2026: Front Store Editor (v9.5) — live theme loader.
@@ -9259,9 +9259,9 @@ body:not(.oz-product) #stickyCart { display: none !important; }
      (cached ~60s). An admin browsing with ?preview=1 sees their
      unsaved draft from localStorage instead.
      ═══════════════════════════════════════════════════════════════ -->
-<script defer src="scripts/themes.js?v=20260819-3"></script>
+<script defer src="/scripts/themes.js?v=20260819-3"></script>
 
 <!-- ═════════ OZYLIX v10 STORE LOADER — style presets, combos & content edits ═════════ -->
-<script defer src="scripts/theme-builder.js?v=20260819-3"></script>
+<script defer src="/scripts/theme-builder.js?v=20260819-3"></script>
 </body>
 </html>

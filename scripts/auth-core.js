@@ -402,53 +402,42 @@ function showPage(pg) {
   // ── SEO: Update title + meta description per page ──
   // ── SEO: Per-page keyword-rich titles (≤60 chars) + descriptions (≤155 chars) ──
   const PAGE_SEO = {
-    home:          [
-      'Glutathione Effervescent Tablets | Ozylix India',
-      'FSSAI approved effervescent vitamins from Anand, Gujarat. Glutathione, Spirulina, Moringa, ACV & Multivitamins. FSSAI Approved. Free delivery, no minimum.'
-    ],
-    shop:          [
-      'Shop Effervescent Vitamins & Supplements | Ozylix India',
-      'Browse 11 premium supplements — Glutathione, Spirulina B12+D3, Organic Moringa, ACV+Moringa, Multivitamin. FSSAI approved, made in Gujarat. Up to 35% OFF on packs.'
-    ],
-    about:         [
-      'About Ozylix | FSSAI Licensed Supplement Manufacturer Anand Gujarat',
-      'Ozylix — nutraceutical manufacturer in Anand, Gujarat. FSSAI approved. Effervescent tablets, organic spirulina and moringa supplements India.'
-    ],
-    blog:          [
-      'Supplement & Wellness Blog | Glutathione, Spirulina Guides | Ozylix',
-      'Expert guides on Glutathione skin glow, Spirulina for vegans, Moringa hair growth & ACV weight loss from Ozylix\'s nutritionists. Free health tips for India.'
-    ],
-    faq:           [
-      'FAQ – Effervescent Vitamins, Shipping & Returns | Ozylix',
-      'Common questions about Ozylix supplements: absorption, FSSAI certification, delivery across India, returns and all payment options including UPI and EMI.'
-    ],
-    contact:       [
-      'Contact Ozylix | Supplement Manufacturer in Anand, Gujarat India',
-      'Reach Ascovita in Anand, Gujarat. Call +91 9898 582 650 or WhatsApp for product queries, B2B wholesale and retail support across India.'
-    ],
-    cart:          [
-      'Your Cart | Ozylix – Effervescent Vitamins India',
-      'Review your Ozylix supplement order. Free delivery, no minimum. Secure UPI, card and EMI checkout. FSSAI approved, made in Anand Gujarat.'
-    ],
-    checkout:      [
-      'Secure Checkout | Ozylix – Made in Gujarat India',
-      'Complete your order securely. Pay via UPI, Credit/Debit Card, Net Banking or EMI via GoKwik. FSSAI approved effervescent supplements delivered pan-India.'
-    ],
-    advisor:       [
-      'AI Health Advisor – Find Your Perfect Supplement | Ozylix',
-      'Answer 3 questions to discover which Ozylix effervescent vitamin is right for your skin, energy, immunity or weight goals. Powered by AI. Free to use.'
-    ],
-    wishlist:      [
-      'My Wishlist | Ozylix Supplements India',
-      'Your saved Ozylix supplements. Save for later and never miss a deal on effervescent vitamins, organic spirulina, moringa and multivitamins.'
-  ],
-};
+    home: ['Effervescent Vitamins & Supplements | Ozylix India', 'Shop Ozylix effervescent vitamins and everyday supplements made by Ascovita Healthcare in Anand, Gujarat. Explore ingredients, usage and current offers.'],
+    shop: ['Shop Effervescent Vitamins & Supplements | Ozylix India', 'Browse Ozylix glutathione, spirulina, moringa, ACV and multivitamin supplements. Compare ingredients, pack sizes, prices and current availability.'],
+    about: ['About Ozylix | Supplement Manufacturer in Anand, Gujarat', 'Learn how Ozylix supplements are made by Ascovita Healthcare in Anand, Gujarat, with clear product information and direct customer support.'],
+    blog: ['Supplement & Wellness Blog | Ozylix India', 'Read practical Ozylix guides about ingredients, effervescent supplements, manufacturing, delivery and everyday wellness in India.'],
+    faq: ['FAQ | Ozylix Supplements, Shipping & Returns', 'Find answers about Ozylix ingredients, product use, shipping, payments, returns, Mix & Match and wholesale enquiries.'],
+    contact: ['Contact Ozylix | Anand, Gujarat Supplement Support', 'Contact Ozylix for product questions, order support, wholesale enquiries and manufacturing information by phone, email or WhatsApp.'],
+    advisor: ['AI Health Advisor | Ozylix', 'Use the Ozylix wellness questionnaire to explore products that may fit your stated goals. It provides general information, not medical advice.'],
+    privacy: ['Privacy Policy | Ozylix', 'Read how Ozylix collects, uses, stores and protects information when you browse, purchase or contact the brand.'],
+    terms: ['Terms & Conditions | Ozylix', 'Review the terms that apply to purchases, accounts, payments, delivery, returns and use of the Ozylix website.'],
+    shipping: ['Shipping Policy | Ozylix', 'Review Ozylix dispatch timelines, delivery charges, free-shipping threshold, tracking and delivery support for orders in India.'],
+    refund: ['Refund & Return Policy | Ozylix', 'Review Ozylix eligibility, timelines and steps for reporting damaged, incorrect, sealed or unused products.'],
+    accessibility: ['Accessibility Statement | Ozylix', 'Learn about Ozylix accessibility commitments and how to report an issue using the website or assistive technology.'],
+    conduct: ['Conduct & Violation Policy | Ozylix', 'Read the conduct rules that help keep Ozylix accounts, reviews, support and community interactions safe and respectful.'],
+    'discount-policy': ['Discount Policy | Ozylix', 'Review how Ozylix coupons, Mix & Match offers, eligibility rules and discount limits are applied at checkout.'],
+    'vita-points': ['VitaPoints Rewards | Ozylix', 'Learn how Ozylix VitaPoints are earned, redeemed, adjusted and shown on eligible delivered orders.'],
+    download: ['Install the Ozylix App', 'Get the Ozylix shopping experience on supported devices and continue browsing supplements, orders and rewards.'],
+    wishlist: ['My Wishlist | Ozylix', 'Save Ozylix products for later and return to your selected supplements when you are ready to shop.'],
+    notifications: ['Notification Center | Ozylix', 'Review your Ozylix order, rewards and service notifications in one place.'],
+    cart: ['Your Cart | Ozylix', 'Review selected Ozylix products, quantities, discounts, delivery charges and the current order total before checkout.'],
+    checkout: ['Secure Checkout | Ozylix', 'Complete your Ozylix order through the secure checkout flow. Available payment methods and delivery charges are shown before payment.'],
+    thankyou: ['Order Confirmation | Ozylix', 'Your Ozylix order confirmation and next steps for payment, dispatch and delivery tracking.'],
+    'payment-failed': ['Payment Unsuccessful | Ozylix', 'Your payment did not complete. Review the order status and choose an available payment method to try again.']
+  };
+  const NOINDEX_ROUTES = new Set(['account', 'cart', 'checkout', 'thankyou', 'payment-failed', 'notifications', 'wishlist', 'download']);
   const seo = PAGE_SEO[pg];
   if (seo) {
     document.title = seo[0];
     // Meta description
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) metaDesc.setAttribute('content', seo[1]);
+    // Keep private and transactional views out of search while leaving
+    // product, editorial, help, and policy pages eligible for indexing.
+    const robots = document.querySelector('meta[name="robots"]');
+    if (robots) robots.setAttribute('content', NOINDEX_ROUTES.has(pg)
+      ? 'noindex, nofollow, noarchive'
+      : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1');
     // Open Graph title + description (dynamic per page)
     const ogTitle = document.querySelector('meta[property="og:title"]');
     if (ogTitle) ogTitle.setAttribute('content', seo[0]);
@@ -566,7 +555,12 @@ function showPage(pg) {
     } catch(e){}
   }
   if (pg === 'blog') renderFullBlog();
-  if (pg === 'faq') renderFullFaq();
+  if (pg === 'faq') {
+    renderFullFaq();
+    setTimeout(function () {
+      if (typeof window.emitPageSeoGraph === 'function') window.emitPageSeoGraph(null);
+    }, 0);
+  }
 
   // Footer: hide on transactional/fullscreen pages
   const noFooterPages = ['checkout', 'thankyou', 'account', 'login'];
@@ -2819,7 +2813,7 @@ function bootApp() {
   // wishlist has a real page section but was missing here, so a direct hit on
   // /wishlist rendered the HOME page at 200 — a soft 404. Keep
   // this list in step with SPA_ROUTES in worker/index.js.
-  const _validPages = ['home','shop','blog','about','contact','faq','advisor','account','product','wishlist','notifications','privacy','terms','shipping','refund','accessibility','download'];
+  const _validPages = ['home','shop','blog','about','contact','faq','advisor','account','product','wishlist','notifications','privacy','terms','shipping','refund','accessibility','conduct','discount-policy','vita-points','download','cart','checkout','thankyou','payment-failed'];
   // Legacy /b2b links now redirect to the Ascovita corporate B2B page
   if (_initPage === 'b2b') { window.location.href = 'https://www.ascovita.com/#/capabilities'; }
   if (_initPage && (_validPages.includes(_initPage) || _initPage === 'blog')) {

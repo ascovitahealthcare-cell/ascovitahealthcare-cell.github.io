@@ -36,6 +36,23 @@ const SPA_ROUTES = new Set([
   '/account',
   '/b2b', // index.html forwards this on to the Ascovita corporate site
   '/wishlist',
+  // Public policy, support, utility, and transaction views are real SPA
+  // sections too. Keeping them here prevents direct links from becoming
+  // production 404s while preserving the app's client-side noindex rules.
+  '/privacy',
+  '/terms',
+  '/shipping',
+  '/refund',
+  '/accessibility',
+  '/conduct',
+  '/discount-policy',
+  '/vita-points',
+  '/notifications',
+  '/download',
+  '/cart',
+  '/checkout',
+  '/thankyou',
+  '/payment-failed',
 ]);
 
 // /product/<slug> only. Bare /product/ has no product to open, and

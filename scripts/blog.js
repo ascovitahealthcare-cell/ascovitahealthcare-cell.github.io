@@ -19,7 +19,8 @@ function openBlog(id) {
     + '<div class="br-body">' + bodyHtml + '</div>'
     + shopBtn;
   const blogSlug = b.slug || slugify(b.title);
-  document.title = (b.metaTitle || b.title) + ' | Ozylix';
+  const articleTitle = b.metaTitle || b.title;
+  document.title = /\bOzylix\b/i.test(articleTitle) ? articleTitle : articleTitle + ' | Ozylix';
   const blogDescription = document.querySelector('meta[name="description"]');
   if (blogDescription) blogDescription.setAttribute('content', b.metaDescription || b.excerpt);
   const blogCanonical = document.querySelector('link[rel="canonical"]');

@@ -87,14 +87,9 @@ function toggleWAPopup() {
   if (popup) popup.classList.toggle('open');
 }
 
-// Auto-show WA popup after 45 seconds on first visit
-setTimeout(() => {
-  if (!sessionStorage.getItem('wa_shown')) {
-    const popup = document.getElementById('waChatPopup');
-    if (popup) popup.classList.add('open');
-    sessionStorage.setItem('wa_shown', '1');
-  }
-}, 45000);
+// Support stays user-initiated. Auto-opening a chat after a delay interrupted
+// reading and checkout on small screens; the floating action remains available.
+
 
 // B2B Enquiry form → opens WhatsApp with pre-filled message
 
@@ -1184,11 +1179,9 @@ function productRating(p) {
   return n > 0 ? { avg: Number(p.rating) || 0, count: n } : { avg: null, count: 0 };
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', loadProductRatings);
-} else {
-  loadProductRatings();
-}
+// `initHome()` owns the startup call after auth-core has defined the shared
+// review batch function. Avoid a second listener that races script order.
+
 
 async function loadProductReviews(productId) {
   try {

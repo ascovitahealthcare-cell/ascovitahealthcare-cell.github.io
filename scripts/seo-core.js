@@ -1,103 +1,210 @@
-/**
- * SEO-CORE.js — Ozylix dynamic structured data
- * ─────────────────────────────────────────────────
- * Extracted from the inline <script type="application/ld+json"> block
- * (19 Aug 2026, Manus SEO pass). The 16-product static catalogue —
- * every entry hardcoded "OutOfStock" regardless of real stock — has
- * been replaced by emitProductGraph(), which reads the live
- * PRODUCTS array (store-core.js) and emits correct
- * Product + Offer markup with InStock/OutOfStock availability.
+/*
+ * Ozylix route-aware structured data.
+ *
+ * Keep this graph factual and small: the visible page is the source of truth.
+ * Product offers are generated from the live PRODUCTS array, while ratings are
+ * emitted only when the product has a non-zero real review count.
  */
 (function () {
-  var STATIC_GRAPH = [{"@type": ["Organization", "OnlineStore"], "@id": "https://www.ozylix.com/#organization", "name": "Ozylix", "alternateName": ["Ozylix", "Ozylix India", "Ozylix Effervescent", "ozylix.com"], "url": "https://www.ozylix.com/", "logo": {"@type": "ImageObject", "@id": "https://www.ozylix.com/#logo", "url": "assets/ozylix-icon-512.png", "caption": "Ozylix Logo — Empower Your Health", "width": 346, "height": 166}, "image": {"@type": "ImageObject", "url": "https://static.wixstatic.com/media/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg/v1/fill/w_1200,h_630,al_c,q_85,enc_avif,quality_auto/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg", "caption": "Ozylix — Premium Effervescent Vitamin Supplements, Anand Gujarat India"}, "description": "Ozylix is the direct-to-consumer supplement brand of Ascovita Healthcare. It sells effervescent vitamin tablets online across India — L-Glutathione for skin, Vitamin C with Amla, Apple Cider Vinegar, Ashwagandha, rehydration, bone health, men's and women's multivitamins, and the Multidiata 19-nutrient multivitamin. Products are made in Ascovita Healthcare's FSSAI approved facility in Anand, Gujarat, and shipped direct from the maker with no reseller markup.", "slogan": "Empower Your Health", "foundingDate": "2022", "foundingLocation": {"@type": "Place", "name": "Anand, Gujarat, India"}, "founder": {"@id": "https://www.ozylix.com/#founder"}, "address": {"@type": "PostalAddress", "streetAddress": "R.S.Cinema, 5, Rajeshree Society Rd, behind R & S Cinemas, Vivekanand Wadi", "addressLocality": "Anand", "addressRegion": "Gujarat", "postalCode": "388001", "addressCountry": "IN"}, "geo": {"@type": "GeoCoordinates", "latitude": 22.5645, "longitude": 72.9289}, "telephone": "+91-98985-82650", "email": "ascovitahealthcare@gmail.com", "contactPoint": [{"@type": "ContactPoint", "telephone": "+91-98985-82650", "contactType": "customer service", "areaServed": "IN", "availableLanguage": ["English", "Hindi", "Gujarati"]}, {"@type": "ContactPoint", "telephone": "+91-98985-82650", "contactType": "sales", "areaServed": "IN", "availableLanguage": ["English", "Hindi", "Gujarati"]}], "sameAs": ["https://www.ozylix.com", "https://www.instagram.com/ozylixlife", "https://www.linkedin.com/company/ascovita-healthcare", "https://www.facebook.com/Ozylix", "https://www.indiamart.com/ascovita-healthcare", "https://www.1mg.com/otc/Ozylix-multidiata-tablet", "https://www.ascovita.com"], "hasCredential": [{"@type": "EducationalOccupationalCredential", "credentialCategory": "FSSAI Licensed", "recognizedBy": {"@type": "GovernmentOrganization", "name": "Food Safety and Standards Authority of India"}}, {"@type": "EducationalOccupationalCredential", "credentialCategory": "FSSAI Licensed", "recognizedBy": {"@type": "GovernmentOrganization", "name": "World Health Organization"}}], "knowsAbout": ["Effervescent Nutraceutical Manufacturing", "L-Glutathione Supplements for Skin Brightening", "Apple Cider Vinegar Weight Management Supplements", "Organic Spirulina B12 D3 Vegan Supplements", "Magnesium Sleep and Recovery Supplements", "Biotin Hair Growth Supplements", "Calcium Iron Women Wellness Supplements", "Multivitamin Daily Nutrition Supplements", "Moringa Immunity Supplements", "L-Carnitine Fat Burning Supplements", "Vitamin C Effervescent Immunity Boosters", "Private Label Supplement Manufacturing India", "Contract Nutraceutical Manufacturing Gujarat", "FSSAI Licensed Nutraceutical Manufacturing", "FSSAI Licensed Food Supplement Production", "B2B Nutraceutical Manufacturing Low MOQ", "D2C Health Supplement E-commerce India", "Effervescent Tablet Formulation and Manufacturing", "Ayurvedic and Modern Nutraceutical Integration", "Pan-India Supplement Distribution", "Skin Health Antioxidant Supplements", "Women Health Supplements India", "Men Vitality Supplements India", "Vegan Plant-Based Nutrition Supplements", "Sports Nutrition and Recovery Supplements India"], "makesOffer": [{"@type": "Offer", "itemOffered": {"@type": "Service", "name": "B2B Private Label Nutraceutical Manufacturing", "description": "FSSAI licensed contract manufacturing of effervescent tablets, capsules, sachets and nutraceutical supplements under client brand names. Low MOQ. Custom formulations. Pan-India and global supply.", "areaServed": {"@type": "Country", "name": "India"}}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Custom Effervescent Tablet Formulation", "description": "End-to-end custom effervescent tablet manufacturing with proprietary and custom formulations. Suitable for vitamins, minerals, amino acids, herbal blends.", "areaServed": {"@type": "Country", "name": "India"}}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "D2C Nutraceutical Supplement Sales — Pan-India", "description": "Direct-to-consumer sales of Ozylix premium supplements across all Indian states. Free delivery on every order. Delivery to all PIN codes in India.", "areaServed": {"@type": "Country", "name": "India"}}}, {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "Regulatory Compliance & FSSAI Support for Supplement Brands", "description": "Complete regulatory documentation, FSSAI licensing support, and quality compliance for supplement brands launching in India.", "areaServed": {"@type": "Country", "name": "India"}}}], "numberOfEmployees": {"@type": "QuantitativeValue", "value": "11-50"}, "legalName": "Ascovita Healthcare", "areaServed": [{"@type": "Country", "name": "India"}, {"@type": "AdministrativeArea", "name": "Gujarat"}, {"@type": "AdministrativeArea", "name": "Maharashtra"}, {"@type": "AdministrativeArea", "name": "Rajasthan"}, {"@type": "AdministrativeArea", "name": "Karnataka"}, {"@type": "AdministrativeArea", "name": "Tamil Nadu"}, {"@type": "AdministrativeArea", "name": "Telangana"}, {"@type": "AdministrativeArea", "name": "Uttar Pradesh"}, {"@type": "AdministrativeArea", "name": "West Bengal"}, {"@type": "AdministrativeArea", "name": "Delhi"}, {"@type": "AdministrativeArea", "name": "Kerala"}, {"@type": "AdministrativeArea", "name": "Madhya Pradesh"}, {"@type": "AdministrativeArea", "name": "Punjab"}, {"@type": "AdministrativeArea", "name": "Haryana"}, {"@type": "AdministrativeArea", "name": "Bihar"}, {"@type": "AdministrativeArea", "name": "Andhra Pradesh"}, {"@type": "City", "name": "Mumbai"}, {"@type": "City", "name": "Delhi"}, {"@type": "City", "name": "Bangalore"}, {"@type": "City", "name": "Hyderabad"}, {"@type": "City", "name": "Chennai"}, {"@type": "City", "name": "Kolkata"}, {"@type": "City", "name": "Pune"}, {"@type": "City", "name": "Ahmedabad"}, {"@type": "City", "name": "Surat"}, {"@type": "City", "name": "Jaipur"}, {"@type": "City", "name": "Lucknow"}, {"@type": "City", "name": "Kochi"}, {"@type": "City", "name": "Indore"}, {"@type": "City", "name": "Chandigarh"}, {"@type": "City", "name": "Bhopal"}, {"@type": "City", "name": "Nagpur"}, {"@type": "City", "name": "Visakhapatnam"}, {"@type": "City", "name": "Vadodara"}, {"@type": "City", "name": "Anand"}], "parentOrganization": {"@id": "https://www.ascovita.com/#organization"}, "brand": {"@type": "Brand", "name": "Ozylix"}}, {"@type": "Organization", "@id": "https://www.ascovita.com/#organization", "name": "Ascovita Healthcare", "url": "https://www.ascovita.com/", "description": "Ascovita Healthcare is the parent company behind Ozylix. It handles manufacturing, product formulation, R&D, packaging and label design, distribution, private label and white label production, B2B services, and export partnerships from its FSSAI approved facility in Anand, Gujarat, India.", "subOrganization": {"@id": "https://www.ozylix.com/#organization"}, "knowsAbout": ["Effervescent tablet manufacturing", "Nutraceutical formulation", "Private label supplements", "White label supplements", "Contract manufacturing", "Supplement export"], "address": {"@type": "PostalAddress", "addressLocality": "Anand", "addressRegion": "Gujarat", "addressCountry": "IN"}}, {"@type": "Person", "@id": "https://www.ozylix.com/#founder", "name": "Aamin Ghachivahora", "jobTitle": "Co-Founder", "affiliation": {"@id": "https://www.ozylix.com/#organization"}, "worksFor": {"@id": "https://www.ozylix.com/#organization"}, "knowsAbout": ["Nutraceuticals", "Health Supplements", "Pharmaceutical Manufacturing", "Effervescent Vitamins", "B2B Private Label"], "sameAs": "https://www.linkedin.com/in/aamin-ghachivahora-416985332", "url": "https://www.linkedin.com/in/aamin-ghachivahora-416985332"}, {"@type": "WebSite", "@id": "https://www.ozylix.com/#website", "url": "https://www.ozylix.com/", "name": "Ozylix", "alternateName": "ozylix.com", "description": "Official website of Ozylix — India's premium FSSAI approved effervescent vitamin and nutraceutical supplement brand, co-founded by Aamin Ghachivahora in Anand, Gujarat.", "publisher": {"@id": "https://www.ozylix.com/#organization"}, "potentialAction": {"@type": "SearchAction", "target": {"@type": "EntryPoint", "urlTemplate": "https://www.ozylix.com/?q={search_term_string}"}, "query-input": "required name=search_term_string"}, "speakable": {"@type": "SpeakableSpecification", "cssSelector": [".hero-title", ".hero-subtitle", ".product-name", ".faq-question", "h1", "h2"]}, "inLanguage": "en-IN"}, {"@type": "WebPage", "@id": "https://www.ozylix.com/#webpage", "url": "https://www.ozylix.com/", "name": "Ozylix | Premium Effervescent Vitamins & Nutraceutical Manufacturer — Anand, Gujarat, India", "isPartOf": {"@id": "https://www.ozylix.com/#website"}, "about": {"@id": "https://www.ozylix.com/#organization"}, "description": "Buy Ozylix effervescent vitamin tablets online in India — Glutathione, Vitamin C + Amla, Apple Cider Vinegar, Ashwagandha and daily multivitamins, shipped direct from the FSSAI approved facility that makes them.", "breadcrumb": {"@id": "https://www.ozylix.com/#breadcrumb"}, "author": {"@id": "https://www.ozylix.com/#organization"}, "primaryImageOfPage": {"@type": "ImageObject", "url": "https://static.wixstatic.com/media/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg/v1/fill/w_1200,h_630,al_c,q_85,enc_avif,quality_auto/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg", "caption": "Ozylix — L-Glutathione Effervescent Tablet, Skin Brightening Supplement, Anand Gujarat India"}, "inLanguage": "en-IN", "specialty": "Nutraceuticals, Effervescent Vitamins, Health Supplements India"}, {"@type": "BreadcrumbList", "@id": "https://www.ozylix.com/#breadcrumb", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.ozylix.com/"}, {"@type": "ListItem", "position": 2, "name": "Shop Supplements", "item": "https://www.ozylix.com/shop"}, {"@type": "ListItem", "position": 3, "name": "About Ozylix", "item": "https://www.ozylix.com/about"}, {"@type": "ListItem", "position": 4, "name": "Blog & Health Tips", "item": "https://www.ozylix.com/blog"}, {"@type": "ListItem", "position": 5, "name": "Contact Us", "item": "https://www.ozylix.com/contact"}]}, {"@type": "LocalBusiness", "@id": "https://www.ozylix.com/#localbusiness", "name": "Ozylix", "alternateName": ["Ozylix", "Ozylix Nutraceuticals"], "image": ["assets/ozylix-icon-512.png", "https://static.wixstatic.com/media/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg/v1/fill/w_1200,h_630,al_c,q_85,enc_avif,quality_auto/f0adaf_0632dc96f8db425a9211154fc0a7ab6f~mv2.jpg"], "url": "https://www.ozylix.com/", "telephone": "+91-98985-82650", "email": "ascovitahealthcare@gmail.com", "priceRange": "₹120 – ₹900", "currenciesAccepted": "INR", "paymentAccepted": "UPI, Credit Card, Debit Card, Net Banking, EMI, COD", "address": {"@type": "PostalAddress", "streetAddress": "R.S.Cinema, 5, Rajeshree Society Rd, behind R & S Cinemas, Vivekanand Wadi", "addressLocality": "Anand", "addressRegion": "Gujarat", "postalCode": "388001", "addressCountry": "IN"}, "geo": {"@type": "GeoCoordinates", "latitude": 22.5645, "longitude": 72.9289}, "openingHoursSpecification": {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "opens": "09:00", "closes": "18:00"}, "hasMap": "https://maps.google.com/?q=Ozylix+Healthcare,Anand,Gujarat,India", "areaServed": [{"@type": "Country", "name": "India"}, {"@type": "AdministrativeArea", "name": "Gujarat"}], "serviceArea": {"@type": "GeoCircle", "geoMidpoint": {"@type": "GeoCoordinates", "latitude": 22.5645, "longitude": 72.9289}, "geoRadius": "500000"}, "category": "Nutraceutical Manufacturer, Health Supplement Brand, Pharmaceutical Manufacturer", "description": "Ozylix is the direct-to-consumer supplement brand of Ascovita Healthcare. It sells effervescent vitamin tablets online across India — L-Glutathione for skin, Vitamin C with Amla, Apple Cider Vinegar, Ashwagandha, rehydration, bone health, men's and women's multivitamins, and the Multidiata 19-nutrient multivitamin. Products are made in Ascovita Healthcare's FSSAI approved facility in Anand, Gujarat, and shipped direct from the maker with no reseller markup.", "founder": {"@id": "https://www.ozylix.com/#founder"}, "sameAs": ["https://www.instagram.com/ozylixlife", "https://www.linkedin.com/company/ascovita-healthcare", "https://www.facebook.com/Ozylix", "https://www.indiamart.com/ascovita-healthcare"]}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Ozylix?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix is an Indian direct-to-consumer supplement brand selling effervescent vitamin tablets online. Each tablet drops into a glass of water and dissolves, which absorbs faster than a swallowed pill. The range covers L-Glutathione for skin, Vitamin C with Amla, Apple Cider Vinegar, Ashwagandha, rehydration, bone health and daily multivitamins. Ozylix is the consumer brand of Ascovita Healthcare, which makes every product in its own FSSAI approved facility in Anand, Gujarat."}}, {"@type": "Question", "name": "Who is the co-founder of Ozylix?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix was co-founded by Aamin Ghachivahora. The company is headquartered in Anand, Gujarat, India and manufactures FSSAI approved effervescent nutraceutical supplements."}}, {"@type": "Question", "name": "Where is Ozylix located?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix is located in Anand, Gujarat, India (Pincode 388001). The manufacturing facility is FSSAI licensed. Address: R.S.Cinema Road, Vivekanand Wadi, Anand, Gujarat 388001."}}, {"@type": "Question", "name": "Is Ozylix FSSAI approved?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. All Ozylix supplements are manufactured in a FSSAI-licensed facility in Anand, Gujarat, India. Every batch undergoes quality testing. Ozylix is transparent about its ingredients, certifications, and manufacturing processes."}}, {"@type": "Question", "name": "Who makes Ozylix supplements?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix supplements are made by Ascovita Healthcare, the parent company, in its own FSSAI approved facility in Anand, Gujarat. Ascovita handles formulation, R&D and manufacturing; Ozylix is the consumer brand that sells the finished products online. Because the maker ships direct, there is no distributor markup in the price. B2B, private label and export enquiries are handled by Ascovita Healthcare at ascovita.com."}}, {"@type": "Question", "name": "Which Ozylix supplement is best for skin glow and brightening?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix's L-Glutathione Effervescent (Orange Flavour) is the best product for skin glow. It contains 650mg Reduced Glutathione, Vitamin C 1000mg, L-Cysteine, and Astaxanthin. The effervescent format absorbs 3x faster than capsules. Most users see visible results within 4-6 weeks of daily use."}}, {"@type": "Question", "name": "Which Ozylix supplement is best for weight management?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix's ACV + Moringa Effervescent (Green Apple Flavour) is ideal for weight management. It contains Apple Cider Vinegar, Garcinia Cambogia, and Moringa — taken 15-30 minutes before a meal to manage cravings, blood sugar spikes and support healthy metabolism."}}, {"@type": "Question", "name": "Which is better: Glutathione capsules or effervescent tablets?", "acceptedAnswer": {"@type": "Answer", "text": "Effervescent tablets have significantly higher bioavailability — up to 3x faster absorption than capsules. Ozylix's L-Glutathione Effervescent delivers 650mg Reduced Glutathione with Vitamin C 1000mg for maximum antioxidant protection and skin glow."}}, {"@type": "Question", "name": "Are Ozylix products safe for vegetarians and vegans?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. All Ozylix spirulina-based products — VitaPlus B12+D3, MG+++ Magnesium, and CS++ Calcium+Iron — are 100% vegan, plant-based, made with certified organic spirulina. The effervescent range is also vegetarian. All are free from artificial additives."}}, {"@type": "Question", "name": "Does Ozylix deliver supplements across all of India?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Ozylix offers free delivery pan-India on every order. We deliver to all major cities including Mumbai, Delhi, Bangalore, Hyderabad, Chennai, Kolkata, Pune, Ahmedabad, Surat, Jaipur, Lucknow, Kochi, Indore, Chandigarh, Nagpur, Bhopal, Visakhapatnam, Vadodara, and all other PIN codes across India. Standard delivery takes 2-7 business days."}}, {"@type": "Question", "name": "Which is the best glutathione supplement brand in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix is one of India's most trusted glutathione supplement brands. The Ozylix L-Glutathione Effervescent contains 650mg Reduced Glutathione + 1000mg Vitamin C + L-Cysteine + Astaxanthin in an effervescent format for 3x faster absorption than capsules. FSSAI approved, manufactured in Anand, Gujarat. Available at ozylix.com with pan-India delivery."}}, {"@type": "Question", "name": "What is the best supplement for skin glow and brightening in India?", "acceptedAnswer": {"@type": "Answer", "text": "For skin glow and brightening in India, Ozylix's L-Glutathione Effervescent (Orange Flavour) is the top choice. It contains 650mg Reduced Glutathione, Vitamin C 1000mg, L-Cysteine and Astaxanthin — powerful antioxidants that reduce melanin production, brighten skin tone, and protect against UV damage. Results are visible in 4-6 weeks of daily use."}}, {"@type": "Question", "name": "What is the best supplement for hair growth and hair fall control in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix B12 + Biotin Effervescent (Guava Flavour) is ideal for hair growth and hair fall control. It contains high-dose Biotin, Vitamin B12, and essential nutrients in a fast-absorbing effervescent tablet. Biotin supports keratin production which strengthens hair follicles and reduces hair fall. One tablet daily dissolves in water for a refreshing guava-flavoured drink."}}, {"@type": "Question", "name": "What is the best vegan B12 supplement in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix VitaPlus B12+D3 with Certified Organic Spirulina is India's best vegan B12 supplement. It is 100% plant-based, made with certified organic spirulina, and provides Methylcobalamin B12 + Vitamin D3 in one tablet. Ideal for vegans, vegetarians, and anyone on a plant-based diet who may be deficient in B12. Available at ozylix.com with pan-India delivery."}}, {"@type": "Question", "name": "Which magnesium supplement is best for sleep and muscle recovery in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix MG+++ Magnesium B12+D3 with Organic Spirulina is the best magnesium supplement in India for sleep support and muscle recovery. It combines Magnesium, Vitamin B12, Vitamin D3, and Organic Spirulina for comprehensive nervous system and muscle support. Take one tablet daily for deeper sleep, reduced muscle cramps, and better recovery after exercise."}}, {"@type": "Question", "name": "Which calcium and iron supplement is best for women in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix CS++ Calcium+Iron with B12+D3 and Organic Spirulina is the best calcium and iron supplement for women in India. It addresses the most common deficiencies in Indian women — calcium, iron, B12 and D3 — all in one tablet enriched with organic spirulina. Supports bone health, reduces fatigue from iron deficiency anaemia, and boosts overall energy levels."}}, {"@type": "Question", "name": "What is the best multivitamin for daily nutrition in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix Multidiata is India's premium daily multivitamin with 23 essential vitamins and minerals in one tablet. It includes Vitamins A, B-complex, C, D3, E, K2, Zinc, Selenium, Chromium, and more. It is FSSAI approved and manufactured in Gujarat, India. Available in Box Pack (30 tabs at ₹120) and Bottle Pack (60 tabs at ₹231) at ozylix.com."}}, {"@type": "Question", "name": "What supplements does Ozylix recommend for weight loss in India?", "acceptedAnswer": {"@type": "Answer", "text": "For weight management and fat loss, Ozylix recommends: (1) ACV + Moringa Effervescent — Apple Cider Vinegar with Garcinia Cambogia and Moringa, taken before meals to reduce cravings and support metabolism; (2) L-Carnitine Effervescent — supports fat burning during exercise by transporting fatty acids into mitochondria for energy. Both are FSSAI approved and available at ozylix.com."}}, {"@type": "Question", "name": "Are Ozylix supplements available in Mumbai, Delhi, Bangalore, Hyderabad and other major cities?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Ozylix delivers supplements to all major Indian cities including Mumbai, Delhi, Bangalore, Hyderabad, Chennai, Kolkata, Pune, Ahmedabad, Surat, Jaipur, Lucknow, Kochi, Indore, Chandigarh, Nagpur, Visakhapatnam, Bhopal, Vadodara, Patna, Coimbatore, and all other cities and towns across India. Order at ozylix.com with delivery in 2-7 business days."}}, {"@type": "Question", "name": "Where can I buy Ozylix effervescent tablets online?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix effervescent tablets are sold directly at ozylix.com and ship across India. Orders over Rs 599 ship free, and dispatch is typically within 24 hours from Anand, Gujarat. Buying from the official store means the tablets come straight from the FSSAI approved facility that made them, with full batch traceability."}}, {"@type": "Question", "name": "What is the difference between Ozylix Spirulina range and the Effervescent range?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix has two main supplement ranges: (1) Effervescent Range — fast-dissolving tablets (Glutathione, ACV Moringa, Biotin, Vitamin C, L-Carnitine) for rapid absorption, best for active individuals and those who prefer a drink format. (2) Spirulina Range — solid tablets (VitaPlus B12+D3, MG+++ Magnesium, CS++ Calcium+Iron) made with certified organic spirulina, 100% vegan, best for daily foundational nutrition and plant-based lifestyle."}}, {"@type": "Question", "name": "What makes Ozylix different from other supplement brands in India?", "acceptedAnswer": {"@type": "Answer", "text": "Ozylix stands out for four key reasons: (1) FSSAI approved manufacturing in India; (2) Effervescent format for 3x faster absorption vs capsules; (3) Certified Organic Spirulina in the spirulina range — plant-based, vegan, and free from artificial additives; (4) Transparent ingredients and clinical dosages. Co-founded by Aamin Ghachivahora, Ozylix is a Made-in-India brand committed to science-backed, affordable wellness for every Indian."}}]}, {"@type": "MedicalOrganization", "@id": "https://www.ozylix.com/#medicalorg", "name": "Ozylix", "url": "https://www.ozylix.com", "description": "Ozylix is the direct-to-consumer supplement brand of Ascovita Healthcare. It sells effervescent vitamin tablets online across India — L-Glutathione for skin, Vitamin C with Amla, Apple Cider Vinegar, Ashwagandha, rehydration, bone health, men's and women's multivitamins, and the Multidiata 19-nutrient multivitamin. Products are made in Ascovita Healthcare's FSSAI approved facility in Anand, Gujarat, and shipped direct from the maker with no reseller markup.", "medicalSpecialty": "Nutraceuticals, Dietary Supplements, Vitamins and Minerals", "hasCredential": [{"@type": "EducationalOccupationalCredential", "credentialCategory": "FSSAI Licensed", "recognizedBy": {"@type": "GovernmentOrganization", "name": "Food Safety and Standards Authority of India"}}, {"@type": "EducationalOccupationalCredential", "credentialCategory": "FSSAI Licensed", "recognizedBy": {"@type": "GovernmentOrganization", "name": "World Health Organization"}}], "parentOrganization": {"@id": "https://www.ascovita.com/#organization"}}, {"@type": "ItemList", "@id": "https://www.ozylix.com/#categories", "name": "Ozylix Supplement Categories", "description": "All supplement categories available at Ozylix India", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Effervescent Vitamin Supplements", "url": "https://www.ozylix.com/products/effervescent", "item": {"@type": "Thing", "name": "Effervescent Vitamins India", "description": "Fast-absorbing effervescent vitamin tablets for skin glow, immunity, weight management, hair growth, and fat burning. FSSAI approved."}}, {"@type": "ListItem", "position": 2, "name": "Spirulina Supplement Range", "url": "https://www.ozylix.com/products/spirulina", "item": {"@type": "Thing", "name": "Spirulina Supplements India", "description": "100% vegan supplement tablets made with certified organic spirulina. B12+D3, Magnesium, Calcium+Iron. Plant-based, no artificial additives."}}, {"@type": "ListItem", "position": 3, "name": "Ayurvedic Supplements", "url": "https://www.ozylix.com/products/ayurvedic", "item": {"@type": "Thing", "name": "Ayurvedic Supplements India", "description": "Organic Moringa Tablets — natural immunity booster, anti-inflammatory, rich in vitamins and minerals."}}, {"@type": "ListItem", "position": 4, "name": "Premium Multivitamins", "url": "https://www.ozylix.com/products/premium", "item": {"@type": "Thing", "name": "Premium Multivitamin India", "description": "Multidiata — 19 vitamins and minerals in one daily tablet. India's premium multivitamin supplement."}}, {"@type": "ListItem", "position": 5, "name": "B2B Private Label Manufacturing", "url": "https://www.ascovita.com/#/capabilities", "item": {"@type": "Thing", "name": "Private Label Supplement Manufacturing India", "description": "FSSAI licensed B2B contract manufacturing for supplement brands across India."}}]}];
+  var ORIGIN = 'https://www.ozylix.com';
+  var ORG_ID = ORIGIN + '/#organization';
+  var SITE_ID = ORIGIN + '/#website';
 
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  var PAGE_INFO = {
+    home: { name: 'Ozylix effervescent vitamins and supplements', description: 'Shop Ozylix effervescent vitamins and everyday supplements made by Ascovita Healthcare in Anand, Gujarat.' },
+    shop: { name: 'Shop Ozylix supplements', description: 'Browse Ozylix glutathione, spirulina, moringa, ACV and multivitamin supplements with current prices and availability.' },
+    about: { name: 'About Ozylix', description: 'Learn how Ozylix supplements are made by Ascovita Healthcare in Anand, Gujarat.' },
+    blog: { name: 'The Ozylix Blog', description: 'Practical guides about ingredients, effervescent supplements, manufacturing, delivery and everyday wellness.' },
+    faq: { name: 'Ozylix frequently asked questions', description: 'Answers about Ozylix products, ingredients, shipping, payment, returns, Mix & Match and wholesale enquiries.' },
+    contact: { name: 'Contact Ozylix', description: 'Contact Ozylix for product questions, order support, wholesale enquiries and manufacturing information.' },
+    advisor: { name: 'Ozylix AI Health Advisor', description: 'A general wellness questionnaire for exploring products that may fit a stated goal. Not medical advice.' },
+    privacy: { name: 'Ozylix Privacy Policy', description: 'How Ozylix collects, uses, stores and protects information.' },
+    terms: { name: 'Ozylix Terms and Conditions', description: 'Terms for Ozylix purchases, accounts, payments, delivery, returns and website use.' },
+    shipping: { name: 'Ozylix Shipping Policy', description: 'Ozylix dispatch timelines, delivery charges, tracking and delivery support in India.' },
+    refund: { name: 'Ozylix Refund and Return Policy', description: 'Ozylix eligibility, timelines and steps for reporting damaged, incorrect, sealed or unused products.' },
+    accessibility: { name: 'Ozylix Accessibility Statement', description: 'Ozylix accessibility commitments and how to report an issue.' },
+    conduct: { name: 'Ozylix Conduct and Violation Policy', description: 'Rules for safe and respectful Ozylix account, review and support interactions.' },
+    'discount-policy': { name: 'Ozylix Discount Policy', description: 'How Ozylix coupons, Mix & Match offers, eligibility and limits are applied.' },
+    'vita-points': { name: 'Ozylix VitaPoints Rewards', description: 'How Ozylix VitaPoints are earned, redeemed and adjusted on eligible orders.' },
+    download: { name: 'Install the Ozylix App', description: 'Continue the Ozylix shopping experience on supported devices.' },
+    wishlist: { name: 'My Ozylix Wishlist', description: 'Saved Ozylix products for later.' },
+    notifications: { name: 'Ozylix Notification Center', description: 'Review Ozylix order, rewards and service notifications.' },
+    cart: { name: 'Your Ozylix Cart', description: 'Review selected products, quantities, discounts, delivery charges and the current order total.' },
+    checkout: { name: 'Ozylix Secure Checkout', description: 'Complete an Ozylix order; available payment methods and delivery charges are shown before payment.' }
+  };
+
+  function clone(value) {
+    return JSON.parse(JSON.stringify(value));
   }
 
-  // Remove any previously emitted Ozylix JSON-LD so re-runs
-  // (page switches, admin updates) never stack duplicate blocks.
+  function text(value) {
+    return String(value == null ? '' : value).replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  function currentPage() {
+    var first = (location.pathname || '/').replace(/^\/+|\/+$/g, '').split('/')[0];
+    return first || 'home';
+  }
+
+  function currentUrl() {
+    var path = location.pathname || '/';
+    return ORIGIN + (path === '/' ? '/' : path.replace(/\/+$/, ''));
+  }
+
+  function imageUrl(value) {
+    if (!value) return '';
+    var raw = typeof value === 'string' ? value : value.url;
+    if (!raw) return '';
+    return /^https?:\/\//i.test(raw) ? raw : ORIGIN + '/' + String(raw).replace(/^\/+/, '');
+  }
+
+  function availability(product) {
+    if (typeof product.stock === 'undefined') return 'https://schema.org/InStock';
+    return Number(product.stock) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
+  }
+
+  function productNode(product) {
+    var url = currentUrl();
+    var price = Number(product.salePrice || product.price || 0);
+    var reviews = Number(product.reviews || product.reviewCount || 0);
+    var rating = Number(product.rating || 0);
+    var image = imageUrl(product.image || (product.images && product.images[0]));
+    var node = {
+      '@type': 'Product',
+      '@id': url + '#product',
+      name: text(product.name),
+      description: text(product.description),
+      image: image ? [image] : undefined,
+      url: url,
+      sku: product.sku || String(product.id || ''),
+      brand: { '@type': 'Brand', name: 'Ozylix' },
+      offers: {
+        '@type': 'Offer',
+        url: url,
+        priceCurrency: 'INR',
+        price: price,
+        availability: availability(product),
+        itemCondition: 'https://schema.org/NewCondition',
+        seller: { '@id': ORG_ID },
+        areaServed: { '@type': 'Country', name: 'India' }
+      }
+    };
+    if (reviews > 0 && rating > 0) {
+      node.aggregateRating = {
+        '@type': 'AggregateRating',
+        ratingValue: rating,
+        reviewCount: reviews,
+        bestRating: 5,
+        worstRating: 1
+      };
+    }
+    Object.keys(node).forEach(function (key) { if (node[key] === undefined || node[key] === '') delete node[key]; });
+    return node;
+  }
+
+  function baseGraph(url, page) {
+    var info = PAGE_INFO[page] || PAGE_INFO.home;
+    return [
+      {
+        '@type': 'Organization',
+        '@id': ORG_ID,
+        name: 'Ozylix',
+        alternateName: ['Ozylix India', 'Ozylix Effervescent'],
+        url: ORIGIN + '/',
+        logo: { '@type': 'ImageObject', url: ORIGIN + '/assets/ozylix-icon-512.png', caption: 'Ozylix logo' },
+        description: 'Ozylix is the consumer supplement brand of Ascovita Healthcare, made in Anand, Gujarat.',
+        parentOrganization: { '@id': ORIGIN + '/#ascovita' },
+        address: { '@type': 'PostalAddress', addressLocality: 'Anand', addressRegion: 'Gujarat', postalCode: '388001', addressCountry: 'IN' },
+        telephone: '+91-98985-82650',
+        email: 'ascovitahealthcare@gmail.com',
+        sameAs: ['https://www.instagram.com/ozylixlife', 'https://www.ascovita.com/']
+      },
+      {
+        '@type': 'Organization',
+        '@id': ORIGIN + '/#ascovita',
+        name: 'Ascovita Healthcare',
+        url: 'https://www.ascovita.com/',
+        description: 'The parent company that manufactures Ozylix products in Anand, Gujarat.'
+      },
+      {
+        '@type': 'WebSite',
+        '@id': SITE_ID,
+        url: ORIGIN + '/',
+        name: 'Ozylix',
+        publisher: { '@id': ORG_ID },
+        inLanguage: 'en-IN'
+      },
+      {
+        '@type': 'WebPage',
+        '@id': url + '#webpage',
+        url: url,
+        name: info.name,
+        description: info.description,
+        isPartOf: { '@id': SITE_ID },
+        about: { '@id': ORG_ID },
+        inLanguage: 'en-IN'
+      },
+      {
+        '@type': 'BreadcrumbList',
+        '@id': url + '#breadcrumb',
+        itemListElement: page === 'home' ? [{ '@type': 'ListItem', position: 1, name: 'Home', item: ORIGIN + '/' }] : [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: ORIGIN + '/' },
+          { '@type': 'ListItem', position: 2, name: info.name, item: url }
+        ]
+      }
+    ];
+  }
+
+  function faqNode(url) {
+    var root = document.getElementById('page-faq');
+    if (!root) return null;
+    var questions = [];
+    root.querySelectorAll('.faq-item').forEach(function (item) {
+      var button = item.querySelector('.faq-q');
+      var answer = item.querySelector('.faq-a-inner');
+      var question = text(button && button.textContent).replace(/\s*\+\s*$/, '');
+      var answerText = text(answer && answer.textContent);
+      if (question && answerText) questions.push({ '@type': 'Question', name: question, acceptedAnswer: { '@type': 'Answer', text: answerText } });
+    });
+    return questions.length ? { '@type': 'FAQPage', '@id': url + '#faq', mainEntity: questions } : null;
+  }
+
   function clearEmitted() {
-    document.querySelectorAll('script[data-ozylx-seo]').forEach(function (s) { s.remove(); });
+    document.querySelectorAll('script[data-ozylx-seo]').forEach(function (node) { node.remove(); });
   }
 
   function insertGraph(graph) {
     clearEmitted();
-    if (!graph || !graph.length) return;
-    var s = document.createElement("script");
-    s.type = "application/ld+json";
-    s.setAttribute("data-ozylx-seo", "1");
-    s.textContent = JSON.stringify({"@context": "https://schema.org", "@graph": graph});
-    var first = document.head.querySelector("script[type=\"application/ld+json\"]") || document.head.firstChild;
-    if (first && first.parentNode) first.parentNode.insertBefore(s, first);
-    else document.head.appendChild(s);
+    var script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.setAttribute('data-ozylx-seo', '1');
+    script.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+    document.head.appendChild(script);
   }
 
-  // The static identity/corporate graph (Organization, WebSite,
-  // BreadcrumbList, FAQPage, …) never changes per product, so it
-  // is emitted once as-is. Product/Offer markup is dynamic.
-  window.emitStaticSeoGraph = function () { insertGraph(STATIC_GRAPH); };
-
-  // Per-page dynamic graph — call when the shop or a product page
-  // opens. Merges the static graph with live Product + Offer
-  // entries so Google always sees real stock and real prices.
+  window.emitStaticSeoGraph = function () { window.emitPageSeoGraph(null); };
   window.emitPageSeoGraph = function (product) {
-    var graph = STATIC_GRAPH.map(function (n) { return JSON.parse(JSON.stringify(n)); });
-    if (typeof PRODUCTS !== "undefined" && PRODUCTS && PRODUCTS.length) {
-      var base = location.origin;
-      var list = product && product.id ? PRODUCTS.filter(function (p) { return p.id === product.id; }) : PRODUCTS.slice();
-      var items = list.map(function (p, idx) {
-        var price = Number(p.salePrice || p.price || 0);
-        var available = typeof p.stock !== "undefined" ? Number(p.stock) > 0 : true;
-        var url = base + "/product/" + (p.slug || p.urlSlug || p.id);
-        return {
-          "@type": "Product",
-          "@id": url + "#product",
-          "name": p.name || "",
-          "description": (p.description || "").replace(/<[^>]*>/g, ""),
-          "image": (p.image || p.images && p.images[0] && p.images[0].url) || "",
-          "url": url,
-          "sku": p.sku || String(p.id || ""),
-          "brand": {"@type": "Brand", "name": "Ozylix"},
-          "offers": {
-            "@type": "Offer",
-            "@id": url + "#offer",
-            "url": url,
-            "priceCurrency": "INR",
-            "price": price,
-            "availability": available ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-            "itemCondition": "https://schema.org/NewCondition",
-            "seller": {"@id": "https://www.ozylix.com/#organization"},
-            "areaServed": {"@type": "Country", "name": "India"}
-          }
-        };
-      });
-      if (items.length === 1) {
-        graph.push(items[0]);
-        var wp = graph.find(function (n) { return n["@id"] === "https://www.ozylix.com/#webpage"; });
-        if (wp) wp.primaryEntity = {"@id": items[0]["@id"]};
-      } else if (items.length) {
-        graph.push({"@type": "ItemList", "name": "Ozylix Products", "numberOfItems": items.length,
-                    "itemListElement": items.map(function (p, i) { return {"@type": "ListItem", "position": i + 1, "item": p}; })});
-      }
+    var page = currentPage();
+    var url = currentUrl();
+    var graph = baseGraph(url, page);
+    var faq = page === 'faq' ? faqNode(url) : null;
+    if (faq) graph.push(faq);
+    if (product && product.id) {
+      graph.push(productNode(product));
+    } else if (page === 'shop' && typeof PRODUCTS !== 'undefined' && PRODUCTS.length) {
+      var items = PRODUCTS.map(productNode);
+      graph.push({ '@type': 'ItemList', '@id': url + '#products', name: 'Ozylix products', numberOfItems: items.length, itemListElement: items.map(function (item, index) {
+        return { '@type': 'ListItem', position: index + 1, item: { '@id': item['@id'] } };
+      }) });
+      graph = graph.concat(items);
     }
     insertGraph(graph);
   };
 
-  // Boot: static graph on first paint (search engines crawling
-  // the raw HTML see identity markup immediately); the dynamic
-  // pass runs after store-core.js has built PRODUCTS.
-  window.emitStaticSeoGraph();
-  function dynamicPass() {
-    if (typeof PRODUCTS !== "undefined" && PRODUCTS && PRODUCTS.length) {
-      window.emitPageSeoGraph(null);
-    } else {
-      setTimeout(dynamicPass, 500);
-    }
+  function boot() {
+    if (typeof PRODUCTS !== 'undefined' && PRODUCTS && PRODUCTS.length) window.emitPageSeoGraph(null);
+    else setTimeout(boot, 500);
   }
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", dynamicPass);
-  } else { dynamicPass(); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();
