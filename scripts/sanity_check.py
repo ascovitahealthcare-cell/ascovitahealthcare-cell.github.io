@@ -6,9 +6,10 @@
    checking for obvious syntax errors via `node -c` per block.
 """
 import re, subprocess, sys
+from pathlib import Path
 
-path = sys.argv[1] if len(sys.argv) > 1 else '/home/ubuntu/repos/frontend/admin.html'
-src = open(path, encoding='utf-8').read()
+path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parents[1] / 'admin.html'
+src = path.read_text(encoding='utf-8')
 
 # 1. script / style balance
 for tag in ('script', 'style'):
