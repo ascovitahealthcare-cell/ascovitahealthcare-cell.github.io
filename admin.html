@@ -1827,11 +1827,11 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   <link rel="stylesheet" href="styles/admin-advanced.css">
 </head>
 <body>
-<script defer src="scripts/admin-core.js?v=20260821-2"></script>
+<script defer src="scripts/admin-core.js?v=20260821-3"></script>
 <script defer src="scripts/admin-api.js?v=20260819-7"></script>
 <script defer src="scripts/admin-ui.js?v=20260819-6"></script>
 <script defer src="scripts/admin-seo.js?v=20260819-4"></script>
-<script defer src="scripts/admin-audit.js?v=20260819-7"></script>
+<script defer src="scripts/admin-audit.js?v=20260821-8"></script>
 
 
 <!-- ══════════════ LOGIN ══════════════ -->
@@ -2666,6 +2666,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
         <div id="homeThumbPreview" style="width:112px;height:112px;border:1px dashed var(--edge);border-radius:14px;background:var(--sub-1);display:grid;place-items:center;overflow:hidden;color:var(--text3);font-size:0.7rem;text-align:center;">No thumbnail</div>
         <div style="display:flex;flex-direction:column;gap:7px;">
           <button class="btn-secondary" type="button" onclick="triggerHomeThumbnailUpload()">Upload homepage thumbnail</button>
+          <button class="btn-secondary" type="button" onclick="openHomeThumbnailGallery()">Use from Admin Gallery</button>
           <button class="btn-secondary" type="button" id="clearHomeThumbBtn" onclick="clearHomeThumbnail()" style="display:none;">Remove thumbnail</button>
           <div style="font-size:0.68rem;color:var(--text3);max-width:260px;line-height:1.45;">Used only by homepage Featured and New Arrivals cards. It does not change the Shop gallery or product-detail images.</div>
         </div>

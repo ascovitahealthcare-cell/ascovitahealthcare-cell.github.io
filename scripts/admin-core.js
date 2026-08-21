@@ -3571,6 +3571,13 @@ function triggerHomeThumbnailUpload() {
   const input = document.getElementById('homeThumbFileInput');
   if (input) { input.value = ''; input.click(); }
 }
+function openHomeThumbnailGallery() {
+  if (!drawerProductId) { toast('Save the product first, then choose a gallery image.', 'error'); return; }
+  if (typeof window.storeEdOpenGallery !== 'function') { toast('Admin Gallery is unavailable — refresh the page and try again.', 'error'); return; }
+  window._homeThumbnailGalleryActive = true;
+  window._homeThumbnailGalleryProductId = drawerProductId;
+  window.storeEdOpenGallery('Homepage thumbnail · product ' + drawerProductId);
+}
 async function handleHomeThumbnailFileChosen(input) {
   const file = input?.files?.[0];
   if (!file || !drawerProductId) return;

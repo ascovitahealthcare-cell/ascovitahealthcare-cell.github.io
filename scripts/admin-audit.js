@@ -1099,13 +1099,28 @@ async function azLoadPerms() {
   };
   window.storeEdPickGallery = async function(url){
     try {
+      if (window._homeThumbnailGalleryActive) {
+        const productId = Number(window._homeThumbnailGalleryProductId);
+        if (!Number.isSafeInteger(productId) || productId <= 0) throw new Error('No product is selected');
+        const r = await apiFetch('/api/admin/products/' + productId + '/home-thumbnail', { method: 'PUT', body: JSON.stringify({ url: url }) });
+        const d = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+        if (typeof resetHomeThumbnailPreview === 'function' && typeof drawerProductId !== 'undefined' && drawerProductId === productId) resetHomeThumbnailPreview(d.data?.url || url);
+        toast('✅ Gallery image set as homepage thumbnail');
+        storeEdCloseGallery();
+        return;
+      }
       const r = await apiFetch('/api/admin/site-media/' + encodeURIComponent(_seGalKey), { method: 'PUT', body: JSON.stringify({ url: url }) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       toast('✅ Image set — live on the site now');
       storeEdCloseGallery();
     } catch(e) { toast('❌ Could not set image: ' + e.message, 'error'); }
   };
-  window.storeEdCloseGallery = function(){ document.getElementById('storeEdGalleryModal').style.display = 'none'; };
+  window.storeEdCloseGallery = function(){
+    document.getElementById('storeEdGalleryModal').style.display = 'none';
+    window._homeThumbnailGalleryActive = false;
+    window._homeThumbnailGalleryProductId = null;
+  };
   document.addEventListener('keydown', function(e){ if (e.key === 'Escape') storeEdCloseGallery(); });
   // small helpers
   function escAttr(s){ return String(s||'').replace(/"/g,'&quot;'); }
