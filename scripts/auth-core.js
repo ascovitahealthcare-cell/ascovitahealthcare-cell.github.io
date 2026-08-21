@@ -3186,6 +3186,7 @@ async function startGoKwikPayment(orderId, total, formData, btn, origText) {
         orderId: orderId, formData: formData, t: Date.now(),
         vitaApplied: (typeof VITA_APPLIED !== 'undefined' ? VITA_APPLIED : 0),
         promoCode: (typeof activePromoCode !== 'undefined' && activePromoCode) ? activePromoCode : null,
+        paymentToken: data.payment_session_token,
       }));
     } catch (e) {}
     window.location.href = data.short_url;
@@ -3248,6 +3249,7 @@ async function startCashfreePayment(orderId, total, formData, btn, origText) {
         orderId: orderId, formData: formData, t: Date.now(),
         vitaApplied: (typeof VITA_APPLIED !== 'undefined' ? VITA_APPLIED : 0),
         promoCode: (typeof activePromoCode !== 'undefined' && activePromoCode) ? activePromoCode : null,
+        paymentToken: data.payment_session_token,
       }));
     } catch (e) {}
 
@@ -3302,7 +3304,9 @@ async function handleGoKwikReturn(merchantRefId) {
 
   showProcessingScreen(merchantRefId, 0, 'gokwik');
   try {
-    const resp = await fetch(API_BASE + '/api/verify-gokwik-order/' + encodeURIComponent(merchantRefId));
+    const resp = await fetch(API_BASE + '/api/verify-gokwik-order/' + encodeURIComponent(merchantRefId), {
+      headers: pending.paymentToken ? { 'X-Payment-Session': pending.paymentToken } : {},
+    });
     const data = await resp.json();
     if (!resp.ok || !data.success) throw new Error(data.error || 'Could not verify payment');
     if (!data.paid) {
@@ -3311,7 +3315,7 @@ async function handleGoKwikReturn(merchantRefId) {
         merchantRefId, pending.formData, data.amount || 0, 'gokwik');
       return;
     }
-    await finalizeOrder(merchantRefId, pending.formData, data.amount || 0, 'gokwik', 0);
+    await finalizeOrder(merchantRefId, pending.formData, data.amount || 0, 'gokwik', 0, pending.paymentToken);
   } catch (err) {
     console.error('[handleGoKwikReturn]', err);
     if (typeof hideProcessingScreen === 'function') hideProcessingScreen();
@@ -3333,7 +3337,9 @@ async function handleCashfreeReturn(orderId) {
 
   showProcessingScreen(orderId, 0, 'cashfree');
   try {
-    const resp = await fetch(API_BASE + '/api/verify-cashfree-order/' + encodeURIComponent(orderId));
+    const resp = await fetch(API_BASE + '/api/verify-cashfree-order/' + encodeURIComponent(orderId), {
+      headers: pending.paymentToken ? { 'X-Payment-Session': pending.paymentToken } : {},
+    });
     const data = await resp.json();
     if (!resp.ok || !data.success) throw new Error(data.error || 'Could not verify payment');
     if (!data.paid) {
@@ -3342,7 +3348,7 @@ async function handleCashfreeReturn(orderId) {
         orderId, pending.formData, data.order_amount || 0, 'cashfree');
       return;
     }
-    await finalizeOrder(orderId, pending.formData, data.order_amount || 0, 'cashfree', 0);
+    await finalizeOrder(orderId, pending.formData, data.order_amount || 0, 'cashfree', 0, pending.paymentToken);
   } catch (err) {
     console.error('[handleCashfreeReturn]', err);
     if (typeof hideProcessingScreen === 'function') hideProcessingScreen();
@@ -3717,7 +3723,7 @@ function openReviewFromThankYou() {
   if (pid) openProductReview(pid);
   else showPage('account');
 }
-async function finalizeOrder(orderId, formData, total, method, codCharge) {
+async function finalizeOrder(orderId, formData, total, method, codCharge, paymentSessionToken) {
   const orderNumEl = document.getElementById('orderNum');
   if (orderNumEl) orderNumEl.textContent = orderId;
   const payEl = document.getElementById('tyPayMethod');
@@ -3935,7 +3941,8 @@ async function finalizeOrder(orderId, formData, total, method, codCharge) {
         const resp = await fetch(url, {
           method: 'POST',
           headers: Object.assign({ 'Content-Type': 'application/json' },
-            _jwt ? { 'Authorization': 'Bearer ' + _jwt } : {}),
+            _jwt ? { 'Authorization': 'Bearer ' + _jwt } : {},
+            paymentSessionToken ? { 'X-Payment-Session': paymentSessionToken } : {}),
           signal: AbortSignal.timeout(timeouts[attempt]),
           body: body,
         });
@@ -5237,20 +5244,6 @@ function postLoginRedirect() {
   showPage('account'); loadAccountPage();
 }
 
-// ── Offline-fallback password hashing (SHA-256 + per-user salt) ──
-// Used ONLY when the backend is unreachable. This is not a replacement for
-// real server-side auth (bcrypt/argon2 + JWT) — it just avoids storing
-// passwords reversibly (e.g. plain Base64) in localStorage.
-async function hashPasswordLocal(password, saltHex) {
-  const enc = new TextEncoder();
-  const salt = saltHex || Array.from(crypto.getRandomValues(new Uint8Array(16)))
-    .map(b => b.toString(16).padStart(2, '0')).join('');
-  const data = enc.encode(salt + ':' + password);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  const hashHex = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
-  return { hash: hashHex, salt };
-}
-
 async function doLogin() {
   clearAuthMessages();
   const email = document.getElementById('loginEmail').value.trim();
@@ -5270,30 +5263,9 @@ async function doLogin() {
     postLoginRedirect();
     showToast('🌿 Welcome back, ' + data.user.name.split(' ')[0] + '!');
   } catch(e) {
-    // Fallback to localStorage if backend offline
-    const users = JSON.parse(localStorage.getItem('asc_users') || '[]');
-    const candidate = users.find(u => u.email === email);
-    let user = null;
-    if (candidate) {
-      if (candidate.passwordSalt) {
-        const { hash } = await hashPasswordLocal(pass, candidate.passwordSalt);
-        if (hash === candidate.passwordHash) user = candidate;
-      } else if (candidate.password === btoa(pass)) {
-        // Legacy record from before this fix — migrate it to a salted hash now.
-        const { hash, salt } = await hashPasswordLocal(pass);
-        candidate.passwordHash = hash;
-        candidate.passwordSalt = salt;
-        delete candidate.password;
-        localStorage.setItem('asc_users', JSON.stringify(users));
-        user = candidate;
-      }
-    }
-    if (!user) { showAuthError('Invalid email or password. Please try again.'); return; }
-    localStorage.setItem('asc_user', JSON.stringify(user));
-    closeAuth(); updateAccountNavBtn();
-    resumeCheckoutIfWaiting();
-    postLoginRedirect();
-    showToast('🌿 Welcome back, ' + user.name.split(' ')[0] + '!');
+    // Fail closed: a browser-local record is not an authenticated account and
+    // must never be promoted to a logged-in session when the API is offline.
+    showAuthError('Authentication service is temporarily unavailable. Please try again.');
   }
 }
 
@@ -5319,18 +5291,8 @@ async function doRegister() {
     postLoginRedirect();
     showToast('🌿 Account created! Welcome to Ozylix, ' + name.split(' ')[0] + '!');
   } catch(e) {
-    // Fallback to localStorage if backend offline
-    const users = JSON.parse(localStorage.getItem('asc_users') || '[]');
-    if (users.find(u => u.email === email)) { showAuthError('An account with this email already exists.'); return; }
-    const { hash, salt } = await hashPasswordLocal(pass);
-    const newUser = { name, email, phone, passwordHash: hash, passwordSalt: salt, createdAt: new Date().toISOString(), address: {} };
-    users.push(newUser);
-    localStorage.setItem('asc_users', JSON.stringify(users));
-    localStorage.setItem('asc_user', JSON.stringify(newUser));
-    closeAuth(); updateAccountNavBtn();
-    resumeCheckoutIfWaiting();
-    postLoginRedirect();
-    showToast('🌿 Account created! Welcome to Ozylix, ' + name.split(' ')[0] + '!');
+    // Registration is server-authoritative; do not create local-only accounts.
+    showAuthError('Registration service is temporarily unavailable. Please try again.');
   }
 }
 
