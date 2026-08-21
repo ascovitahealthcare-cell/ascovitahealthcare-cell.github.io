@@ -1476,6 +1476,7 @@ function starCount(n) {
 }
 
 function renderProductCard(p){
+  const hasRealImage = !!(p && p.image && String(p.image).trim());
   const disc=p.salePrice&&p.price?Math.round((1-p.salePrice/p.price)*100):0;
   const rawTiers=p._backendTiers||QTY_TIERS[p.id];
   const tiers=rawTiers&&rawTiers.filter(t=>t.rate!=null&&t.mrp!=null).length?rawTiers.filter(t=>t.rate!=null&&t.mrp!=null):null;
@@ -1484,6 +1485,8 @@ function renderProductCard(p){
   const baseMRP=tiers?tiers[0].mrp:p.price;
   const priceDisplay=(baseRate==null)?'<em style="font-size:0.8rem;color:var(--f-mineral-d)">Price Coming Soon</em>':'\u20B9'+baseRate.toLocaleString('en-IN');
   const imgSrc = getProductImg(p);
+  const mediaState = hasRealImage ? 'ready' : 'missing';
+  const mediaBadge = hasRealImage ? '' : '<span class="p-media-status" role="status" style="position:absolute;left:10px;right:10px;bottom:10px;z-index:3;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.9);color:#547177;font-size:.64rem;font-weight:700;text-align:center;letter-spacing:.02em;box-shadow:0 2px 8px rgba(44,55,60,.12)">Product photo being updated</span>';
   const safeName  = esc(p.name);
   const safeBrand = esc(p.brand);
   // Benefit, not brand and not category. This slot first printed "OZYLIX"
@@ -1538,5 +1541,5 @@ function renderProductCard(p){
   const qAddLabel = tiers ? 'Choose Pack' : 'Add to Cart';
   const qAddOnclick = tiers ? `event.stopPropagation();openProduct(${p.id})` : `event.stopPropagation();STORE.addToCart(${p.id})`;
   const buyNowOnclick = `event.stopPropagation();openProduct(${p.id})`;
-  return `<div class="product-card" data-product-id="${p.id}" style="--card-flavour:${cardFlavour}" onclick="openProduct(${p.id})"><div class="p-img-wrap"><img data-src="${imgSrc}" alt="${safeName}" loading="lazy" onerror="this.src='${PRODUCT_FALLBACKS.default}'" decoding="async">${safeBadge} ${maxDisc>0?`<span class="p-disc-badge">${tiers?'Up to ':'-'}${maxDisc}%</span>`:''}<div class="p-actions"><button class="btn-wishlist" onclick="event.stopPropagation();STORE.toggleWishlist(${p.id})" title="Wishlist">♡</button><button class="btn-qadd" onclick="${qAddOnclick}">${qAddLabel}</button></div><div class="p-buyrow"><button class="btn-buynow" onclick="${buyNowOnclick}">⚡ Buy Now</button></div></div><div class="p-info"><div class="p-brand">${safeKicker}</div><div class="p-name">${safeName}</div><div class="p-rating">${ratingDisplay}</div><div class="p-price"><span class="sale-price">${priceDisplay}</span>${(baseMRP&&baseMRP!==baseRate)?`<span class="orig-price">₹${baseMRP.toLocaleString('en-IN')}</span>`:''}</div>${tiers?`<div class="tier-offer-tag">⚡ Up to ${maxDisc}% OFF on larger packs</div>`:safeOffer}<div class="p-enter" aria-hidden="true">Shop now<svg viewBox="0 0 15 8" fill="none"><path d="M0 4h13M9.5 1L13 4l-3.5 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></div>`;
+  return `<div class="product-card" data-product-id="${p.id}" data-image-state="${mediaState}" style="--card-flavour:${cardFlavour}" onclick="openProduct(${p.id})"><div class="p-img-wrap"><img src="${imgSrc}" alt="${safeName}" loading="lazy" onerror="this.src='${PRODUCT_FALLBACKS.default}'" decoding="async">${safeBadge}${mediaBadge} ${maxDisc>0?`<span class="p-disc-badge">${tiers?'Up to ':'-'}${maxDisc}%</span>`:''}<div class="p-actions"><button class="btn-wishlist" onclick="event.stopPropagation();STORE.toggleWishlist(${p.id})" title="Wishlist">♡</button><button class="btn-qadd" onclick="${qAddOnclick}">${qAddLabel}</button></div><div class="p-buyrow"><button class="btn-buynow" onclick="${buyNowOnclick}">⚡ Buy Now</button></div></div><div class="p-info"><div class="p-brand">${safeKicker}</div><div class="p-name">${safeName}</div><div class="p-rating">${ratingDisplay}</div><div class="p-price"><span class="sale-price">${priceDisplay}</span>${(baseMRP&&baseMRP!==baseRate)?`<span class="orig-price">₹${baseMRP.toLocaleString('en-IN')}</span>`:''}</div>${tiers?`<div class="tier-offer-tag">⚡ Up to ${maxDisc}% OFF on larger packs</div>`:safeOffer}<div class="p-enter" aria-hidden="true">Shop now<svg viewBox="0 0 15 8" fill="none"><path d="M0 4h13M9.5 1L13 4l-3.5 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></div>`;
 }

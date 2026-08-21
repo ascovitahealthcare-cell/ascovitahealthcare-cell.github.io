@@ -685,11 +685,16 @@ async function initHome() {
   try { await loadProductRatings(); } catch (e) { /* cards fall back below */ }
   // ✅ FIX 2: Filter out _hidden (active:false) products from all grids
   const visibleProducts = PRODUCTS.filter(p => !p._hidden && p.active !== false);
+  // Permanent media safeguard: a homepage card must never be a blank or
+  // placeholder-only tile. Products without an assigned real image remain
+  // searchable in Shop, where renderProductCard marks the media as pending.
+  const homepageProducts = visibleProducts.filter(p => p.image && String(p.image).trim());
+  window.OZYLIX_MISSING_MEDIA = visibleProducts.filter(p => !p.image || !String(p.image).trim()).map(p => ({ id: p.id, name: p.name }));
   // Featured
-  const feat = visibleProducts.filter(p => p.tags.includes('featured')).slice(0,8);
+  const feat = homepageProducts.filter(p => p.tags.includes('featured')).slice(0,8);
   const fg=document.getElementById('featuredGrid'); if(fg) fg.innerHTML = feat.map(p => renderProductCard(p)).join('');
   // New arrivals
-  const newP = visibleProducts.filter(p => p.tags.includes('new')).slice(0,4);
+  const newP = homepageProducts.filter(p => p.tags.includes('new')).slice(0,4);
   const nag=document.getElementById('newArrivalsGrid'); if(nag) nag.innerHTML = newP.map(p => renderProductCard(p)).join('');
   // Blog content is rendered only on the dedicated blog page.
   // FAQ
