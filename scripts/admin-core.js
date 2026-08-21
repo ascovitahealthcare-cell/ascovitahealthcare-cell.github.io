@@ -8202,21 +8202,28 @@ function loadGeoAnalytics(){
 // ── Performance ────────────────────────────────────────
 function loadPerformance(){
   if(!allOrders.length){toast('Load dashboard first','warning');return;}
-  const paid=allOrders.filter(o=>(o.payment_status||'').toLowerCase().includes('paid')||o.payment_status==='SUCCESS');
-  const delivered=allOrders.filter(o=>(o.fulfillment||o.status||'')==='Delivered');
+  const activeOrders=allOrders.filter(o=>{
+    const f=String(o.fulfillment||o.status||'').trim().toLowerCase();
+    return f!=='cancelled' && f!=='returned';
+  });
+  const paid=activeOrders.filter(o=>{
+    const p=String(o.payment_status||'').trim().toLowerCase();
+    return p.includes('paid') || p.includes('success') || p.includes('collected');
+  });
+  const delivered=activeOrders.filter(o=>String(o.fulfillment||o.status||'').trim().toLowerCase()==='delivered');
   const aov=paid.length?paid.reduce((s,o)=>s+parseFloat(o.total||0),0)/paid.length:0;
-  const conv=allOrders.length?paid.length/allOrders.length*100:0;
-  const del=allOrders.length?delivered.length/allOrders.length*100:0;
+  const conv=activeOrders.length?paid.length/activeOrders.length*100:0;
+  const del=activeOrders.length?delivered.length/activeOrders.length*100:0;
   const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   se('perfConvRate',conv.toFixed(1)+'%'); se('perfAOV','₹'+fmtNum(Math.round(aov)));
   se('perfPaySucc',conv.toFixed(1)+'%'); se('perfDelRate',del.toFixed(1)+'%');
   const fe=document.getElementById('perfFunnel');
   if(fe){
     const steps=[
-      {l:'Total Orders',n:allOrders.length,c:'#547177'},
-      {l:'Paid',n:paid.length,c:'#3B7EA6'},
-      {l:'Processing',n:allOrders.filter(o=>(o.fulfillment||o.status||'')==='Processing').length,c:'#8F6417'},
-      {l:'Shipped',n:allOrders.filter(o=>(o.fulfillment||o.status||'')==='Shipped').length,c:'#E87020'},
+      {l:'Active Orders',n:activeOrders.length,c:'#547177'},
+      {l:'Paid / Collected',n:paid.length,c:'#3B7EA6'},
+      {l:'Processing',n:activeOrders.filter(o=>String(o.fulfillment||o.status||'').trim().toLowerCase()==='processing').length,c:'#8F6417'},
+      {l:'Shipped',n:activeOrders.filter(o=>String(o.fulfillment||o.status||'').trim().toLowerCase()==='shipped').length,c:'#E87020'},
       {l:'Delivered',n:delivered.length,c:'#7C3AED'}
     ];
     const maxN=steps[0].n||1;
@@ -8236,7 +8243,7 @@ function loadPerformance(){
   const totP=allProducts.filter(p=>!p.deleted_at).length||1;
   setTimeout(()=>{
     drawAreaChart('perfTrendCanvas',n30.map(b=>b.label),n30.map(b=>b.rev),chartTheme().primary);
-    drawRing('perfRing1',conv,chartTheme().secondary,'Paid Rate');
+    drawRing('perfRing1',conv,chartTheme().secondary,'Paid / Collected');
     drawRing('perfRing2',del,chartTheme().primary,'Delivered');
     drawRing('perfRing3',inStock/totP*100,'#8F6417','Stock OK');
   },120);
