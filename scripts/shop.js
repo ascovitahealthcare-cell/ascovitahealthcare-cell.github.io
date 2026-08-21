@@ -42,7 +42,7 @@
   // ── SERVICE WORKER ──
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(function (reg) {
         // A new sw.js was deployed while this tab was open. Don't force a
         // reload mid-session (could drop a cart/checkout in progress) —
         // just let the person know, the same way the network banner does.

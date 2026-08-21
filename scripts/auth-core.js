@@ -683,13 +683,17 @@ async function initHome() {
   // reviews could flash "4.8 ★ (567)" for up to a second before the
   // honest "No ratings yet" replaced it.
   try { await loadProductRatings(); } catch (e) { /* cards fall back below */ }
-  // ✅ FIX 2: Filter out _hidden (active:false) products from all grids
+  // ✅ FIX 2: Filter out _hidden (active:false) products from all grids.
   const visibleProducts = PRODUCTS.filter(p => !p._hidden && p.active !== false);
-  // Permanent media safeguard: a homepage card must never be a blank or
-  // placeholder-only tile. Products without an assigned real image remain
-  // searchable in Shop, where renderProductCard marks the media as pending.
-  const homepageProducts = visibleProducts.filter(p => p.image && String(p.image).trim());
+  // Do not gate the entire homepage on media availability. The static
+  // catalogue intentionally boots before /api/products returns on slower
+  // mobile connections; filtering out image-less products here used to
+  // replace the already-painted Featured and New Arrivals cards with empty
+  // grids. renderProductCard() shows an honest media-pending state, and the
+  // successful backend sync re-renders these same cards with live images,
+  // prices, offers, and stock. Products must not disappear during that gap.
   window.OZYLIX_MISSING_MEDIA = visibleProducts.filter(p => !p.image || !String(p.image).trim()).map(p => ({ id: p.id, name: p.name }));
+  const homepageProducts = visibleProducts;
   // Featured
   const feat = homepageProducts.filter(p => p.tags.includes('featured')).slice(0,8);
   const fg=document.getElementById('featuredGrid'); if(fg) fg.innerHTML = feat.map(p => renderProductCard(p)).join('');
