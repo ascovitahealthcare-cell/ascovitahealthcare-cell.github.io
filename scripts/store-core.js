@@ -214,19 +214,25 @@ function mergeBackendProducts(backendProducts) {
       else if (bp.position != null) p.position = parseInt(bp.position);
       // Tags
       if (bp.tags) p.tags = parseArr(bp.tags);
-      // Media — support media[] JSON array (up to 10 images/videos) OR individual fields
-      // ✅ Only apply backend images if products-images.js has NOT already set them
-      const alreadyHasImage = p.image && p.image.startsWith('http');
+      // Media — support media[] JSON array (up to 10 images/videos) OR individual fields.
+      // A local seed may provide first-paint media while the API is waking up,
+      // but a later admin update must still be allowed to replace that seed.
       const mediaArr = parseArr(bp.media || bp.images);
-      if (mediaArr.length && !alreadyHasImage) {
-        p.media = mediaArr.slice(0, 10); // [{url, type:"image"|"video", thumb}]
+      if (mediaArr.length) {
+        p.media = mediaArr.slice(0, 10).map(m =>
+          typeof m === 'string' ? { url: m, type: mediaTypeFromUrl(m), thumb: m } : m
+        );
         // Back-compat flat fields
         p.image  = (mediaArr[0] && mediaArr[0].url) || mediaArr[0] || p.image;
         p.image2 = (mediaArr[1] && mediaArr[1].url) || mediaArr[1] || '';
         p.allImages = mediaArr.map(m => m.url || m).filter(Boolean);
       } else {
-        if (bp.image  && !alreadyHasImage) p.image  = bp.image;
-        if (bp.image2 && !alreadyHasImage) p.image2 = bp.image2;
+        // Only replace a first-paint seed when the backend actually has a URL.
+        if (bp.image)  p.image  = bp.image;
+        if (bp.image2) p.image2 = bp.image2;
+        if (bp.image3) p.image3 = bp.image3;
+        if (bp.image4) p.image4 = bp.image4;
+        if (bp.image5) p.image5 = bp.image5;
         // Build media array from individual fields for back-compat
         const legacyUrls = [bp.image,bp.image2,bp.image3,bp.image4,bp.image5].filter(Boolean);
         if (legacyUrls.length) p.media = legacyUrls.map(u=>({url:u,type:mediaTypeFromUrl(u),thumb:u}));
@@ -1352,7 +1358,7 @@ function mediaTypeFromUrl(url) {
   return 'image';
 }
 function getProductImg(p) {
-  if (p.image && p.image.startsWith('http')) return cdnImg(p.image);
+  if (p.image && (p.image.startsWith('http') || p.image.startsWith('/cdn-storage/'))) return cdnImg(p.image);
   return cdnImg(PRODUCT_FALLBACKS[p.category] || PRODUCT_FALLBACKS['default']);
 }
 

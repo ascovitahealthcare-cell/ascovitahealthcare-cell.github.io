@@ -1,8 +1,8 @@
 // Extracted from index.html (line 13388) by Manus SEO pass — load order preserved
 
 // ============================================================
-// ASCOVITA — PRODUCT IMAGES
-// Using direct Wix CDN URLs — no local image upload needed
+// OZYLIX — PRODUCT IMAGES
+// Seeded from verified Supabase Storage URLs; cdnImg() serves them through Cloudflare
 // ============================================================
 
 const PRODUCT_IMAGES = {
@@ -70,6 +70,80 @@ const PRODUCT_IMAGES = {
 
   // —— id: 22 — Power Pro Tablets ——
   22: { images: [] },
+
+  // Live Supabase product media (verified 2026-08-21). These are seeded
+  // locally for first paint; the backend remains the source of truth and can
+  // replace them during hydration when an admin updates a product.
+  30: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544808269-q1ro7o.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544812957-wytvzi.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544819470-d1bil2.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544823561-hbes1s.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544827808-gamblv.webp',
+  ]},
+  31: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544754750-xd8h9n.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544758370-qsxkhw.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544762274-xlfm8p.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544765993-nfu965.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544770095-meduli.webp',
+  ]},
+  32: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786529108294-o35fhe.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544881956-ifl139.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544885553-ctzbfa.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544891555-sqego1.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544895270-le2u45.webp',
+  ]},
+  33: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544958455-wlcavv.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544962961-ofe17e.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544970080-cpejik.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544973478-b7hfx4.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544979263-njlchi.webp',
+  ]},
+  34: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544405506-8l0alq.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544411180-kovmbq.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544414753-g3gyel.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544421875-r996wp.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544537699-p4m3x7.webp',
+  ]},
+  35: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545030513-0a7fmf.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545034233-7c1jsa.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545038759-j1c446.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545043563-zk7yv5.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545047780-ddsuvc.webp',
+  ]},
+  36: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545163371-nk5c7i.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545166376-07p1ho.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545171082-m0yzur.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545174462-258y6k.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545178379-qk3xhq.webp',
+  ]},
+  37: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545213192-cozg5a.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545216371-v3s2ka.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545221354-yvp1su.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545230368-2wts0r.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545235384-espp52.webp',
+  ]},
+  38: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544708346-2n4nad.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544327665-9pzy6j.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544335392-997fq4.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544340183-fmhsbp.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786544344588-l11gi7.webp',
+  ]},
+  39: { images: [
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786529254427-awoc66.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545294655-tn1atd.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545298781-uz2amq.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545302575-auh121.webp',
+    'https://frwsjgrrtzhjfflcdjjs.supabase.co/storage/v1/object/public/product-images/1786545306484-l3vtad.webp',
+  ]},
 
 };
 
