@@ -73,6 +73,10 @@
 
   /* Pointer and scroll channels, read by CSS. */
   function channels() {
+    // The visual channels are decorative. Do not install a global scroll
+    // listener on Android/touch/weak devices; native scrolling should own the
+    // frame budget without JS or CSS-variable churn.
+    if (LOW || reduce) return;
     var root = document.documentElement, raf = null, mx = 0, my = 0;
     if (!coarse && !reduce) {
       window.addEventListener('pointermove', function (e) {
@@ -99,8 +103,8 @@
   /* ══ 3 · BUBBLE FIELD ════════════════════════════════════════════
      Ambient bubbles across the whole page, not only the hero.        */
   function bubbles() {
-    if (reduce) return;
-    var n = LOW ? 5 : 11;
+    if (LOW || reduce) return;
+    var n = 11;
     for (var i = 0; i < n; i++) {
       (function (i) {
         setTimeout(function () {
@@ -126,7 +130,9 @@
      pointer and scroll position via the --mx/--my/--scrollv channels
      channels() already publishes.                                   */
   function liquidFoil() {
-    if (reduce || document.getElementById('liquidFoil')) return;
+    // Blurred fixed layers are expensive to composite during Android scroll.
+    // The CSS also hides this layer on touch devices as a defensive fallback.
+    if (LOW || reduce || document.getElementById('liquidFoil')) return;
     var field = document.createElement('div');
     field.id = 'liquidFoil';
     var count = LOW ? 2 : 4;

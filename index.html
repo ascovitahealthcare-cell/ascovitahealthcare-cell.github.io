@@ -901,8 +901,9 @@ button:disabled, .btn-primary:disabled, .btn-gold:disabled {
 }
 .click-wave, .ripple-effect { display: none; }
 #scrollBar {
-  position: fixed; top: 0; left: 0; height: 2px; width: 0; z-index: 9999; pointer-events: none;
-  background: var(--indigo);
+  position: fixed; top: 0; left: 0; height: 2px; width: 100%; z-index: 9999; pointer-events: none;
+  background: var(--indigo); transform: scaleX(0); transform-origin: left center;
+  will-change: transform;
 }
 #pageTransition {
   position: fixed; inset: 0; z-index: 9998; pointer-events: none; opacity: 0;
@@ -990,6 +991,18 @@ button:disabled, .btn-primary:disabled, .btn-gold:disabled {
 @media (max-width: 900px), (hover: none) {
   .foil-blob.b3, .foil-blob.b4 { display: none; }
   .foil-blob { filter: blur(46px) saturate(1.4); opacity: .4; }
+}
+
+/* Android performance policy: ambient blur and translucent fixed chrome are
+   decorative only. Keep the mobile shell opaque and let native scrolling own
+   the compositor instead of repainting a blurred viewport every frame. */
+@media (max-width: 768px), (hover: none) {
+  #liquidFoil { display: none !important; }
+  .app-topbar, .app-bottom-nav, .mobile-menu {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--paper) !important;
+  }
 }
 
 /* The floating cursor (a halo trailing the pointer plus a ring tracking
@@ -5849,7 +5862,7 @@ button, [role="button"] {
 <div id="scrollBar"></div>
 <div id="pageTransition"></div>
 
-<script defer src="scripts/animations.js?v=20260819-3"></script>
+<script defer src="scripts/animations.js?v=20260821-2"></script>
 
 <!-- SVG ICON DEFS — reusable 3D illustrated icons -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -8610,7 +8623,7 @@ button, [role="button"] {
 <script defer src="scripts/magnet-observe.js?v=20260819-3"></script>
 
 
-<script defer src="scripts/liquid-bubbles.js?v=20260819-3"></script>
+<script defer src="scripts/liquid-bubbles.js?v=20260821-2"></script>
 
 <!-- ══ APP LAYER ══ -->
 <style>

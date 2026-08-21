@@ -7,19 +7,53 @@
 // ═══════════════════════════════════════════════════════════
 (function() {
 
-  // ── SCROLL PROGRESS BAR ──
+  // ── SHARED SCROLL SCHEDULER ──
+  // Keep all scroll-linked work behind one requestAnimationFrame. Android
+  // dispatches many scroll events per gesture; reading document height and
+  // writing layout properties from multiple listeners makes the page compete
+  // with the compositor for every frame.
+  const reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const coarsePointer = !!(window.matchMedia && window.matchMedia('(hover: none)').matches);
+  const narrowViewport = window.innerWidth <= 768;
+  const weakDevice = (navigator.hardwareConcurrency || 4) <= 4;
+  const saveData = !!(navigator.connection && navigator.connection.saveData);
+  const lowPowerDevice = reduceMotion || coarsePointer || narrowViewport || weakDevice || saveData;
   const bar = document.getElementById('scrollBar');
-  window.addEventListener('scroll', function() {
-    const scrolled = window.scrollY;
-    const max = document.body.scrollHeight - window.innerHeight;
-    if (bar) bar.style.width = (scrolled / max * 100) + '%';
-  }, { passive: true });
-
-  // ── NAVBAR SHRINK ON SCROLL ──
   const navbar = document.querySelector('.navbar');
-  window.addEventListener('scroll', function() {
-    if (navbar) navbar.classList.toggle('scrolled', window.scrollY > 60);
+  const heroVisual = document.querySelector('.hero-visual');
+  let maxScroll = 1;
+  let scrollRaf = 0;
+
+  function refreshScrollMetrics() {
+    maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+  }
+
+  function applyScrollEffects() {
+    scrollRaf = 0;
+    const y = window.scrollY || 0;
+    if (bar) {
+      const progress = Math.min(1, Math.max(0, y / maxScroll));
+      bar.style.transform = 'scaleX(' + progress.toFixed(4) + ')';
+    }
+    if (navbar) navbar.classList.toggle('scrolled', y > 60);
+    // Hero parallax is decorative and is intentionally disabled on Android.
+    if (!lowPowerDevice && heroVisual && y < window.innerHeight) {
+      heroVisual.style.transform = 'translate3d(0,' + (y * 0.12).toFixed(2) + 'px,0)';
+    }
+  }
+
+  function queueScrollEffects() {
+    if (!scrollRaf) scrollRaf = requestAnimationFrame(applyScrollEffects);
+  }
+
+  refreshScrollMetrics();
+  window.addEventListener('resize', function () {
+    refreshScrollMetrics();
+    queueScrollEffects();
   }, { passive: true });
+  window.addEventListener('load', refreshScrollMetrics, { once: true });
+  window.addEventListener('scroll', queueScrollEffects, { passive: true });
+  queueScrollEffects();
 
   // ── CLICK WAVE ──
   document.addEventListener('click', function(e) {
@@ -177,6 +211,9 @@
 
   // ── FLOATING PARTICLES ──
   function spawnParticles() {
+    // Ambient particles are decorative; skip them on touch/narrow/weak
+    // devices so Android can reserve the frame budget for scrolling.
+    if (lowPowerDevice) return;
     var colors = ['rgba(28,86,32,0.3)', 'rgba(46,125,50,0.25)', 'rgba(28,86,32,0.2)', 'rgba(232,160,32,0.2)'];
     var sizes  = [4, 6, 8, 10, 5, 7];
     for (var i = 0; i < 8; i++) {
@@ -199,16 +236,6 @@
     }
   }
   spawnParticles();
-
-  // ── PARALLAX on HERO images ──
-  var heroVisual = document.querySelector('.hero-visual');
-  window.addEventListener('scroll', function() {
-    if (!heroVisual) return;
-    var scrollY = window.scrollY;
-    if (scrollY < window.innerHeight) {
-      heroVisual.style.transform = 'translateY(' + (scrollY * 0.12) + 'px)';
-    }
-  }, { passive: true });
 
   // ── COUNTER ANIMATION for hero stats ──
   function animateCounter(el, target, prefix, suffix) {
