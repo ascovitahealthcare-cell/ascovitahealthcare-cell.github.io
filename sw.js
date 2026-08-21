@@ -17,7 +17,7 @@
 // changing this string is what actually evicts the bad copy from devices
 // already carrying it. Bump it on any deploy that fixes a page-breaking
 // bug — a fix nobody can receive is not shipped.
-const CACHE_NAME = 'ozylix-pwa-v19';
+const CACHE_NAME = 'ozylix-pwa-v20';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache on install (your core pages)
