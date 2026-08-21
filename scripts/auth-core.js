@@ -696,10 +696,10 @@ async function initHome() {
   const homepageProducts = visibleProducts;
   // Featured
   const feat = homepageProducts.filter(p => p.tags.includes('featured')).slice(0,8);
-  const fg=document.getElementById('featuredGrid'); if(fg) fg.innerHTML = feat.map(p => renderProductCard(p)).join('');
+  const fg=document.getElementById('featuredGrid'); if(fg) fg.innerHTML = feat.map(p => renderProductCard(p, { homepage: true })).join('');
   // New arrivals
   const newP = homepageProducts.filter(p => p.tags.includes('new')).slice(0,4);
-  const nag=document.getElementById('newArrivalsGrid'); if(nag) nag.innerHTML = newP.map(p => renderProductCard(p)).join('');
+  const nag=document.getElementById('newArrivalsGrid'); if(nag) nag.innerHTML = newP.map(p => renderProductCard(p, { homepage: true })).join('');
   // Blog content is rendered only on the dedicated blog page.
   // FAQ
   const hfw=document.getElementById('homeFaqWrap'); if(hfw) hfw.innerHTML = FAQS.slice(0,5).map(renderFaqItem).join('');
@@ -2629,6 +2629,8 @@ function bootApp() {
   try { hydrateAboutStats(); } catch(e) {}
   try { if(document.getElementById('bundleProdList')) renderBundleBuilder(); } catch(e) {}
   try { updateSaleUIVisibility(); } catch(e) {}
+  // Homepage thumbnails are a separate public projection and never block Shop.
+  syncHomeThumbnails();
   // 🔗 Sync live product data from Supabase backend (non-blocking)
   syncProductsFromBackend();
   // Keep syncing every 2 minutes so a customer with the page already open

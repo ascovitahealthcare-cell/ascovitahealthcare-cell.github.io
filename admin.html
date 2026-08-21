@@ -1827,7 +1827,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   <link rel="stylesheet" href="styles/admin-advanced.css">
 </head>
 <body>
-<script defer src="scripts/admin-core.js?v=20260821-1"></script>
+<script defer src="scripts/admin-core.js?v=20260821-2"></script>
 <script defer src="scripts/admin-api.js?v=20260819-7"></script>
 <script defer src="scripts/admin-ui.js?v=20260819-6"></script>
 <script defer src="scripts/admin-seo.js?v=20260819-4"></script>
@@ -2657,6 +2657,21 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <input type="file" id="imgSlotFileInput" accept="image/*,.svg,video/*,.mp4,.webm,.mov" style="display:none;" onchange="handleImgSlotFileChosen(this)">
       <!-- Hidden fields — keep existing save/load code (dImage..dImage5) working unchanged -->
       <input type="hidden" id="dImage"><input type="hidden" id="dImage2"><input type="hidden" id="dImage3"><input type="hidden" id="dImage4"><input type="hidden" id="dImage5">
+    </div>
+    <!-- Homepage-only thumbnail: intentionally separate from Shop gallery media -->
+    <div class="section-ico-hdr"><div class="section-ico" style="background:#e9f5ef">🏠</div><div style="font-weight:700;font-size:0.88rem;">Homepage Thumbnail</div></div>
+    <div class="drawer-field">
+      <div class="drawer-field-label">Featured / New Arrivals card image</div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;">
+        <div id="homeThumbPreview" style="width:112px;height:112px;border:1px dashed var(--edge);border-radius:14px;background:var(--sub-1);display:grid;place-items:center;overflow:hidden;color:var(--text3);font-size:0.7rem;text-align:center;">No thumbnail</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <button class="btn-secondary" type="button" onclick="triggerHomeThumbnailUpload()">Upload homepage thumbnail</button>
+          <button class="btn-secondary" type="button" id="clearHomeThumbBtn" onclick="clearHomeThumbnail()" style="display:none;">Remove thumbnail</button>
+          <div style="font-size:0.68rem;color:var(--text3);max-width:260px;line-height:1.45;">Used only by homepage Featured and New Arrivals cards. It does not change the Shop gallery or product-detail images.</div>
+        </div>
+      </div>
+      <input type="file" id="homeThumbFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;" onchange="handleHomeThumbnailFileChosen(this)">
+      <input type="hidden" id="dHomeThumbnail">
     </div>
     <!-- Basic -->
     <div class="section-ico-hdr"><div class="section-ico green">📦</div><div style="font-weight:700;font-size:0.88rem;">Basic Info</div></div>

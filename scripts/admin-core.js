@@ -3512,9 +3512,11 @@ function openProductDrawer(productId) {
     document.getElementById('dSeoRobots').value = p.seo_robots||'index,follow';
     document.getElementById('dSeoSitemap').checked = p.seo_sitemap_include !== false;
     renderAllImgSlots();
+    resetHomeThumbnailPreview();
+    loadHomeThumbnail(productId);
     updateDrawerPricePreview();
   } else {
-    ['dName','dBadge','dDescription','dOfferText','dHowToUse','dIngredients','dTags','dImage','dImage2','dImage3','dImage4','dImage5','dMetaDesc','dSeoKeywords','dSeoSlug','dSeoCanonical','dSeoOgImage','dSeoTwitterImage'].forEach(id => document.getElementById(id).value='');
+    ['dName','dBadge','dDescription','dOfferText','dHowToUse','dIngredients','dTags','dImage','dImage2','dImage3','dImage4','dImage5','dMetaDesc','dSeoKeywords','dSeoSlug','dSeoCanonical','dSeoOgImage','dSeoTwitterImage','dHomeThumbnail'].forEach(id => document.getElementById(id).value='');
     document.getElementById('dSeoSchemaType').value = 'Product';
     document.getElementById('dSeoRobots').value = 'index,follow';
     document.getElementById('dSeoSitemap').checked = true;
@@ -3533,6 +3535,7 @@ function openProductDrawer(productId) {
     _tierRowSeq = 0;
     renderTierRows();
     document.getElementById('drawerPricePreview').style.display='none';
+    resetHomeThumbnailPreview();
   }
   document.getElementById('prodDrawer').classList.add('open');
   document.getElementById('prodDrawerOverlay').classList.add('open');
@@ -3540,6 +3543,58 @@ function openProductDrawer(productId) {
 function closeProductDrawer() {
   document.getElementById('prodDrawer').classList.remove('open');
   document.getElementById('prodDrawerOverlay').classList.remove('open');
+}
+
+let drawerHomeThumbnailUrl = '';
+function resetHomeThumbnailPreview(url = '') {
+  drawerHomeThumbnailUrl = String(url || '');
+  const field = document.getElementById('dHomeThumbnail');
+  if (field) field.value = drawerHomeThumbnailUrl;
+  const box = document.getElementById('homeThumbPreview');
+  const clear = document.getElementById('clearHomeThumbBtn');
+  if (!box) return;
+  box.innerHTML = drawerHomeThumbnailUrl
+    ? `<img src="${adminCdnImg(drawerHomeThumbnailUrl)}" alt="Homepage thumbnail" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='Thumbnail unavailable'">`
+    : 'No thumbnail';
+  if (clear) clear.style.display = drawerHomeThumbnailUrl ? '' : 'none';
+}
+async function loadHomeThumbnail(productId) {
+  if (!productId) return;
+  try {
+    const r = await apiFetch(`/api/admin/products/${productId}/home-thumbnail`);
+    const d = await r.json();
+    if (r.ok && drawerProductId === productId) resetHomeThumbnailPreview(d.data?.url || '');
+  } catch (e) { console.warn('[admin] homepage thumbnail load failed:', e.message); }
+}
+function triggerHomeThumbnailUpload() {
+  if (!drawerProductId) { toast('Save the product first, then upload its homepage thumbnail.', 'error'); return; }
+  const input = document.getElementById('homeThumbFileInput');
+  if (input) { input.value = ''; input.click(); }
+}
+async function handleHomeThumbnailFileChosen(input) {
+  const file = input?.files?.[0];
+  if (!file || !drawerProductId) return;
+  const fd = new FormData();
+  fd.append('image', file);
+  try {
+    toast('Uploading homepage thumbnail…');
+    const r = await adminProofUpload(`/api/admin/products/${drawerProductId}/home-thumbnail`, fd, 'Authorize this homepage thumbnail upload?');
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Thumbnail upload failed');
+    resetHomeThumbnailPreview(d.data?.url || '');
+    toast('Homepage thumbnail uploaded ✅');
+  } catch (e) { toast(e.message, 'error'); }
+}
+async function clearHomeThumbnail() {
+  if (!drawerProductId || !drawerHomeThumbnailUrl) return;
+  if (!confirm('Remove this homepage thumbnail? Shop/product images will not be changed.')) return;
+  try {
+    const r = await apiFetch(`/api/admin/products/${drawerProductId}/home-thumbnail`, {method:'DELETE'});
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Thumbnail removal failed');
+    resetHomeThumbnailPreview('');
+    toast('Homepage thumbnail removed');
+  } catch (e) { toast(e.message, 'error'); }
 }
 const IMG_SLOT_FIELDS = {1:'dImage', 2:'dImage2', 3:'dImage3', 4:'dImage4', 5:'dImage5'};
 
