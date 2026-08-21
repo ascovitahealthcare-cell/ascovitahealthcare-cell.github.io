@@ -530,8 +530,8 @@ function showPage(pg) {
         for (var g = 0; g < groups; g++) mmDisc += mmUnits[g * 4] || 0;
         var mmNeed = groups > 0 ? 0 : 4 - (mmUnits.length % 4);
         var msg = mmDisc > 0
-          ? '🎉 <b>₹' + mmDisc.toLocaleString('en-IN') + ' saved</b> with your Mix &amp; Match bundle discount'
-          : (mmUnits.length > 0 ? ('🎁 <b>' + mmNeed + '</b> more ' + (mmNeed === 1 ? 'item' : 'items') + ' and your bundle discount grows')
+          ? '🎉 ₹' + mmDisc.toLocaleString('en-IN') + ' saved with your Mix & Match bundle discount'
+          : (mmUnits.length > 0 ? ('🎁 ' + mmNeed + ' more ' + (mmNeed === 1 ? 'item' : 'items') + ' and your bundle discount grows')
             : '💚 Don’t forget — your order earns Vita Points');
         ozylxNotify.show({ id: 'cart-' + (mmDisc > 0 ? 'saved' : mmNeed ? 'mm' : 'vita'), msg: msg, corner: 'bottom-left' });
       } catch (e) {}
@@ -6508,32 +6508,73 @@ function openTracking(orderId) {
   }, 100);
 }
 
-function doTrackOrder() {
+async function doTrackOrder() {
   const inp = document.getElementById('trackInput');
   const res = document.getElementById('trackResult');
   if (!inp || !res) return;
-  const orderId = inp.value.trim();
-  if (!orderId) { showToast('Please enter an Order ID', 'error'); return; }
-  try {
-    const orders = JSON.parse(localStorage.getItem('asc_orders') || '[]');
-    const order = orders.find(o => o.orderId === orderId || orderId.includes(o.orderId.replace('AVC-','')));
-    if (order) {
-      res.style.display = 'block';
-      res.innerHTML = `
-        <div style="background:var(--green-wash);border-radius:var(--radius);padding:18px">
-          <div style="font-weight:700;margin-bottom:8px;color:var(--green)">📦 Order Found: ${order.orderId}</div>
-          <div style="font-size:0.84rem;color:var(--gray);margin-bottom:12px">${order.address}</div>
-          <div style="font-size:0.84rem;font-weight:700;color:var(--text)">Status: ${order.status}</div>
-          <div style="margin-top:14px">
-            <a href="https://www.shiprocket.in/shipment-tracking/" target="_blank" class="btn-primary" style="font-size:0.82rem;padding:10px 20px">Track on Shiprocket ↗</a>
-          </div>
-        </div>
-      `;
-    } else {
-      res.style.display = 'block';
-      res.innerHTML = `<div style="background:var(--st-danger-bg);border:1px solid var(--st-danger-bg);border-radius:var(--radius);padding:14px;font-size:0.84rem;color:var(--red)">Order not found locally. <a href="https://www.shiprocket.in/shipment-tracking/" target="_blank" style="color:var(--green);font-weight:700">Try Shiprocket directly ↗</a></div>`;
-    }
-  } catch(e) {}
+  const requested = inp.value.trim();
+  if (!requested) { showToast('Please enter an Order ID', 'error'); return; }
+  const normaliseId = value => String(value || '').trim().toUpperCase();
+  const matchesId = value => {
+    const a = normaliseId(value);
+    const b = normaliseId(requested);
+    return a === b || a.replace(/^AVC-/, '') === b.replace(/^AVC-/, '');
+  };
+
+  res.style.display = 'block';
+  res.innerHTML = '<div style="padding:14px;color:var(--gray)">Loading order status…</div>';
+  let order = Array.isArray(window.__INVOICE_ORDERS)
+    ? window.__INVOICE_ORDERS.find(o => matchesId(o.id || o.orderId))
+    : null;
+  const user = getCurrentUser();
+  const jwt = localStorage.getItem('asc_jwt') || localStorage.getItem('asc_token') || '';
+
+  // The authenticated endpoint is the source of truth; it returns only the
+  // current customer’s orders, so tracking works across devices and sessions.
+  if (!order && jwt) {
+    try {
+      const r = await fetchWithTimeout(API_BASE + '/api/orders/my', {
+        headers: { 'Authorization': 'Bearer ' + jwt, 'Accept': 'application/json' }
+      }, 8000);
+      if (r.ok) {
+        const data = await r.json();
+        const backendOrders = (data.data || data || []).filter(o =>
+          !user?.email || (o.customer_email || '').toLowerCase().trim() === user.email.toLowerCase().trim()
+        );
+        order = backendOrders.find(o => matchesId(o.id || o.orderId));
+      }
+    } catch (e) { console.warn('[Tracking] backend lookup failed:', e && e.message); }
+  }
+
+  // Legacy local orders remain a fallback, but only after an email ownership
+  // check. The previous implementation could display another local order if
+  // a visitor guessed its ID.
+  if (!order && user?.email) {
+    try {
+      const local = JSON.parse(localStorage.getItem('asc_orders') || '[]');
+      order = local.filter(o => (o.userEmail || o.email || '').toLowerCase().trim() === user.email.toLowerCase().trim())
+        .find(o => matchesId(o.orderId || o.id));
+    } catch (e) {}
+  }
+
+  if (!order) {
+    res.innerHTML = '<div style="background:var(--st-danger-bg);border:1px solid var(--st-danger-bg);border-radius:var(--radius);padding:14px;font-size:0.84rem;color:var(--red)">Order not found in your account. <a href="https://www.shiprocket.in/shipment-tracking/" target="_blank" rel="noopener" style="color:var(--green);font-weight:700">Try Shiprocket directly ↗</a></div>';
+    return;
+  }
+
+  const foundId = order.id || order.orderId || requested;
+  const address = order.address || order.shipping_address || [order.city, order.state, order.pincode || order.postal_code].filter(Boolean).join(', ');
+  const status = order.fulfillment || order.status || order.order_status || 'Processing';
+  res.innerHTML = `
+    <div style="background:var(--green-wash);border-radius:var(--radius);padding:18px">
+      <div style="font-weight:700;margin-bottom:8px;color:var(--green)">📦 Order Found: ${esc(foundId)}</div>
+      <div style="font-size:0.84rem;color:var(--gray);margin-bottom:12px">${esc(address)}</div>
+      <div style="font-size:0.84rem;font-weight:700;color:var(--text)">Status: ${esc(status)}</div>
+      <div style="margin-top:14px">
+        <a href="https://www.shiprocket.in/shipment-tracking/" target="_blank" rel="noopener" class="btn-primary" style="font-size:0.82rem;padding:10px 20px">Track on Shiprocket ↗</a>
+      </div>
+    </div>
+  `;
 }
 
 // The A4 GST tax invoice lives in invoice-template.js, loaded in <head>
@@ -7708,7 +7749,13 @@ const VITA_MATCH_RULES = {
 // Answers that rule a product OUT regardless of score. Scoring alone is
 // not enough here: a gendered formula recommended to the other gender is
 // wrong at any score, not merely ranked too high.
-const VITA_MATCH_EXCLUDE = { male: ["women's"], female: ["men's"] };
+const VITA_MATCH_EXCLUDE = {
+  male: ["women's"],
+  female: ["men's"],
+  // The quiz explicitly promises to skip gendered formulas when the user
+  // declines to provide gender; do not infer or rank one from neutral answers.
+  na: ["men's", "women's"]
+};
 
 let vmAnswers = {};
 let vmStep = 0;

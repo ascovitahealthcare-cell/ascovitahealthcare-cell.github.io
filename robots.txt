@@ -11,6 +11,7 @@ Disallow: /_page_staff.html
 Disallow: /_page_customer360.html
 Disallow: /platform_review_report.md
 Disallow: /invoice-template.js
+Disallow: /invoice-renderer.js
 Disallow: /tools/
 Disallow: /*?p=
 

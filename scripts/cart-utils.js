@@ -199,9 +199,6 @@ function renderCheckoutSummary() {
     disc = appliedDiscount.type==='percent' ? Math.round(sub*appliedDiscount.value/100) : appliedDiscount.value;
   }
 
-  const ship  = calcShipping(sub - disc);
-  const _vita = vitaCheckoutInfo(sub - disc);
-  const vitaOff = _vita.rupees;
   // ── MIX & MATCH (display only) ──────────────────────────────────────
   // Mirrors mixAndMatchDiscount() in server.js: every 4 units, the cheapest
   // is free. The SERVER sets the real price; this only lets the cart show
@@ -221,8 +218,15 @@ function renderCheckoutSummary() {
   var mmOff = Math.max(0, Math.min(mmDisc, sub));
   var mmNeed = mmGroups > 0 ? 0 : 4 - (mmUnits.length % 4);
 
-
-  const total = Math.max(0, sub - disc - mmOff + ship - vitaOff);
+  // Mix & Match is standalone: when unlocked, the coupon is not stacked.
+  if (mmOff > 0) disc = 0;
+  const netBeforeVita = Math.max(0, sub - disc - mmOff);
+  const ship  = calcShipping(netBeforeVita);
+  // Re-read VITA_APPLIED after every input event. vitaCheckoutInfo clamps it
+  // to the current eligible subtotal and returns the amount actually shown.
+  const _vita = vitaCheckoutInfo(netBeforeVita);
+  const vitaOff = _vita.rupees;
+  const total = Math.max(0, netBeforeVita + ship - vitaOff);
 
   const itemsHtml = STORE.cart.map(item => {
     const p = PRODUCTS.find(p => p.id === item.id);
@@ -259,7 +263,7 @@ function renderCheckoutSummary() {
     ${vitaOff > 0 ? `<div class="sum-row" style="color:var(--fern-lo)"><span>💎 VitaPoints (${_vita.applied.toLocaleString('en-IN')})</span><span>-₹${vitaOff.toFixed(2)}</span></div>` : ''}
     <hr style="border:none;border-top:1px solid var(--light-gray);margin:8px 0">
     <div class="sum-row total"><span>Total</span><span style="color:var(--green);font-size:1.1rem">₹${total.toLocaleString('en-IN',{maximumFractionDigits:2})}</span></div>
-    ${vitaRedeemWidgetHTML(paidSubtotal)}`;
+    ${vitaRedeemWidgetHTML(netBeforeVita)}`;
 
   // Also re-render recommendations whenever summary updates
   renderCkRecommendations();

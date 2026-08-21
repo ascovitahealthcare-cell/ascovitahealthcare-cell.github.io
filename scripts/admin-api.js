@@ -1162,22 +1162,31 @@ if (typeof _mktOrigShowPage === 'function') {
     })['catch'](function (e) { fail('beh-funnel', e); fail('beh-dropoff', e); });
 
     api('/health').then(function (h) {
-      var cls = h.status === 'healthy' ? 'ok' : h.status === 'degraded' || h.status === 'stale' ? 'warn' : '';
-      var chan = Object.keys(h.channels).map(function (k) {
-        var c = h.channels[k];
-        return (c.enabled ? '✅ ' : '⚪ ') + k + (c.note ? ' <span class="mkt-sub">(' + esc(c.note) + ')</span>' : '');
-      }).join(' &nbsp;·&nbsp; ');
+      // Older deployments and partially failed health responses may omit
+      // nested objects. Normalize them before rendering so one missing field
+      // cannot crash the whole behaviour dashboard.
+      h = h && typeof h === 'object' ? h : {};
+      var channels = h.channels && typeof h.channels === 'object' && !Array.isArray(h.channels)
+        ? h.channels : {};
+      var outbox = h.outbox && typeof h.outbox === 'object' ? h.outbox : {};
+      var integrations = h.integrations && typeof h.integrations === 'object' ? h.integrations : {};
+      var cls = h.status === 'healthy' ? 'ok' : h.status === 'degraded' || h.status === 'stale' ? 'warn' : 'warn';
+      var chan = Object.keys(channels).map(function (k) {
+        var c = channels[k] && typeof channels[k] === 'object' ? channels[k] : {};
+        return (c.enabled ? '✅ ' : '⚪ ') + esc(k) + (c.note ? ' <span class="mkt-sub">(' + esc(c.note) + ')</span>' : '');
+      }).join(' &nbsp;·&nbsp; ') || '⚪ channel status unavailable';
       document.getElementById('beh-health').className = 'mkt-hint ' + cls;
       document.getElementById('beh-health').innerHTML =
         '<strong>Engine:</strong> ' + esc(h.status) +
         (h.minutes_since_tick != null ? ' — last tick ' + h.minutes_since_tick + 'm ago' : ' — has never run') +
         ' · ' + num(h.events_last_hour) + ' events in the last hour' +
-        ' · outbox ' + num(h.outbox.queued) + ' queued, ' + num(h.outbox.failed) + ' failed<br>' +
+        ' · outbox ' + num(outbox.queued) + ' queued, ' + num(outbox.failed) + ' failed<br>' +
         '<strong>Channels:</strong> ' + chan +
         '<br><strong>Server-side events:</strong> ' +
-        (h.integrations.meta_capi ? '✅' : '⚪') + ' Meta CAPI &nbsp;·&nbsp; ' +
-        (h.integrations.ga4_mp ? '✅' : '⚪') + ' GA4 Measurement Protocol' +
-        (h.last_tick_error ? '<br><strong>Last error:</strong> ' + esc(h.last_tick_error) : '');
+        (integrations.meta_capi ? '✅' : '⚪') + ' Meta CAPI &nbsp;·&nbsp; ' +
+        (integrations.ga4_mp ? '✅' : '⚪') + ' GA4 Measurement Protocol' +
+        (h.last_tick_error ? '<br><strong>Last error:</strong> ' + esc(h.last_tick_error) : '') +
+        (!h.status ? '<br><strong>Health response incomplete:</strong> service may be waking up or needs the behaviour-engine migration.' : '');
     })['catch'](function (e) { fail('beh-health', e); });
 
     api('/live').then(function (d) {

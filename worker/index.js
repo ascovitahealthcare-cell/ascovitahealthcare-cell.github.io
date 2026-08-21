@@ -86,7 +86,7 @@ async function serveAdmin(request, env, url) {
     return noIndex(new Response(page.body, { status: 200, headers: page.headers }));
   }
 
-  // Real files still resolve, because admin.html pulls in scripts/invoice-template.js,
+  // Real files still resolve, because admin.html pulls in scripts/invoice-renderer.js,
   // the logo and so on. Anything else — storefront routes in particular — is
   // left to 404 here rather than serving the shop under the admin name.
   return noIndex(await env.ASSETS.fetch(request));
