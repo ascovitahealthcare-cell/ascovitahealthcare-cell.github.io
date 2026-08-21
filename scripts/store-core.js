@@ -1388,6 +1388,15 @@ function getProductImg(p) {
   return cdnImg(PRODUCT_FALLBACKS[p.category] || PRODUCT_FALLBACKS['default']);
 }
 
+// Non-Shop product surfaces (homepage, promo cards, Mix & Match) can use a
+// dedicated thumbnail uploaded from Admin. Shop/product-detail media keeps
+// using getProductImg() and remains completely independent.
+function getProductSurfaceImg(p) {
+  const thumb = p && p.homeThumbnailUrl ? String(p.homeThumbnailUrl).trim() : '';
+  if (thumb) return cdnImg(thumb);
+  return getProductImg(p);
+}
+
 // ══════════════════════════════════════════════════════════════════════
 // OZYLX NOTIFY — centralized contextual popup manager (Aug 2026)
 // Rules (from the brief, enforced here):
