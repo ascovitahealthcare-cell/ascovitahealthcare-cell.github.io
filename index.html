@@ -1694,7 +1694,7 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
 .shader-badge {
   display: inline-flex; align-items: center; gap: 12px;
   padding: 0; margin-bottom: clamp(14px, 2.2vh, 22px);
-  font-size: .68rem; font-weight: 600; letter-spacing: .22em; text-transform: uppercase;
+  font-size: .64rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase;
   color: var(--green); background: none; border: none; box-shadow: none;
 }
 .shader-badge-line { width: 26px; height: 1px; background: var(--green); flex: none; opacity: .5; }
@@ -1712,11 +1712,11 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
   color: var(--indigo);
   margin-bottom: clamp(8px, 1.2vh, 13px);
 }
-.sh-line-2 { font-size: clamp(2.1rem, 5.6vw, 4.2rem); font-weight: 200; letter-spacing: -.035em; }
-.sh-line-3 { font-size: clamp(2.1rem, 5.6vw, 4.2rem); font-weight: 500; letter-spacing: -.035em; color: var(--ink); }
+.sh-line-2 { font-size: clamp(2rem, 5.2vw, 3.9rem); font-weight: 200; letter-spacing: -.035em; }
+.sh-line-3 { font-size: clamp(2rem, 5.2vw, 3.9rem); font-weight: 500; letter-spacing: -.035em; color: var(--ink); }
 .shader-sub {
-  font-size: clamp(.9rem, 1.1vw, 1rem);
-  line-height: 1.62; color: var(--t-low);
+  font-size: clamp(.86rem, 1vw, .96rem);
+  line-height: 1.58; color: var(--t-low);
   max-width: 52ch; margin: 0 auto clamp(18px, 2.6vh, 28px);
 }
 .shader-cta-row { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
@@ -4435,6 +4435,23 @@ textarea.b2b-form-input { min-height: 110px; resize: vertical; font-family: inhe
 
 /* ── ≤480px ────────────────────────────────────────────────────── */
 @media (max-width: 480px) {
+  /* The hero already carries the same message as the banner, so its copy is
+     intentionally quiet on compact screens without changing desktop scale. */
+  #shaderHero .shader-badge { font-size: .56rem; letter-spacing: .075em; margin-bottom: 3px; }
+  #shaderHero .sh-line-2, #shaderHero .sh-line-3 { font-size: clamp(.98rem, 4.2vw, 1.25rem); line-height: 1.1; }
+  #shaderHero .shader-hero-inner { gap: 2px; }
+  #shaderHero .shader-hero { padding-top: 11px !important; padding-bottom: 15px !important; }
+
+  /* Why Ozylix / The Ozylix Promise: compact cards on mobile only. */
+  .promise-section { padding-top: 2px !important; }
+  .promise-section .sec-head { margin: 8px 0 0 !important; }
+  .promise-section .section-label { font-size: .56rem; letter-spacing: .1em; }
+  .promise-section .section-title { font-size: 1.18rem !important; line-height: 1.15; }
+  .promise-section .trust-grid { gap: 7px; margin: 12px 0; }
+  .promise-section .trust-tile { padding: 9px 5px; border-radius: 12px; }
+  .promise-section .trust-tile .tt-ico { font-size: 1.15rem; margin-bottom: 3px; }
+  .promise-section .trust-tile .tt-lbl { font-size: .6rem; line-height: 1.2; letter-spacing: .015em; }
+
   .products-grid { gap: 10px; }
   .footer-grid { grid-template-columns: 1fr; }
   .fizz-counters-grid { grid-template-columns: repeat(3, 1fr); }
@@ -6489,7 +6506,7 @@ button, [role="button"] {
   </div>
 
   <!-- ROUND 3: TRUST BADGE GRID (Wellbeing Nutrition-style) -->
-  <section class="container" style="padding:6px 0 0">
+  <section class="container promise-section" style="padding:6px 0 0">
     <div class="sec-head" style="margin:14px 0 2px">
       <div class="sec-head-main"><div class="section-label">Why Ozylix</div>
         <h2 class="section-title" style="font-size:clamp(1.4rem,3vw,1.9rem)">The Ozylix Promise</h2>
@@ -6735,7 +6752,7 @@ button, [role="button"] {
     </div>
   </section>
 
-<script defer src="scripts/banners.js?v=20260819-6"></script>
+<script defer src="scripts/banners.js?v=20260822-7"></script>
 
   <!-- FAQ PREVIEW -->
   <section class="section" style="background:var(--green-wash)">

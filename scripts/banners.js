@@ -496,6 +496,9 @@ window.dismissOfferReminder = function () {
         if (r.height > 4 && r.top < 120 && r.height < 160 && r.bottom > lowest) lowest = r.bottom;
       });
     });
+    // Keep the landscape slider close to the mobile header while retaining
+    // the full measured offset needed for safe-area and ticker chrome.
+    if (lowest && window.matchMedia && window.matchMedia('(max-width: 768px)').matches) lowest = Math.max(0, lowest - 4);
     wrap.style.marginTop = lowest ? Math.round(lowest) + 'px' : '';
   }
   // Rotating a phone changes the chrome height.
