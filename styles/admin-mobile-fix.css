@@ -98,4 +98,19 @@ body { min-width:0; max-width:100vw; overflow-x:hidden; }
 }
 @media (max-width:900px) and (orientation:landscape) and (max-height:500px) {
   #app .main { height:auto !important; min-height:calc(100dvh - 46px) !important; }
+  /* The full-screen login scene remains fixed, but a short landscape
+     viewport needs an internal fallback scroll for the complete form. */
+  #loginScreen {
+    align-items:flex-start !important;
+    justify-content:center !important;
+    overflow-y:auto !important;
+    padding:12px 20px calc(20px + env(safe-area-inset-bottom)) !important;
+    overscroll-behavior-y:contain !important;
+  }
+  #loginScreen .login-wrap { margin:0 auto; }
+  #loginScreen .login-logo { margin-bottom:10px !important; }
+  #loginScreen .logo-mark { width:58px !important; height:58px !important; margin-bottom:8px !important; border-radius:16px !important; }
+  #loginScreen .login-title { font-size:1.35rem !important; }
+  #loginScreen .login-sub { font-size:.65rem !important; margin-top:3px !important; }
+  #loginScreen .login-card { padding:16px 18px !important; border-radius:18px !important; }
 }
