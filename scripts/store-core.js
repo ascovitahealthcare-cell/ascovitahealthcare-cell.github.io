@@ -693,6 +693,10 @@ async function syncHomeThumbnails() {
       });
       renderFeatured();
       renderNewArrivals();
+      // The thumbnail projection resolves independently from the product catalog.
+      // Rebuild Mix & Match after it arrives so its rows do not keep the startup fallback image.
+      try { if (document.getElementById('bundleProdList') && typeof renderBundleBuilder === 'function') renderBundleBuilder(); } catch (e) {}
+      try { if (typeof renderPromoCarousel === 'function') renderPromoCarousel(); } catch (e) {}
     } catch (e) {
       console.warn('[Ozylix] homepage thumbnails unavailable:', e.message);
     }
