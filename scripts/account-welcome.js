@@ -174,16 +174,25 @@ async function refreshAccountWelcome() {
 
   const user = getCurrentUser();
   if (!user || !user.email) {
+    window.__appBackendOrderCount = 0;
     if (nameEl) nameEl.textContent = 'Welcome to your Ozylix account';
     if (ordersEl) ordersEl.textContent = '—';
     if (pointsEl) pointsEl.textContent = '—';
     if (savedEl) savedEl.textContent = '—';
+    const accOrders = document.getElementById('accOrdersCount');
+    const accPoints = document.getElementById('accVitaCount');
+    if (accOrders) accOrders.textContent = '0';
+    if (accPoints) accPoints.textContent = '0';
+    if (typeof window.syncAppMenuCounts === 'function') window.syncAppMenuCounts();
     return;
   }
   if (nameEl) nameEl.textContent = 'Welcome back, ' + (user.name || user.email.split('@')[0]) + ' 👋';
 
   // Points (cached vita state, instantaneous)
-  if (pointsEl) pointsEl.textContent = (Number(getVitaState().balance) || 0).toLocaleString('en-IN');
+  const points = Number(getVitaState().balance) || 0;
+  if (pointsEl) pointsEl.textContent = points.toLocaleString('en-IN');
+  const accPoints = document.getElementById('accVitaCount');
+  if (accPoints) accPoints.textContent = points.toLocaleString('en-IN');
 
   // Orders + savings — backend first, localStorage merged as fallback
   let orders = [];
@@ -211,6 +220,12 @@ async function refreshAccountWelcome() {
   } catch(e) {}
 
   if (ordersEl) ordersEl.textContent = orders.length;
+  window.__appBackendOrderCount = orders.length;
+  const accOrders = document.getElementById('accOrdersCount');
+  if (accOrders) accOrders.textContent = orders.length > 99 ? '99+' : String(orders.length);
+  const menuOrders = document.getElementById('appMenuOrdersStat');
+  if (menuOrders) menuOrders.textContent = orders.length > 99 ? '99+' : String(orders.length);
+  if (typeof window.syncAppMenuCounts === 'function') window.syncAppMenuCounts();
 
   // Lifetime savings = sum of per-item MRP-vs-price discount where available
   let saved = 0;

@@ -8299,45 +8299,46 @@ button, [role="button"] {
 <div class="page" id="page-account" style="padding-top:90px;background:var(--off-white);min-height:100vh">
   <div class="container">
     <div class="account-layout">
-      <div class="account-sidebar">
-        <div class="account-avatar" id="accAvatar">👤</div>
-        <div class="account-name" id="accName">My Account</div>
-        <div class="account-email" id="accEmail"></div>
-        <nav class="account-nav">
-          <button class="account-nav-item active" onclick="switchAccountPanel('orders')"><span class="nav-ico">📦</span> My Orders</button>
-          <button class="account-nav-item" onclick="switchAccountPanel('tracking')"><span class="nav-ico">🚚</span> Track Shipment</button>
-          <button class="account-nav-item" onclick="switchAccountPanel('invoices')"><span class="nav-ico">🧾</span> Invoices & Payments</button>
-          <button class="account-nav-item" onclick="switchAccountPanel('vita')"><span class="nav-ico">💎</span> VitaPoints</button>
-          <button class="account-nav-item" onclick="switchAccountPanel('returns')"><span class="nav-ico">↩️</span> Returns & Refunds</button>
-          <button class="account-nav-item" onclick="switchAccountPanel('profile')"><span class="nav-ico">✏️</span> Profile & Address</button>
-          <button class="account-nav-item" onclick="doLogout()" style="margin-top:20px;color:var(--red)"><span class="nav-ico">🚪</span> Sign Out</button>
-        </nav>
-      </div>
-
-      <div class="account-content">
-        <div class="account-welcome" id="accountWelcome">
-          <div class="aw-greeting">
-            <div class="aw-title-row">
-              <div class="aw-eyebrow">🌿 Ozylix Member</div>
-              <h2 class="aw-name" id="awName">Welcome to your Ozylix account</h2>
-            </div>
-            <p class="aw-sub">Your orders, rewards and rewards balance — all in one place.</p>
-          </div>
-          <div class="aw-stats">
-            <div class="aw-stat">
-              <div class="aw-stat-val" id="awOrders">0</div>
-              <div class="aw-stat-lbl">Orders placed</div>
-            </div>
-            <div class="aw-stat">
-              <div class="aw-stat-val" id="awPoints">0</div>
-              <div class="aw-stat-lbl">💎 VitaPoints</div>
-            </div>
-            <div class="aw-stat">
-              <div class="aw-stat-val" id="awSaved">₹0</div>
-              <div class="aw-stat-lbl">Lifetime savings</div>
-            </div>
+      <aside class="account-sidebar" aria-label="Account navigation">
+        <div class="account-profile-top">
+          <div class="account-avatar" id="accAvatar" aria-hidden="true">👤</div>
+          <div class="account-identity">
+            <div class="account-overline">MY OZYLIX</div>
+            <div class="account-name" id="accName">My Account</div>
+            <div class="account-email" id="accEmail"></div>
           </div>
         </div>
+        <div class="account-nav-heading">Account centre</div>
+        <nav class="account-nav">
+          <button class="account-nav-item active" type="button" onclick="switchAccountPanel('orders')"><span class="nav-ico" aria-hidden="true">📦</span><span class="account-nav-copy"><strong>My Orders</strong><small>View history</small></span><span class="account-nav-count" id="accOrdersCount">0</span></button>
+          <button class="account-nav-item" type="button" onclick="switchAccountPanel('tracking')"><span class="nav-ico" aria-hidden="true">🚚</span><span class="account-nav-copy"><strong>Track Shipment</strong><small>Live delivery updates</small></span><span class="account-nav-arrow" aria-hidden="true">›</span></button>
+          <button class="account-nav-item" type="button" onclick="switchAccountPanel('invoices')"><span class="nav-ico" aria-hidden="true">🧾</span><span class="account-nav-copy"><strong>Invoices &amp; Payments</strong><small>Receipts and billing</small></span><span class="account-nav-arrow" aria-hidden="true">›</span></button>
+          <button class="account-nav-item" type="button" onclick="switchAccountPanel('vita')"><span class="nav-ico" aria-hidden="true">💎</span><span class="account-nav-copy"><strong>VitaPoints</strong><small>Rewards balance</small></span><span class="account-nav-count account-nav-count-gold" id="accVitaCount">0</span></button>
+          <button class="account-nav-item" type="button" onclick="switchAccountPanel('returns')"><span class="nav-ico" aria-hidden="true">↩️</span><span class="account-nav-copy"><strong>Returns &amp; Refunds</strong><small>Manage requests</small></span><span class="account-nav-arrow" aria-hidden="true">›</span></button>
+          <button class="account-nav-item" type="button" onclick="switchAccountPanel('profile')"><span class="nav-ico" aria-hidden="true">✏️</span><span class="account-nav-copy"><strong>Profile &amp; Address</strong><small>Keep details current</small></span><span class="account-nav-arrow" aria-hidden="true">›</span></button>
+          <button class="account-nav-item account-nav-signout" type="button" onclick="doLogout()"><span class="nav-ico" aria-hidden="true">↪</span><span class="account-nav-copy"><strong>Sign out</strong><small>End this session</small></span></button>
+        </nav>
+      </aside>
+
+      <div class="account-content">
+        <section class="account-welcome" id="accountWelcome" aria-labelledby="awName">
+          <div class="aw-greeting">
+            <div class="aw-eyebrow"><span aria-hidden="true">🌿</span> Ozylix Member <span class="aw-eyebrow-pill">ACCOUNT HUB</span></div>
+            <h2 class="aw-name" id="awName">Welcome to your Ozylix account</h2>
+            <p class="aw-sub">Orders, deliveries, rewards and saved details — all together.</p>
+          </div>
+          <div class="aw-stats" aria-label="Account summary">
+            <button class="aw-stat" type="button" onclick="switchAccountPanel('orders')" aria-label="Open my orders">
+              <span class="aw-stat-icon" aria-hidden="true">📦</span><span><strong class="aw-stat-val" id="awOrders">0</strong><span class="aw-stat-lbl">Orders</span><span class="aw-stat-note">View history&nbsp;›</span></span>
+            </button>
+            <button class="aw-stat" type="button" onclick="switchAccountPanel('vita')" aria-label="Open VitaPoints">
+              <span class="aw-stat-icon" aria-hidden="true">💎</span><span><strong class="aw-stat-val" id="awPoints">0</strong><span class="aw-stat-lbl">VitaPoints</span><span class="aw-stat-note">Rewards balance&nbsp;›</span></span>
+            </button>
+            <button class="aw-stat" type="button" onclick="switchAccountPanel('orders')" aria-label="View savings in my orders">
+              <span class="aw-stat-icon" aria-hidden="true">✦</span><span><strong class="aw-stat-val" id="awSaved">₹0</strong><span class="aw-stat-lbl">Saved so far</span><span class="aw-stat-note">Across your orders</span></span>
+            </button>
+          </div>
+        </section>
         <div class="account-panel active" id="panel-orders">
           <div class="account-panel-title">📦 My Orders</div>
           <div id="ordersList"></div>
@@ -8575,15 +8576,23 @@ button, [role="button"] {
       <div class="app-menu-usersub" id="appMenuUsersub">Sign in for rewards & orders</div>
     </div>
   </div>
-  <!-- Main nav -->
+  <!-- Live shortcuts -->
+  <div class="app-menu-section-title">Your shortcuts</div>
+  <div class="app-menu-summary" aria-label="Your Ozylix summary">
+    <button type="button" onclick="handleAccountNavClick();closeAppMenu()"><strong id="appMenuOrdersStat">0</strong><span>Orders</span></button>
+    <button type="button" onclick="closeAppMenu();openVitaPopup()"><strong id="appMenuPointsStat">0</strong><span>VitaPoints</span></button>
+    <button type="button" onclick="showPage('wishlist');closeAppMenu();setAppNav('more')"><strong id="appMenuWishStat">0</strong><span>Wishlist</span></button>
+  </div>
+  <button class="app-menu-item" onclick="handleAccountNavClick();closeAppMenu();setAppNav('account')"><div class="app-menu-icon">📦</div><span class="app-menu-item-label">My Orders</span><span class="app-menu-item-badge app-menu-live-badge" id="appMenuOrdersBadge">0</span><span class="app-menu-item-arrow">›</span></button>
+  <button class="app-menu-item" onclick="showPage('wishlist');closeAppMenu();setAppNav('more')"><div class="app-menu-icon">♡</div><span class="app-menu-item-label">Wishlist</span><span class="app-menu-item-badge app-menu-live-badge" id="appMenuWishBadge">0</span><span class="app-menu-item-arrow">›</span></button>
+  <button class="app-menu-item" onclick="openNotificationCenter();closeAppMenu();setAppNav('more')"><div class="app-menu-icon">🔔</div><span class="app-menu-item-label">Notification Center</span><span class="app-menu-item-badge app-menu-live-badge" id="appMenuNotificationBadge">0</span><span class="app-menu-item-arrow">›</span></button>
+  <button class="app-menu-item" onclick="openSideCart();closeAppMenu();setAppNav('cart')"><div class="app-menu-icon">🛒</div><span class="app-menu-item-label">Cart</span><span class="app-menu-item-badge app-menu-live-badge" id="appMenuCartBadge">0</span><span class="app-menu-item-arrow">›</span></button>
+
   <div class="app-menu-section-title">Shop</div>
   <button class="app-menu-item app-menu-install-item" onclick="showPage('download');closeAppMenu();setAppNav('more')"><div class="app-menu-icon">⬇</div><span class="app-menu-item-label">Install Ozylix App</span><span class="app-menu-item-badge">ANDROID / IOS</span><span class="app-menu-item-arrow">›</span></button>
-
   <button class="app-menu-item" onclick="showPage('home');closeAppMenu();setAppNav('home')"><div class="app-menu-icon">🏠</div><span class="app-menu-item-label">Home</span><span class="app-menu-item-arrow">›</span></button>
   <button class="app-menu-item" onclick="showPage('shop');closeAppMenu();setAppNav('shop')"><div class="app-menu-icon">🛍️</div><span class="app-menu-item-label">All Products</span><span class="app-menu-item-badge">12 Products</span><span class="app-menu-item-arrow">›</span></button>
   <button class="app-menu-item" onclick="showPage('advisor');closeAppMenu();setAppNav('advisor')"><div class="app-menu-icon">🌿</div><span class="app-menu-item-label">AI Health Advisor</span><span class="app-menu-item-badge">NEW</span><span class="app-menu-item-arrow">›</span></button>
-  <button class="app-menu-item" onclick="showPage('wishlist');closeAppMenu();setAppNav('more')"><div class="app-menu-icon">♡</div><span class="app-menu-item-label">Wishlist</span><span class="app-menu-item-arrow">›</span></button>
-  <button class="app-menu-item" onclick="openNotificationCenter();closeAppMenu();setAppNav('more')"><div class="app-menu-icon">🔔</div><span class="app-menu-item-label">Notification Center</span><span class="app-menu-item-badge">UPDATES</span><span class="app-menu-item-arrow">›</span></button>
   <button class="app-menu-item" onclick="closeAppMenu();openVitaPopup()"><div class="app-menu-icon vp3d-slot"><span class="vp3d" aria-hidden="true"><picture><source srcset="/assets/vitapoint-3d/vitapoint-coin-still.webp" media="(prefers-reduced-motion: reduce)"><img src="/assets/vitapoint-3d/vitapoint-coin.webp" alt="" width="176" height="176" loading="lazy" decoding="async"></picture></span></div><span class="app-menu-item-label">VitaPoints</span><span class="app-menu-item-arrow">›</span></button>
 
   <div class="app-menu-section-title">Company</div>
@@ -8594,7 +8603,6 @@ button, [role="button"] {
   <div class="app-menu-section-title">Support</div>
   <button class="app-menu-item" onclick="showPage('faq');closeAppMenu();setAppNav('more')"><div class="app-menu-icon">❓</div><span class="app-menu-item-label">FAQ</span><span class="app-menu-item-arrow">›</span></button>
   <button class="app-menu-item" onclick="showPage('contact');closeAppMenu();setAppNav('more')"><div class="app-menu-icon">📬</div><span class="app-menu-item-label">Contact Us</span><span class="app-menu-item-arrow">›</span></button>
-  <button class="app-menu-item" onclick="handleAccountNavClick();closeAppMenu()"><div class="app-menu-icon">👤</div><span class="app-menu-item-label">My Account</span><span class="app-menu-item-arrow">›</span></button>
 
   <!-- WhatsApp footer -->
   <div class="app-menu-footer">
@@ -9198,6 +9206,89 @@ body:not(.oz-product) #stickyCart { display: none !important; }
 /* The ambient bubbles are decoration. They belong behind everything and
    must never intercept a tap. */
 .particle { z-index: -1 !important; pointer-events: none !important; }
+
+/* ══════════ ACCOUNT HUB REFRESH ══════════ */
+#page-account .account-layout { align-items: start; gap: 20px; }
+#page-account .account-sidebar {
+  padding: 20px;
+  border: 1px solid rgba(34, 54, 46, .08);
+  border-radius: 24px;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 14px 34px rgba(36, 45, 40, .08);
+}
+.account-profile-top { display:flex; align-items:center; gap:13px; padding-bottom:18px; border-bottom:1px solid rgba(34,54,46,.08); }
+.account-identity { min-width:0; }
+.account-overline, .account-nav-heading { color:var(--green,#3d755a); font-size:.64rem; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+.account-overline { margin-bottom:5px; }
+.account-name { line-height:1.18; }
+.account-email { max-width:210px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.account-nav-heading { margin:19px 2px 10px; color:var(--t-low,#7c8780); letter-spacing:.11em; }
+#page-account .account-nav { display:flex; flex-direction:column; gap:8px; }
+#page-account .account-nav-item {
+  display:flex; align-items:center; gap:11px; width:100%; min-height:62px; padding:11px 12px;
+  border:1px solid transparent; border-radius:16px; background:transparent; box-shadow:none;
+  color:var(--t-mid,#4e5952); text-align:left; transition:background .18s ease, border-color .18s ease, transform .18s ease;
+}
+#page-account .account-nav-item:hover { background:rgba(61,117,90,.06); border-color:rgba(61,117,90,.12); transform:translateY(-1px); }
+#page-account .account-nav-item.active { background:linear-gradient(135deg,rgba(218,239,230,.96),rgba(237,246,241,.96)); border-color:rgba(61,117,90,.30); color:var(--green,#3d755a); box-shadow:0 7px 16px rgba(61,117,90,.10); }
+#page-account .account-nav-item .nav-ico { display:grid; place-items:center; flex:0 0 36px; width:36px; height:36px; border-radius:12px; background:rgba(255,255,255,.82); font-size:1.1rem; }
+.account-nav-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; }
+.account-nav-copy strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.82rem; line-height:1.2; }
+.account-nav-copy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--t-low,#7c8780); font-size:.67rem; line-height:1.2; }
+.account-nav-count, .account-nav-arrow { flex:0 0 auto; }
+.account-nav-count { min-width:24px; padding:3px 7px; border-radius:99px; background:rgba(61,117,90,.12); color:var(--green,#3d755a); font-size:.66rem; font-weight:800; text-align:center; }
+.account-nav-count-gold { background:rgba(196,146,14,.13); color:#9a7410; }
+.account-nav-arrow { color:var(--t-dim,#9ba49e); font-size:1.25rem; line-height:1; }
+#page-account .account-nav-signout { margin-top:8px; border-top:1px solid rgba(34,54,46,.08); border-radius:0 0 12px 12px; padding-top:17px; color:var(--red,#b84242); }
+#page-account .account-nav-signout .nav-ico { background:rgba(184,66,66,.08); }
+#page-account .account-welcome { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(350px,.92fr); gap:20px; align-items:stretch; padding:24px; border-radius:24px; background:linear-gradient(135deg,#8e2333 0%,#6c317f 52%,#4b4a99 100%); box-shadow:0 18px 36px rgba(102,49,105,.20); overflow:hidden; }
+#page-account .aw-greeting { display:flex; flex-direction:column; justify-content:center; min-width:0; }
+#page-account .aw-eyebrow { display:flex; align-items:center; flex-wrap:wrap; gap:8px; color:rgba(255,255,255,.72); font-size:.68rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
+.aw-eyebrow-pill { padding:4px 8px; border:1px solid rgba(255,255,255,.24); border-radius:99px; color:rgba(255,255,255,.82); font-size:.56rem; letter-spacing:.12em; }
+#page-account .aw-name { margin:12px 0 8px; color:#fff; font-size:clamp(1.35rem,2.4vw,2rem); line-height:1.1; }
+#page-account .aw-sub { max-width:420px; margin:0; color:rgba(255,255,255,.76); font-size:.88rem; line-height:1.55; }
+#page-account .aw-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; align-items:stretch; }
+#page-account .aw-stat { display:flex; align-items:flex-start; gap:9px; min-width:0; padding:14px 12px; border:1px solid rgba(255,255,255,.22); border-radius:17px; background:rgba(255,255,255,.12); color:#fff; text-align:left; cursor:pointer; transition:background .18s ease, transform .18s ease; }
+#page-account .aw-stat:hover { background:rgba(255,255,255,.19); transform:translateY(-2px); }
+.aw-stat-icon { display:grid; place-items:center; flex:0 0 28px; width:28px; height:28px; border-radius:10px; background:rgba(255,255,255,.18); font-size:.9rem; }
+#page-account .aw-stat > span:last-child { display:flex; min-width:0; flex-direction:column; }
+#page-account .aw-stat-val { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:1.22rem; line-height:1.1; }
+#page-account .aw-stat-lbl { display:block; margin-top:5px; color:rgba(255,255,255,.88); font-size:.69rem; font-weight:700; }
+#page-account .aw-stat-note { display:block; margin-top:5px; color:rgba(255,255,255,.60); font-size:.6rem; line-height:1.2; }
+.app-menu-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:0 16px 11px; }
+.app-menu-summary button { display:flex; min-width:0; flex-direction:column; align-items:flex-start; padding:11px 12px; border:1px solid rgba(61,117,90,.16); border-radius:15px; background:rgba(61,117,90,.07); color:var(--t-hi,#1f2b24); text-align:left; }
+.app-menu-summary button:active { transform:scale(.98); }
+.app-menu-summary strong { overflow:hidden; max-width:100%; text-overflow:ellipsis; white-space:nowrap; color:var(--green,#3d755a); font-size:1.02rem; line-height:1.1; }
+.app-menu-summary span { margin-top:4px; color:var(--t-low,#7c8780); font-size:.62rem; font-weight:700; }
+.app-menu-live-badge { min-width:24px !important; text-align:center; }
+@media (max-width: 900px) {
+  #page-account { padding-top:74px !important; }
+  #page-account .account-layout { gap:14px; }
+  #page-account .account-sidebar { padding:16px; border-radius:20px; }
+  #page-account .account-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  #page-account .account-nav-item { min-width:0; min-height:70px; padding:10px; }
+  #page-account .account-nav-signout { grid-column:1 / -1; min-height:58px; }
+  #page-account .account-welcome { grid-template-columns:1fr; gap:16px; padding:20px; border-radius:20px; }
+}
+@media (max-width: 560px) {
+  #page-account .account-profile-top { padding-bottom:14px; }
+  #page-account .account-nav { grid-template-columns:1fr; }
+  #page-account .account-nav-signout { grid-column:auto; }
+
+  #page-account .account-nav-copy strong { font-size:.75rem; }
+  #page-account .account-nav-copy small { font-size:.61rem; }
+  #page-account .account-nav-item .nav-ico { flex-basis:31px; width:31px; height:31px; font-size:.95rem; }
+  #page-account .aw-stats { gap:7px; }
+  #page-account .aw-stat { flex-direction:column; gap:7px; padding:11px 9px; border-radius:14px; }
+  #page-account .aw-stat-val { font-size:1.06rem; }
+  #page-account .aw-stat-lbl { font-size:.61rem; }
+  #page-account .aw-stat-note { font-size:.55rem; }
+  .app-menu-summary { margin-left:13px; margin-right:13px; }
+}
+@media (max-width: 360px) {
+  #page-account .account-nav { grid-template-columns:1fr; }
+  #page-account .account-nav-signout { grid-column:auto; }
+}
 </style>
 
 <script defer src="scripts/cart-footer.js?v=20260819-3"></script>

@@ -22,6 +22,7 @@ function openAppMenu() {
       document.getElementById('appMenuUsersub').textContent = user.email || 'VitaRewards Member';
     }
   } catch(e) {}
+  try { if (typeof window.syncAppMenuCounts === 'function') window.syncAppMenuCounts(); } catch(e) {}
 }
 function closeAppMenu() {
   document.getElementById('appMenuDrawer')?.classList.remove('open');
