@@ -351,3 +351,67 @@ canvas { max-width: 100%; }
   #financeApiStatus { grid-template-columns: 1fr; }
   #page-finance #financeTimelineCanvas { margin-inline: 8px; width: calc(100% - 16px) !important; }
 }
+
+
+/* New shell primitives introduced by the structural remodel. */
+.workspace-switcher { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; color: var(--text2); font-size: 12px; white-space: nowrap; }
+.workspace-mark { display: grid; place-items: center; width: 24px; height: 24px; border: 1px solid var(--border); border-radius: 7px; color: var(--green-text); background: var(--surface2); }
+.workspace-chevron { color: var(--text3); font-size: 14px; }
+.sidebar-heading { display: flex; flex-direction: column; gap: 3px; padding: 1px 12px 22px; }
+.sidebar-kicker { color: var(--text3); font-size: 9px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; }
+.sidebar-context { color: var(--text); font-size: 15px; font-weight: 650; letter-spacing: -.025em; }
+.sidebar-footer { margin-top: auto; padding: 18px 3px 0; }
+.sidebar-store-link { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px 12px; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); text-decoration: none; font-size: 12px; transition: border-color var(--duration-ui) ease, color var(--duration-ui) ease, background var(--duration-ui) ease, transform var(--duration-fast) var(--ease-out); }
+.sidebar-store-link:hover { border-color: #b4c7b7; background: var(--bg3); color: var(--green-text); }
+.sidebar-store-link:active { transform: scale(.98); }
+.sidebar-foot-meta { display: flex; align-items: center; gap: 7px; padding: 13px 12px 0; color: var(--text3); font-size: 10px; }
+.foot-dot { width: 6px; height: 6px; border-radius: 50%; background: #4b9a5e; box-shadow: 0 0 0 3px rgba(75,154,94,.10); }
+#geminiPanel { display: none; position: fixed; right: 17px; bottom: 76px; width: min(380px, calc(100vw - 30px)); height: min(480px, 62vh); z-index: 489; flex-direction: column; overflow: hidden; border: 1px solid var(--border2); border-radius: 13px; background: var(--surface); box-shadow: var(--shadow-lg); }
+.gemini-head { display: flex; align-items: center; gap: 9px; padding: 13px 15px; color: var(--text); font-size: 13px; font-weight: 700; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.gemini-head-mark { display: grid; place-items: center; width: 25px; height: 25px; border-radius: 8px; background: var(--green); color: #fff; }
+.gemini-head button { margin-left: auto; border: 0; background: transparent; color: var(--text2); font-size: 20px; cursor: pointer; }
+#geminiMsgs { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 9px; }
+.gemini-message { max-width: 90%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px 10px 10px 3px; background: var(--surface2); color: var(--text2); font-size: 12px; line-height: 1.55; }
+#geminiChips { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 14px 10px; }
+#geminiChips button { padding: 6px 9px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text2); font: inherit; font-size: 10px; cursor: pointer; transition: border-color var(--duration-ui) ease, color var(--duration-ui) ease, transform var(--duration-fast) var(--ease-out); }
+#geminiChips button:hover { border-color: var(--green); color: var(--green-text); }
+#geminiChips button:active { transform: scale(.97); }
+.gemini-input-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.gemini-input-row input { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface2); color: var(--text); font: inherit; font-size: 12px; outline: none; }
+.gemini-input-row input:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-glow); }
+.gemini-input-row button { width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--green); color: #fff; cursor: pointer; }
+.admin-bnav { display: none; }
+.admin-bnav .abn-btn { min-height: 58px; border: 0; background: transparent; font: inherit; font-size: 10px; font-weight: 600; }
+.admin-bnav .abn-btn > span:first-child { font-size: 20px; line-height: 1; }
+.admin-bnav .abn-btn > span:last-child { font-size: 9px; }
+.admin-bnav .abn-btn #abnPendingDot { position: absolute; top: 3px; right: 6px; display: none; width: 14px; height: 14px; align-items: center; justify-content: center; border: 1px solid var(--surface); border-radius: 50%; background: var(--red); color: #fff; font-size: 8px; }
+#sidebarOverlay { display: none; }
+
+@media (max-width: 1180px) {
+  .workspace-switcher { display: none; }
+  .sidebar-heading { align-items: center; padding-inline: 0; }
+  .sidebar-context { font-size: 0; }
+  .sidebar-context::before { content: 'O'; font-size: 15px; font-weight: 750; color: var(--green-text); }
+  .sidebar-footer { display: none; }
+}
+@media (max-width: 760px) {
+  #sidebarOverlay { display: block !important; pointer-events: none; opacity: 0; background: rgba(15, 29, 24, .28) !important; transition: opacity var(--duration-ui) ease; }
+  #sidebarOverlay.open { pointer-events: auto; opacity: 1; }
+  .sidebar-heading { align-items: flex-start; padding-inline: 12px; }
+  .sidebar-context { font-size: 15px; }
+  .sidebar-context::before { content: none; }
+  .sidebar-footer { display: block; }
+  .topbar-logo { min-width: 34px !important; }
+  .topbar-logo .logo-name { display: none; }
+  .workspace-switcher { display: none; }
+  #geminiPanel { right: 12px; bottom: 132px; }
+  .admin-bnav { position: fixed; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-around; min-height: 64px; padding: 4px 4px max(6px, env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: rgba(255,255,255,.96); box-shadow: 0 -8px 24px rgba(24, 53, 41, .08); z-index: 500; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .admin-bnav { background: var(--surface); }
+}
+
+
+/* The remodeled assistant control is a floating action, never part of document flow. */
+.gemini-fab { position: fixed !important; right: 18px !important; bottom: 24px !important; z-index: 490 !important; display: flex !important; align-items: center; justify-content: center; border: 0 !important; border-radius: 50% !important; color: #fff !important; font-size: 19px; cursor: pointer; }
+@media (max-width: 760px) { .gemini-fab { right: 13px !important; bottom: 75px !important; } }

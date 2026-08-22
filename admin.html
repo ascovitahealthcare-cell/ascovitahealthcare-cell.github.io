@@ -1899,152 +1899,61 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 </div>
 
 
-<!-- ══════════════ APP ══════════════ -->
+<!-- ══════════════ APP — remodeled Apple-inspired shell ══════════════ -->
 <div id="app">
-<!-- Sidebar overlay for mobile -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:599;backdrop-filter:blur(2px);"></div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()" aria-hidden="true"></div>
 
-<!-- ═══ ADMIN MOBILE BOTTOM NAV ═══ -->
-<nav class="admin-bnav" id="adminBnav" style="display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--surface);border-top:1px solid var(--border);z-index:500;align-items:center;justify-content:space-around;padding:0 4px 8px;box-shadow:0 -4px 24px rgba(0,0,0,0.2);">
-  <button class="abn-btn active" id="abn-dashboard" onclick="showPage('dashboard');syncAbn('dashboard')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:5px 8px;border-radius:12px;flex:1;border:none;background:none;font-family:inherit;position:relative;">
-    <span style="font-size:20px;color:inherit;">📊</span>
-    <span style="font-size:9px;font-weight:700;letter-spacing:0.3px;">Dashboard</span>
-  </button>
-  <button class="abn-btn" id="abn-orders" onclick="showPage('orders');syncAbn('orders')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:5px 8px;border-radius:12px;flex:1;border:none;background:none;font-family:inherit;position:relative;">
-    <span style="font-size:20px;color:inherit;">📦</span>
-    <span style="font-size:9px;font-weight:700;letter-spacing:0.3px;">Orders</span>
-    <span id="abnPendingDot" style="display:none;position:absolute;top:3px;right:6px;width:14px;height:14px;background:#e53935;border-radius:50%;font-size:8px;font-weight:800;color:#fff;align-items:center;justify-content:center;border:1.5px solid var(--surface);">0</span>
-  </button>
-  <button class="abn-btn" id="abn-products" onclick="showPage('products');syncAbn('products')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:5px 8px;border-radius:12px;flex:1;border:none;background:none;font-family:inherit;">
-    <span style="font-size:20px;color:inherit;">🛍️</span>
-    <span style="font-size:9px;font-weight:700;letter-spacing:0.3px;">Products</span>
-  </button>
-  <button class="abn-btn" id="abn-analytics" onclick="showPage('analytics');syncAbn('analytics')" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:5px 8px;border-radius:12px;flex:1;border:none;background:none;font-family:inherit;">
-    <span style="font-size:20px;color:inherit;">📈</span>
-    <span style="font-size:9px;font-weight:700;letter-spacing:0.3px;">Analytics</span>
-  </button>
-  <button class="abn-btn" id="abn-more" onclick="openAdminMoreMenu()" style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:5px 8px;border-radius:12px;flex:1;border:none;background:none;font-family:inherit;">
-    <span style="font-size:20px;color:inherit;">⋯</span>
-    <span style="font-size:9px;font-weight:700;letter-spacing:0.3px;">More</span>
-  </button>
-</nav>
+  <nav class="admin-bnav" id="adminBnav" aria-label="Primary mobile navigation">
+    <button class="abn-btn active" id="abn-dashboard" onclick="showPage('dashboard');syncAbn('dashboard')" aria-label="Dashboard"><span aria-hidden="true">▦</span><span>Dashboard</span></button>
+    <button class="abn-btn" id="abn-orders" onclick="showPage('orders');syncAbn('orders')" aria-label="Orders"><span aria-hidden="true">□</span><span>Orders</span><span id="abnPendingDot" aria-hidden="true">0</span></button>
+    <button class="abn-btn" id="abn-products" onclick="showPage('products');syncAbn('products')" aria-label="Products"><span aria-hidden="true">◇</span><span>Products</span></button>
+    <button class="abn-btn" id="abn-analytics" onclick="showPage('analytics');syncAbn('analytics')" aria-label="Analytics"><span aria-hidden="true">⌁</span><span>Analytics</span></button>
+    <button class="abn-btn" id="abn-more" onclick="openAdminMoreMenu()" aria-label="More"><span aria-hidden="true">•••</span><span>More</span></button>
+  </nav>
 
-<!-- ═══ GEMINI AI FAB ═══ -->
-<button class="gemini-fab" id="geminiFab" onclick="toggleGeminiPanel()" title="Gemini AI" style="position:fixed;bottom:24px;right:20px;width:52px;height:52px;background:linear-gradient(135deg,#4285F4,#0F9D58);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;box-shadow:0 6px 24px rgba(66,133,244,0.45);z-index:490;border:none;transition:transform 0.2s;">✨</button>
-
-<!-- ═══ GEMINI AI PANEL ═══ -->
-<div id="geminiPanel" style="display:none;position:fixed;bottom:88px;right:16px;width:min(380px,calc(100vw - 32px));height:min(480px,58vh);background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,0.3);z-index:489;flex-direction:column;overflow:hidden;">
-  <div style="padding:13px 16px;background:linear-gradient(135deg,#4285F4,#0F9D58);color:#fff;display:flex;align-items:center;gap:10px;flex-shrink:0;">
-    <span style="font-size:20px;">✨</span>
-    <span style="font-size:13px;font-weight:700;flex:1;">Gemini — Admin AI</span>
-    <button onclick="toggleGeminiPanel()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;line-height:1;">✕</button>
-  </div>
-  <div id="geminiMsgs" style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;scrollbar-width:thin;">
-    <div style="max-width:90%;padding:10px 13px;border-radius:14px;border-bottom-left-radius:4px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:12px;line-height:1.55;align-self:flex-start;">
-      👋 Hi! I'm your Gemini AI assistant. I can analyse orders, revenue, stock, draft WhatsApp messages and more. What do you need?
+  <button class="gemini-fab" id="geminiFab" onclick="toggleGeminiPanel()" title="Gemini AI" aria-label="Open Gemini AI">✦</button>
+  <section id="geminiPanel" aria-label="Gemini admin assistant">
+    <div class="gemini-head"><span class="gemini-head-mark">✦</span><span>Gemini — Admin AI</span><button onclick="toggleGeminiPanel()" aria-label="Close assistant">×</button></div>
+    <div id="geminiMsgs"><div class="gemini-message">Hi. I can analyse orders, revenue, stock, and draft customer messages. What do you need?</div></div>
+    <div id="geminiChips">
+      <button onclick="geminiQuick('Today summary')">Summary</button>
+      <button onclick="geminiQuick('Low stock products')">Low stock</button>
+      <button onclick="geminiQuick('COD pending orders')">COD orders</button>
+      <button onclick="geminiQuick('Draft WhatsApp message for pending orders')">WhatsApp draft</button>
     </div>
-  </div>
-  <div id="geminiChips" style="display:flex;gap:6px;flex-wrap:wrap;padding:0 12px 8px;">
-    <button onclick="geminiQuick('Today summary')" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 11px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;">📊 Summary</button>
-    <button onclick="geminiQuick('Low stock products')" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 11px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;">📦 Low stock</button>
-    <button onclick="geminiQuick('COD pending orders')" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 11px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;">💵 COD orders</button>
-    <button onclick="geminiQuick('Draft WhatsApp message for pending orders')" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:20px;padding:5px 11px;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;">📱 WA draft</button>
-  </div>
-  <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-shrink:0;">
-    <input id="geminiInp" placeholder="Ask about your store..." onkeydown="if(event.key==='Enter')geminiSend()" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:9px 14px;font-size:12px;color:var(--text);font-family:inherit;outline:none;">
-    <button onclick="geminiSend()" style="width:34px;height:34px;background:#4285F4;border:none;border-radius:50%;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;">↑</button>
-  </div>
-</div>
+    <div class="gemini-input-row"><input id="geminiInp" placeholder="Ask about your store…" onkeydown="if(event.key==='Enter')geminiSend()" aria-label="Ask Gemini"><button onclick="geminiSend()" aria-label="Send">↑</button></div>
+  </section>
 
-<div class="app-layout">
-
-<!-- TOPBAR -->
-<header class="topbar">
-  <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
-  <a href="#" class="topbar-logo">
-    <div class="logo-icon"><img src="assets/ozylix-logo.png" alt="Ozylix" onerror="this.style.display='none';this.parentNode.textContent='🌿'"></div>
-    <span class="logo-name">Ozylix <span class="logo-badge">ADMIN</span></span>
-  </a>
-  <div class="topbar-search">
-    <span class="s-ico">🔍</span>
-    <input type="text" placeholder="Search orders, products, customers..." id="globalSearch" oninput="handleGlobalSearch(this.value)">
-  </div>
-  <div class="topbar-right">
-      <span id="roleBadge" style="padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:700;background:rgba(74,138,40,0.15);color:var(--green-text);">Admin</span>
-    <div class="tb-stat" id="serverStatus">
-      <span class="tb-dot"></span>
-      <span style="color:var(--text3);font-size:0.72rem;">Checking…</span>
-    </div>
-    <div class="notif-wrap">
-      <button class="notif-btn" onclick="toggleNotifDropdown()" title="Notifications">🔔<span class="notif-count" id="notifCount" style="display:none;">0</span></button>
-      <div class="notif-dropdown" id="notifDropdown">
-        <div class="notif-hdr">
-          <span class="notif-hdr-title">Notifications</span>
-          <button class="notif-clear" onclick="markAllNotifsRead()">Mark all read</button>
-        </div>
-        <div id="notifList"><div class="notif-empty">No notifications yet</div></div>
+  <div class="app-layout">
+    <header class="topbar">
+      <button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Open navigation">☰</button>
+      <a href="#" class="topbar-logo" aria-label="Ozylix admin home">
+        <span class="logo-icon"><img src="assets/ozylix-logo.png" alt="Ozylix"></span>
+        <span class="logo-name">Ozylix <span class="logo-badge">ADMIN</span></span>
+      </a>
+      <div class="workspace-switcher" aria-label="Current workspace"><span class="workspace-mark">⌂</span><span>Ozylix Store</span><span class="workspace-chevron">⌄</span></div>
+      <label class="topbar-search"><span class="s-ico" aria-hidden="true">⌕</span><input type="search" placeholder="Search orders, products, customers…" id="globalSearch" oninput="handleGlobalSearch(this.value)" aria-label="Search admin"></label>
+      <div class="topbar-right">
+        <span id="roleBadge">Admin</span>
+        <div class="tb-stat" id="serverStatus"><span class="tb-dot"></span><span>Checking…</span></div>
+        <div class="notif-wrap"><button class="notif-btn" onclick="toggleNotifDropdown()" title="Notifications" aria-label="Notifications">♧<span class="notif-count" id="notifCount">0</span></button><div class="notif-dropdown" id="notifDropdown"><div class="notif-hdr"><span class="notif-hdr-title">Notifications</span><button class="notif-clear" onclick="markAllNotifsRead()">Mark all read</button></div><div id="notifList"><div class="notif-empty">No notifications yet</div></div></div></div>
+        <button class="tb-btn" onclick="refreshCurrent()" title="Refresh" aria-label="Refresh"><span aria-hidden="true">↻</span><span class="tb-label">Refresh</span></button>
+        <button class="tb-btn" onclick="doLogout()" title="Sign out" aria-label="Sign out"><span aria-hidden="true">↗</span><span class="tb-label">Sign out</span></button>
       </div>
-    </div>
-    <button class="tb-btn" onclick="refreshCurrent()" title="Refresh" aria-label="Refresh"><span aria-hidden="true">↺</span><span class="tb-label"> Refresh</span></button>
-    <button class="tb-btn" onclick="doLogout()" style="color:var(--red)" title="Sign out" aria-label="Sign out"><span class="tb-ico-sm" aria-hidden="true">⏻</span><span class="tb-label">Sign Out</span></button>
-  </div>
-</header>
+    </header>
 
-<!-- SIDEBAR -->
-<nav class="sidebar" id="sidebar">
-  <div class="nav-section">
-    <div class="nav-sec-label">Overview</div>
-    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-ico">📊</span> Dashboard</div>
-    <div class="nav-item" onclick="showPage('analytics')"><span class="nav-ico">📈</span> Analytics</div>
-    <div class="nav-item" onclick="showPage('livevisitors')"><span class="nav-ico">👁️</span> Live Visitors</div>
-    <div class="nav-item" onclick="showPage('calendar')"><span class="nav-ico">🗓️</span> Calendar</div>
-  </div>
-  <div class="nav-section">
-    <div class="nav-sec-label">Commerce</div>
-    <div class="nav-item" onclick="showPage('orders')"><span class="nav-ico">📦</span> Orders <span class="nav-badge" id="pendingBadge">0</span></div>
-    <div class="nav-item" onclick="showPage('returns')"><span class="nav-ico">↩️</span> Returns <span class="nav-badge" id="returnsBadge">0</span></div>
-    <div class="nav-item" onclick="showPage('products')"><span class="nav-ico">🛍️</span> Products</div>
-    <div class="nav-item" onclick="showPage('inventory')"><span class="nav-ico">📋</span> Inventory</div>
-    <div class="nav-item" onclick="showPage('discounts')"><span class="nav-ico">🏷️</span> Discounts</div>
-    <div class="nav-item" onclick="showPage('customers')"><span class="nav-ico">👥</span> Customers</div>
-  </div>
-  <div class="nav-section">
-    <div class="nav-sec-label">Growth</div>
-    <div class="nav-item" onclick="showPage('marketing')"><span class="nav-ico">📣</span> Marketing</div>
-  </div>
-  <div class="nav-section owner-only" id="navSecContent">
-    <div class="nav-sec-label">Content</div>
-    <div class="nav-item" onclick="showPage('banners')"><span class="nav-ico">🖼️</span> Banners</div>
-    <div class="nav-item" onclick="showPage('photolibrary')"><span class="nav-ico">📸</span> Photo Library</div>
-    <div class="nav-item" onclick="showPage('siteimages')"><span class="nav-ico">🖥️</span> Site Images</div>
-    <div class="nav-item" onclick="showPage('storeeditor')"><span class="nav-ico">🎨</span> Store Editor <span class="nav-new"></span></div>
-  </div>
-  <div class="nav-section owner-only" id="navSecFinance">
-    <div class="nav-sec-label">Finance</div>
-    <div class="nav-item" onclick="showPage('payments')"><span class="nav-ico">💳</span> Payments</div>
-    <div class="nav-item" onclick="showPage('finance')"><span class="nav-ico">🧾</span> Finance <span class="nav-new"></span></div>
-    <div class="nav-item" onclick="showPage('invoices')"><span class="nav-ico">🧾</span> Invoices</div>
-  </div>
-  <div class="nav-section owner-only" id="navSecSystem">
-    <div class="nav-sec-label">System</div>
-    <div class="nav-item" onclick="showPage('whatsapp')"><span class="nav-ico">📱</span> WhatsApp</div>
-    <div class="nav-item" onclick="showPage('aiassistant')"><span class="nav-ico">🤖</span> AI Assistant</div>
-    <div class="nav-item" id="navAiTeam" onclick="showPage('aiteam')" style="display:none;"><span class="nav-ico">🧠</span> AI Agent Team <span style="margin-left:auto;font-size:0.6rem;font-weight:800;color:#000;background:var(--gold-text);padding:1px 6px;border-radius:5px;">OWNER</span></div>
-    <div class="nav-item" onclick="showPage('database')"><span class="nav-ico">🗄️</span> Database</div>
-    <div class="nav-item" onclick="showPage('integrations')"><span class="nav-ico">🔗</span> Integrations</div>
-    <div class="nav-item" onclick="showPage('geoanalytics')"><span class="nav-ico">🌏</span> Geo Analytics <span class="nav-new"></span></div>
-    <div class="nav-item" onclick="showPage('performance')"><span class="nav-ico">⚡</span> Performance <span class="nav-new"></span></div>
-    <a class="nav-item" href="monitoring.html" style="text-decoration:none;color:inherit;"><span class="nav-ico">🛡️</span> Monitoring &amp; Reviews <span class="nav-new"></span></a>
-    <div class="nav-item" id="navAuditLog" onclick="showPage('auditdebugger')"><span class="nav-ico">🛡️</span> Audit / Debugger</div>
-        <div class="nav-item" onclick="showPage('automation')"><span class="nav-ico">🤖</span> Automation <span class="nav-new"></span></div>
-    <div class="nav-item" id="navStaff" onclick="showPage('staff')" style="display:none;"><span class="nav-ico">👤</span> Staff & Permissions <span style="margin-left:auto;font-size:0.6rem;font-weight:800;color:#000;background:var(--gold-text);padding:1px 6px;border-radius:5px;">OWNER</span></div>
-    <div class="nav-item" id="navSettings" onclick="showPage('settings')"><span class="nav-ico">⚙️</span> Settings</div>
-  </div>
-</nav>
+    <nav class="sidebar" id="sidebar" aria-label="Admin navigation">
+      <div class="sidebar-heading"><span class="sidebar-kicker">Workspace</span><span class="sidebar-context">Operations</span></div>
+      <div class="nav-section"><div class="nav-sec-label">Overview</div><div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-ico">▦</span><span>Dashboard</span></div><div class="nav-item" onclick="showPage('analytics')"><span class="nav-ico">⌁</span><span>Analytics</span></div><div class="nav-item" onclick="showPage('livevisitors')"><span class="nav-ico">◉</span><span>Live Visitors</span></div><div class="nav-item" onclick="showPage('calendar')"><span class="nav-ico">□</span><span>Calendar</span></div></div>
+      <div class="nav-section"><div class="nav-sec-label">Commerce</div><div class="nav-item" onclick="showPage('orders')"><span class="nav-ico">□</span><span>Orders</span><span class="nav-badge" id="pendingBadge">0</span></div><div class="nav-item" onclick="showPage('returns')"><span class="nav-ico">↶</span><span>Returns</span><span class="nav-badge" id="returnsBadge">0</span></div><div class="nav-item" onclick="showPage('products')"><span class="nav-ico">◇</span><span>Products</span></div><div class="nav-item" onclick="showPage('inventory')"><span class="nav-ico">▤</span><span>Inventory</span></div><div class="nav-item" onclick="showPage('discounts')"><span class="nav-ico">⌁</span><span>Discounts</span></div><div class="nav-item" onclick="showPage('customers')"><span class="nav-ico">○</span><span>Customers</span></div></div>
+      <div class="nav-section"><div class="nav-sec-label">Growth</div><div class="nav-item" onclick="showPage('marketing')"><span class="nav-ico">◒</span><span>Marketing</span></div></div>
+      <div class="nav-section owner-only" id="navSecContent"><div class="nav-sec-label">Content</div><div class="nav-item" onclick="showPage('banners')"><span class="nav-ico">▧</span><span>Banners</span></div><div class="nav-item" onclick="showPage('photolibrary')"><span class="nav-ico">▣</span><span>Photo Library</span></div><div class="nav-item" onclick="showPage('siteimages')"><span class="nav-ico">▤</span><span>Site Images</span></div><div class="nav-item" onclick="showPage('storeeditor')"><span class="nav-ico">✧</span><span>Store Editor</span></div></div>
+      <div class="nav-section owner-only" id="navSecFinance"><div class="nav-sec-label">Finance</div><div class="nav-item" onclick="showPage('payments')"><span class="nav-ico">◫</span><span>Payments</span></div><div class="nav-item" onclick="showPage('finance')"><span class="nav-ico">₹</span><span>Finance</span></div><div class="nav-item" onclick="showPage('invoices')"><span class="nav-ico">▤</span><span>Invoices</span></div></div>
+      <div class="nav-section owner-only" id="navSecSystem"><div class="nav-sec-label">System</div><div class="nav-item" onclick="showPage('whatsapp')"><span class="nav-ico">◌</span><span>WhatsApp</span></div><div class="nav-item" onclick="showPage('aiassistant')"><span class="nav-ico">✦</span><span>AI Assistant</span></div><div class="nav-item" id="navAiTeam" onclick="showPage('aiteam')" style="display:none"><span class="nav-ico">✣</span><span>AI Agent Team</span></div><div class="nav-item" onclick="showPage('database')"><span class="nav-ico">▥</span><span>Database</span></div><div class="nav-item" onclick="showPage('integrations')"><span class="nav-ico">⌘</span><span>Integrations</span></div><div class="nav-item" onclick="showPage('geoanalytics')"><span class="nav-ico">⌖</span><span>Geo Analytics</span></div><div class="nav-item" onclick="showPage('performance')"><span class="nav-ico">↗</span><span>Performance</span></div><a class="nav-item" href="monitoring.html" style="text-decoration:none;color:inherit"><span class="nav-ico">◈</span><span>Monitoring &amp; Reviews</span></a><div class="nav-item" id="navAuditLog" onclick="showPage('auditdebugger')"><span class="nav-ico">◉</span><span>Audit / Debugger</span></div><div class="nav-item" onclick="showPage('automation')"><span class="nav-ico">⌘</span><span>Automation</span></div><div class="nav-item" id="navStaff" onclick="showPage('staff')" style="display:none"><span class="nav-ico">○</span><span>Staff &amp; Permissions</span></div><div class="nav-item" id="navSettings" onclick="showPage('settings')"><span class="nav-ico">⚙</span><span>Settings</span></div></div>
+      <div class="sidebar-footer"><a href="index.html" class="sidebar-store-link"><span>View Store</span><span>↗</span></a><div class="sidebar-foot-meta"><span class="foot-dot"></span><span>Workspace secure</span></div></div>
+    </nav>
 
-<!-- MAIN CONTENT -->
-<main class="main">
-
+    <main class="main">
 <!-- ═════════════ DASHBOARD ═════════════ -->
 <div class="page active" id="page-dashboard">
   <div class="page-hdr">
