@@ -7611,9 +7611,16 @@ async function loadSettings() {
     if(d.offer_label) document.getElementById('offerLabel').value = d.offer_label;
     if(d.offer_sub) document.getElementById('offerSub').value = d.offer_sub;
     if(d.interface_theme) {
-      // Backend is the source of truth once reachable — keep localStorage in sync too.
-      applyThemeClass(d.interface_theme);
-      try { localStorage.setItem(THEME_KEY, d.interface_theme); } catch {}
+      // Keep an explicit local choice stable after reload. The backend remains
+      // the cross-device fallback, while localStorage prevents an older or
+      // eventually-consistent server value from undoing the palette just picked.
+      const localTheme = THEME_ALIASES[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY);
+      const serverTheme = THEME_ALIASES[d.interface_theme] || d.interface_theme;
+      const selectedTheme = VALID_THEMES.includes(localTheme) ? localTheme : serverTheme;
+      applyThemeClass(selectedTheme);
+      if (!VALID_THEMES.includes(localTheme)) {
+        try { localStorage.setItem(THEME_KEY, selectedTheme); } catch {}
+      }
     }
   } catch {}
 }
