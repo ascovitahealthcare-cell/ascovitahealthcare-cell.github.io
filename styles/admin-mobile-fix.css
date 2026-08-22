@@ -76,3 +76,19 @@ body { min-width:0; max-width:100vw; overflow-x:hidden; }
 @media (prefers-reduced-motion:reduce) {
   #app *, #app *::before, #app *::after { scroll-behavior:auto !important; animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
 }
+
+/* Final scroll-owner correction: legacy inline mobile CSS fixed .main to the
+   viewport height, which trapped long admin pages on touch devices. */
+@media (max-width:900px) {
+  html, body { height:auto !important; min-height:100% !important; overflow-x:hidden !important; overflow-y:auto !important; }
+  #app { height:auto !important; min-height:100dvh !important; overflow:visible !important; }
+  #app .app-layout { height:auto !important; min-height:100dvh !important; overflow:visible !important; }
+  #app .main { height:auto !important; min-height:calc(100dvh - 58px) !important; max-height:none !important; overflow-x:hidden !important; overflow-y:visible !important; overscroll-behavior-y:auto !important; }
+  #app .page { height:auto !important; min-height:0 !important; max-height:none !important; overflow:visible !important; }
+  #app .admin-bnav { position:fixed !important; }
+  #app .sidebar-overlay { position:fixed !important; }
+  #app .prod-drawer, #app .gemini-panel, #app .modal, #app .sheet { overscroll-behavior:contain !important; }
+}
+@media (max-width:900px) and (orientation:landscape) and (max-height:500px) {
+  #app .main { height:auto !important; min-height:calc(100dvh - 46px) !important; }
+}
