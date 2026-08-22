@@ -5947,6 +5947,9 @@ function loadAccountPage() {
   loadOrdersList();
   loadInvoicesList();
   prefillProfile(user);
+  // Refresh the top Account Hub identity and live summary on every account entry.
+  try { if (typeof refreshAccountWelcome === 'function') refreshAccountWelcome(); } catch(e) {}
+
   // AUTO-REFRESH: the courier sync flips fulfillment (Shipped → Delivered)
   // server-side every 10 minutes. Without this loop the customer would have
   // to leave and return to see their order move, and the "Earns VitaPoints

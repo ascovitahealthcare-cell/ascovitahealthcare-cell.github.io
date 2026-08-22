@@ -8327,7 +8327,7 @@ button, [role="button"] {
               <div class="aw-avatar" id="awAvatar" aria-hidden="true">AH</div>
               <div class="aw-profile-copy">
                 <div class="aw-eyebrow"><span aria-hidden="true">🌿</span> Ozylix Member <span class="aw-eyebrow-pill">ACCOUNT HUB</span></div>
-                <div class="aw-email" id="awEmail">Welcome to your Ozylix account</div>
+                <div class="aw-email"><span class="aw-email-icon" aria-hidden="true">✉</span><span id="awEmail">Welcome to your Ozylix account</span></div>
               </div>
             </div>
             <h2 class="aw-name" id="awName">Welcome to your Ozylix account</h2>
@@ -9252,7 +9252,9 @@ body:not(.oz-product) #stickyCart { display: none !important; }
 .aw-profile-line { display:flex; align-items:center; gap:12px; min-width:0; }
 .aw-avatar { display:grid; place-items:center; flex:0 0 62px; width:62px; height:62px; border-radius:19px; background:rgba(255,255,255,.92); color:#b83a2f; font-size:1.6rem; font-weight:800; letter-spacing:.04em; box-shadow:0 8px 18px rgba(25,20,40,.14); }
 .aw-profile-copy { min-width:0; }
-.aw-email { overflow:hidden; margin-top:7px; color:rgba(255,255,255,.82); font-size:.86rem; text-overflow:ellipsis; white-space:nowrap; }
+.aw-email { display:flex; align-items:center; gap:6px; overflow:hidden; margin-top:7px; color:rgba(255,255,255,.82); font-size:.86rem; }
+.aw-email > span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.aw-email-icon { display:inline-grid; place-items:center; flex:0 0 20px; width:20px; height:20px; border:1px solid rgba(255,255,255,.25); border-radius:7px; color:#fff; font-size:.7rem; }
 #page-account .aw-eyebrow { display:flex; align-items:center; flex-wrap:wrap; gap:8px; color:rgba(255,255,255,.72); font-size:.68rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
 .aw-eyebrow-pill { padding:4px 8px; border:1px solid rgba(255,255,255,.24); border-radius:99px; color:rgba(255,255,255,.82); font-size:.56rem; letter-spacing:.12em; }
 #page-account .aw-name { margin:12px 0 8px; color:#fff; font-size:clamp(1.35rem,2.4vw,2rem); line-height:1.1; }
@@ -9272,7 +9274,7 @@ body:not(.oz-product) #stickyCart { display: none !important; }
 .app-menu-summary span { margin-top:4px; color:var(--t-low,#7c8780); font-size:.62rem; font-weight:700; }
 .app-menu-live-badge { min-width:24px !important; text-align:center; }
 @media (max-width: 900px) {
-  #page-account { padding-top:74px !important; }
+  #page-account { padding-top:calc(env(safe-area-inset-top, 0px) + 106px) !important; }
   #page-account .account-layout { gap:14px; }
   #page-account .account-sidebar { padding:16px; border-radius:20px; }
   #page-account .account-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
@@ -9302,6 +9304,7 @@ body:not(.oz-product) #stickyCart { display: none !important; }
   #page-account .aw-sub, #page-account .aw-stat-note { display:none; }
   .aw-avatar { flex-basis:45px; width:45px; height:45px; border-radius:14px; font-size:1.15rem; }
   .aw-email { margin-top:4px; font-size:.7rem; }
+  .aw-email-icon { flex-basis:17px; width:17px; height:17px; border-radius:6px; font-size:.58rem; }
   #page-account .aw-name { margin:7px 0 0; font-size:1.2rem; }
   #page-account .aw-stats { gap:5px; }
   #page-account .aw-stat { flex-direction:row; align-items:center; gap:6px; padding:8px 7px; border-radius:11px; }
