@@ -1,0 +1,78 @@
+/* Responsive hardening for the existing admin application. No data hooks or
+   route selectors are changed; this only prevents overflow and improves the
+   layout across phone, tablet, desktop, and landscape browser contexts. */
+html { min-width:0; max-width:100%; overflow-x:hidden; }
+body { min-width:0; max-width:100vw; overflow-x:hidden; }
+#app, #app .main, #app .page, #app .card, #app .table-wrap, #app .chart-card { min-width:0; box-sizing:border-box; }
+#app { width:100%; max-width:100vw; min-height:100dvh; }
+#app img, #app svg { max-width:100%; }
+#app canvas { display:block; max-width:100%; }
+#app button, #app input, #app select, #app textarea { max-width:100%; }
+#app .table-wrap { overflow-x:auto; overflow-y:visible; -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
+#app table { max-width:none; }
+#app .page-hdr { min-width:0; }
+#app .page-hdr > * { min-width:0; }
+#app .page-sub, #app .card-subtitle { overflow-wrap:anywhere; }
+#app .modal, #app .drawer, #app .sheet { max-width:calc(100vw - 24px); max-height:calc(100dvh - 24px); overflow:auto; -webkit-overflow-scrolling:touch; }
+#app .btn, #app .tb-btn, #app .nav-item, #app .filter-chip, #app .range-chip { touch-action:manipulation; }
+
+@media (max-width:1180px) {
+  #app .main { padding-left:24px !important; padding-right:24px !important; }
+  #app .grid-4 { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+  #app .grid-3 { grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+  #app .wide-grid, #app .dashboard-grid { grid-template-columns:minmax(0,1fr) !important; }
+}
+
+@media (max-width:760px) {
+  #app .topbar { min-height:58px !important; height:auto !important; padding:10px max(12px,env(safe-area-inset-left)) 10px max(12px,env(safe-area-inset-right)) !important; gap:8px !important; }
+  #app .topbar .global-search, #app .topbar input[type="search"] { display:none !important; }
+  #app .topbar .tb-label { display:none !important; }
+  #app .sidebar { display:none !important; }
+  #app .main { width:100% !important; margin-left:0 !important; padding:20px 14px calc(86px + env(safe-area-inset-bottom)) !important; }
+  #app .page { width:100% !important; max-width:none !important; }
+  #app .page-hdr { display:flex !important; flex-direction:column !important; align-items:stretch !important; gap:16px !important; margin-bottom:20px !important; }
+  #app .page-title { font-size:clamp(1.9rem,9vw,2.7rem) !important; line-height:1.02 !important; overflow-wrap:anywhere; }
+  #app .page-sub { font-size:.78rem !important; line-height:1.45 !important; }
+  #app .page-actions { width:100% !important; display:grid !important; grid-template-columns:repeat(auto-fit,minmax(0,1fr)) !important; gap:8px !important; }
+  #app .page-actions .btn { min-height:44px !important; width:100% !important; }
+  #app .grid-2, #app .grid-3, #app .grid-4, #app .wide-grid, #app .dashboard-grid { grid-template-columns:1fr !important; }
+  #app .card, #app .kpi, #app .oz-section-card, #app .mkt-kpi { width:100% !important; max-width:100% !important; }
+  #app .card-hdr { gap:10px !important; flex-wrap:wrap !important; }
+  #app .card-title { min-width:0; overflow-wrap:anywhere; }
+  #app .kpi-grid, #app .metric-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px !important; }
+  #app .kpi, #app .mkt-kpi { min-height:112px !important; padding:14px !important; }
+  #app .kpi .kpi-val, #app .mkt-kpi-value { font-size:1.45rem !important; }
+  #app canvas { width:100% !important; min-height:150px; }
+  #app .table-wrap { margin-left:-2px; margin-right:-2px; width:calc(100% + 4px) !important; }
+  #app table { min-width:640px; }
+  #app .form-row, #app .form-grid { grid-template-columns:1fr !important; }
+  #app .form-control, #app input, #app select, #app textarea { min-height:44px; font-size:16px !important; }
+  #app textarea { min-height:104px; }
+  #app .admin-bnav { display:flex !important; position:fixed !important; left:0 !important; right:0 !important; bottom:0 !important; z-index:1200 !important; padding:7px 6px max(7px,env(safe-area-inset-bottom)) !important; }
+  #app .admin-bnav > * { min-width:0; min-height:44px; }
+  #app .palette-opt, #app .layout-theme-opt { grid-template-columns:68px minmax(0,1fr) 22px !important; }
+  #app .glass-btn, #app .btn-secondary, #app .tb-btn { min-height:44px !important; }
+  #app .gemini-fab, #app #geminiFab { right:14px !important; bottom:78px !important; }
+}
+
+@media (max-width:430px) {
+  #app .main { padding-left:10px !important; padding-right:10px !important; }
+  #app .kpi-grid, #app .metric-grid { grid-template-columns:1fr 1fr !important; gap:8px !important; }
+  #app .kpi, #app .mkt-kpi { padding:12px 10px !important; min-height:98px !important; }
+  #app .kpi .kpi-label, #app .mkt-kpi-label { font-size:.66rem !important; }
+  #app .kpi .kpi-val, #app .mkt-kpi-value { font-size:1.2rem !important; }
+  #app .page-actions { grid-template-columns:1fr !important; }
+  #app .palette-opt, #app .layout-theme-opt { grid-template-columns:60px minmax(0,1fr) 20px !important; gap:9px !important; padding:11px !important; }
+  #app .style-preview { width:60px !important; }
+}
+
+@media (orientation:landscape) and (max-height:600px) {
+  #app .topbar { min-height:50px !important; padding-top:6px !important; padding-bottom:6px !important; }
+  #app .main { padding-top:14px !important; padding-bottom:18px !important; }
+  #app .admin-bnav { display:none !important; }
+  #app .modal, #app .drawer, #app .sheet { max-height:calc(100dvh - 12px); }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  #app *, #app *::before, #app *::after { scroll-behavior:auto !important; animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
+}

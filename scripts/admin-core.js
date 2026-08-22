@@ -573,7 +573,16 @@ async function checkServerStatus() {
 // owner to 'admin' — the server is the real enforcer, so default to
 // owner-visible until positively proven otherwise.
 function applyRole(role) {
-  const r = role || sessionStorage.getItem('ascovita_role');
+  let r = String(role || sessionStorage.getItem('ascovita_role') || '').toLowerCase();
+  if (r !== 'owner' && r !== 'admin') {
+    try {
+      const cached = JSON.parse(localStorage.getItem('ascovita_session') || '{}');
+      if (cached.role === 'owner' || cached.role === 'admin') r = cached.role;
+    } catch (e) {}
+  }
+  // Keep the owner-visible shell during a transient /me timeout. The API
+  // still enforces every action, so this is never an authorization grant.
+  if (r !== 'owner' && r !== 'admin') r = 'owner';
   document.body.classList.remove('role-owner','role-admin');
   document.body.classList.add('role-' + r);
   // Update topbar indicator
@@ -592,6 +601,7 @@ function applyRole(role) {
   if (moreAiTeam) moreAiTeam.style.display = (r === 'owner') ? 'flex' : 'none';
   // Re-render the login audit table so it clears/populates correctly for the active role
   if (typeof renderLoginAudit === 'function') renderLoginAudit();
+  return r;
 }
 
 // Auto-login if the stored token is still valid.

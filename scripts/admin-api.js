@@ -255,8 +255,8 @@ async function azStaffApplyProfile(username, profile){
 async function azStaffToggle(username, currentlyEnabled){
   const req = confirmCriticalAction(`${currentlyEnabled ? 'Suspend' : 'Enable'} ${username}?`, async function(proof){
     const headers = proof ? { 'X-Password-Proof': proof } : {};
-    const r = await apiFetch(`/api/admin/staff/${currentlyEnabled ? 'suspend' : 'enable'}`, {
-      method: 'POST', headers: headers, body: JSON.stringify({ username }),
+    const r = await apiFetch(`/api/admin/staff/${currentlyEnabled ? 'revoke' : 'enable'}`, {
+      method: 'POST', headers: headers, body: JSON.stringify(currentlyEnabled ? { username, suspend: true } : { username }),
     });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error || 'Failed');
