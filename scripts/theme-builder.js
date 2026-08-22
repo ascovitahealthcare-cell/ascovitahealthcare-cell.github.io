@@ -221,12 +221,12 @@
     else if (c.cardstyle === 'bento') css.push('.product-card,.cat-card,.cat-card-sm{box-shadow:0 0 0 1px rgba(30,30,36,.06), 0 2px 8px rgba(30,30,36,.06);border-radius:var(--r-md);}');
     else                              css.push('.product-card,.cat-card,.cat-card-sm{box-shadow:var(--neo-1);}');
     // ── v10.4: Design & Layout controls (banner / cards / borders / image shape-fit-position).
-    //    Default path emits NO rules — the site renders exactly like before
-    //    when no combos are published. Banner height rules are desktop-only
-    //    (>=821px) so phones keep the original aspect-ratio artwork layout.
+    //    Default path emits NO rules — the base storefront styles own the
+    //    landscape ratio. Named sizes only change the desktop frame width;
+    //    no mode may force a portrait crop or fixed full-screen height.
     const _b = c.banner, _k = c.cards, _cb = c.cardborder, _is = c.imgshape, _if = c.imgfit, _ip = c.imgpos;
-    if (_b === 'full') css.push('@media(min-width:821px){.hero-banner,.hero-banner-slide img{min-height:640px;}.hero-banner-slide img{aspect-ratio:auto;height:640px;object-fit:cover !important;}#shopBannerSlot1 img,#shopBannerSlot2 img{height:460px !important;}}');
-    else if (_b === 'compact') css.push('.hero-banner,.hero-banner-slide img{min-height:300px;}.hero-banner-slide img{aspect-ratio:auto;height:300px;object-fit:cover !important;}#shopBannerSlot1 img,#shopBannerSlot2 img{height:240px !important;}');
+    if (_b === 'full') css.push('@media(min-width:821px){.hero-banner{width:min(calc(100% - 32px),1320px);}.hero-banner-slide img{height:auto;min-height:0;aspect-ratio:2688/1152;object-fit:contain !important;}#shopBannerSlot1 img,#shopBannerSlot2 img{height:460px !important;}}');
+    else if (_b === 'compact') css.push('@media(min-width:821px){.hero-banner{width:min(calc(100% - 32px),1160px);}.hero-banner-slide img{height:auto;min-height:0;aspect-ratio:2688/1152;object-fit:contain !important;}#shopBannerSlot1 img,#shopBannerSlot2 img{height:240px !important;}}');
     if (_k === 's')      css.push('.products-grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr)) !important;}.product-card .p-info{font-size:.82rem !important;}');
     else if (_k === 'l') css.push('.products-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr)) !important;}.product-card .p-info{font-size:1rem !important;}.product-card{padding:11px !important;}');
     if (_cb === 'none')   css.push('.product-card,.cat-card,.cat-card-sm,.promo-card-media{border:none !important;box-shadow:none !important;}');

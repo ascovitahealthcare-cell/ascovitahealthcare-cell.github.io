@@ -2096,19 +2096,23 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
 
 /* ══ HERO BANNER — top-of-home offer carousel ══════════════════════════
    Stays display:none until BANNER_SLIDES has at least one usable image, so
-   an empty banner never ships. aspect-ratio reserves the exact height before
-   the image loads, which is what stops the page jumping as it arrives. */
-.hero-banner { display: none; position: relative; width: 100%; overflow: hidden; background: var(--sub-1, #f4f6f2); }
+   an empty banner never ships. The contained frame follows the uploaded
+   landscape reference instead of stretching edge-to-edge on desktop. */
+.hero-banner {
+  display: none; position: relative; width: min(calc(100% - 32px), 1320px);
+  margin: 0 auto; overflow: hidden; background: var(--sub-1, #f4f6f2);
+  border-radius: clamp(18px, 2vw, 30px);
+  box-shadow: 0 18px 44px -28px rgba(29,35,32,.42);
+}
 .hero-banner.is-live { display: block; }
 .hero-banner-track { display: flex; transition: transform .45s cubic-bezier(.22,.61,.36,1); will-change: transform; }
 .hero-banner-slide { flex: 0 0 100%; display: block; position: relative; }
 /* Landscape on every screen, phones included — matches the artwork's own
-   2688x1152, so nothing is ever cropped and the offer text always survives.
+   2688x1152 shape, so nothing is ever cropped and the offer text survives.
    The mobile file is a smaller copy of the same shape, not a square crop. */
 .hero-banner-slide img {
-  width: 100%; height: auto; display: block;
-  aspect-ratio: 2688 / 1152;
-  object-fit: cover;
+  display: block; width: 100%; height: auto; min-height: 0;
+  aspect-ratio: 2688 / 1152; object-fit: contain;
 }
 .hero-banner-dots { position: absolute; left: 0; right: 0; bottom: 10px; display: flex; justify-content: center; gap: 7px; }
 .hero-banner-dot {
