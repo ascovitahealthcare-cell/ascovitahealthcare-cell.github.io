@@ -2261,7 +2261,25 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
   transition: transform var(--dur-3) var(--rise), box-shadow var(--dur-3) var(--rise);
 }
 .inf-card:hover { transform: translateY(-4px); box-shadow: var(--neo-2); }
-
+.oz-thankyou-card {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px;
+  margin: 28px auto 0; max-width: 780px; padding: 22px 26px;
+  border: 1px solid rgba(61,117,90,.18); border-radius: var(--r-lg);
+  background: linear-gradient(135deg, rgba(255,255,255,.92), rgba(232,242,235,.88));
+  box-shadow: var(--neo-1); position: relative; overflow: hidden;
+}
+.oz-thankyou-card::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 5px; background: linear-gradient(180deg, var(--green), var(--seal)); }
+.oz-thankyou-mark { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; background: var(--green); color: #fff; font-size: 1.45rem; box-shadow: 0 8px 18px rgba(61,117,90,.2); }
+.oz-thankyou-kicker { margin: 0 0 4px; color: var(--green); font-size: .68rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.oz-thankyou-title { margin: 0; color: var(--dark); font-family: var(--font-display); font-size: clamp(1.2rem, 2.4vw, 1.65rem); line-height: 1.1; }
+.oz-thankyou-copy { margin: 7px 0 0; color: var(--t-mid); font-size: .83rem; line-height: 1.55; }
+.oz-thankyou-sign { color: var(--green); font-size: .76rem; font-weight: 800; white-space: nowrap; }
+@media (max-width: 600px) {
+  .oz-thankyou-card { grid-template-columns: auto 1fr; gap: 12px; margin-top: 22px; padding: 18px 18px 18px 20px; }
+  .oz-thankyou-mark { width: 42px; height: 42px; font-size: 1.1rem; }
+  .oz-thankyou-copy { font-size: .78rem; }
+  .oz-thankyou-sign { grid-column: 2; }
+}
 /* ══ VITA ADVISOR TEASER ═════════════════════════════════════════ */
 .vita-home-section { position: relative; }
 .vita-home-inner { display: grid; gap: 46px; grid-template-columns: 1fr 1fr; align-items: center; }
@@ -6889,6 +6907,15 @@ button, [role="button"] {
     </div>
     <div class="influencer-grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px" id="reviewsWallGrid">
       <p style="grid-column:1/-1;text-align:center;color:var(--gray);font-size:.9rem">Loading reviews…</p>
+    </div>
+    <div class="oz-thankyou-card" aria-label="Thank you card for Divyandhu">
+      <div class="oz-thankyou-mark" aria-hidden="true">♥</div>
+      <div>
+        <p class="oz-thankyou-kicker">A special thank-you</p>
+        <h3 class="oz-thankyou-title">Thank you, Divyandhu</h3>
+        <p class="oz-thankyou-copy">Your support, trust, and encouragement mean a lot to the Ozylix family. Thank you for being part of our wellness journey.</p>
+      </div>
+      <div class="oz-thankyou-sign">With gratitude,<br>Team Ozylix</div>
     </div>
     <div style="text-align:center;margin-top:28px">
       <button class="btn-outline" onclick="showPage('shop')" style="font-size:0.88rem">Shop Bestsellers →</button>
