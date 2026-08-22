@@ -116,7 +116,8 @@ function wixResize(url, size) {
     // thumb is now a real small variant (300px) instead of the full image,
     // so the gallery thumbnail strip doesn't download full-res images 5x over.
     p.media = imgs.map(function(url) {
-      return { url: url, type: 'image', thumb: wixResize(url, 300) };
+      var type = typeof mediaTypeFromUrl === 'function' ? mediaTypeFromUrl(url) : (/\.(mp4|webm|mov|m4v|3gp)(\?|$)/i.test(String(url)) ? 'video' : 'image');
+      return { url: url, type: type, thumb: type === 'video' ? url : wixResize(url, 300) };
     });
 
     // NEW — small (400px) variant for product-card grids, cart rows,

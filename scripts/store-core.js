@@ -1400,6 +1400,54 @@ function getProductSurfaceImg(p) {
   if (thumb) return cdnImg(thumb);
   return getProductImg(p);
 }
+function productSurfaceMediaHTML(url, alt, className, extraStyle) {
+  const src = cdnImg(url || '');
+  const safeAlt = esc(alt || 'Ozylix product media');
+  const cls = className || '';
+  const style = extraStyle || '';
+  if (mediaTypeFromUrl(src) === 'video') {
+    return '<video class="' + cls + '" src="' + src + '" muted loop playsinline autoplay preload="metadata" aria-label="' + safeAlt + '" style="' + style + '"></video>';
+  }
+  return '<img class="' + cls + '" src="' + src + '" alt="' + safeAlt + '" loading="lazy" decoding="async" style="' + style + '" onerror="this.src=\'' + PRODUCT_FALLBACKS.default + '\'">';
+}
+function upgradeUploadedVideoImages(root) {
+  const scope = root || document;
+  scope.querySelectorAll('img[src]').forEach(function(img) {
+    if (img.dataset.videoUpgraded === '1') return;
+    const src = img.currentSrc || img.getAttribute('src') || '';
+    if (!src || mediaTypeFromUrl(src) !== 'video') return;
+    const video = document.createElement('video');
+    Array.from(img.attributes).forEach(function(attr) {
+      if (!['src','alt','loading','decoding','onerror'].includes(attr.name)) video.setAttribute(attr.name, attr.value);
+    });
+    video.src = src;
+    video.muted = true;
+    video.loop = true;
+    video.playsInline = true;
+    video.autoplay = true;
+    video.preload = 'metadata';
+    video.setAttribute('aria-label', img.getAttribute('alt') || 'Ozylix product video');
+    img.dataset.videoUpgraded = '1';
+    img.replaceWith(video);
+  });
+}
+(function installUploadedVideoUpgrade() {
+  const start = function() {
+    upgradeUploadedVideoImages(document);
+    if (!document.body || window.__ozylixVideoObserver) return;
+    const observer = new MutationObserver(function(records) {
+      records.forEach(function(record) {
+        record.addedNodes.forEach(function(node) {
+          if (node.nodeType === 1) upgradeUploadedVideoImages(node);
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.__ozylixVideoObserver = observer;
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+  else start();
+})();
 
 // ══════════════════════════════════════════════════════════════════════
 // OZYLX NOTIFY — centralized contextual popup manager (Aug 2026)
@@ -1529,6 +1577,7 @@ function renderProductCard(p, options = {}){
   const mediaBadge = hasRealImage ? '' : '<span class="p-media-status" role="status" style="position:absolute;left:10px;right:10px;bottom:10px;z-index:3;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,.9);color:#547177;font-size:.64rem;font-weight:700;text-align:center;letter-spacing:.02em;box-shadow:0 2px 8px rgba(44,55,60,.12)">Product photo being updated</span>';
   const safeName  = esc(p.name);
   const imageAlt = esc(homepage && p.homeThumbnailAlt ? p.homeThumbnailAlt : p.name);
+  const cardMedia = productSurfaceMediaHTML(imgSrc, homepage && p.homeThumbnailAlt ? p.homeThumbnailAlt : p.name, '', 'width:100%;height:100%;object-fit:cover;display:block;');
   const safeBrand = esc(p.brand);
   // Benefit, not brand and not category. This slot first printed "OZYLIX"
   // on every card, then "EFFERVESCENT TABLET" on every card — both useless,
@@ -1582,5 +1631,5 @@ function renderProductCard(p, options = {}){
   const qAddLabel = tiers ? 'Choose Pack' : 'Add to Cart';
   const qAddOnclick = tiers ? `event.stopPropagation();openProduct(${p.id})` : `event.stopPropagation();STORE.addToCart(${p.id})`;
   const buyNowOnclick = `event.stopPropagation();openProduct(${p.id})`;
-  return `<div class="product-card" data-product-id="${p.id}" data-image-state="${mediaState}" style="--card-flavour:${cardFlavour}" onclick="openProduct(${p.id})"><div class="p-img-wrap"><img src="${imgSrc}" alt="${imageAlt}" loading="lazy" onerror="this.src='${PRODUCT_FALLBACKS.default}'" decoding="async">${safeBadge}${mediaBadge} ${maxDisc>0?`<span class="p-disc-badge">${tiers?'Up to ':'-'}${maxDisc}%</span>`:''}<div class="p-actions"><button class="btn-wishlist" onclick="event.stopPropagation();STORE.toggleWishlist(${p.id})" title="Wishlist">♡</button><button class="btn-qadd" onclick="${qAddOnclick}">${qAddLabel}</button></div><div class="p-buyrow"><button class="btn-buynow" onclick="${buyNowOnclick}">⚡ Buy Now</button></div></div><div class="p-info"><div class="p-brand">${safeKicker}</div><div class="p-name">${safeName}</div><div class="p-rating">${ratingDisplay}</div><div class="p-price"><span class="sale-price">${priceDisplay}</span>${(baseMRP&&baseMRP!==baseRate)?`<span class="orig-price">₹${baseMRP.toLocaleString('en-IN')}</span>`:''}</div>${tiers?`<div class="tier-offer-tag">⚡ Up to ${maxDisc}% OFF on larger packs</div>`:safeOffer}<div class="p-enter" aria-hidden="true">Shop now<svg viewBox="0 0 15 8" fill="none"><path d="M0 4h13M9.5 1L13 4l-3.5 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></div>`;
+  return `<div class="product-card" data-product-id="${p.id}" data-image-state="${mediaState}" style="--card-flavour:${cardFlavour}" onclick="openProduct(${p.id})"><div class="p-img-wrap">${cardMedia}${safeBadge}${mediaBadge} ${maxDisc>0?`<span class="p-disc-badge">${tiers?'Up to ':'-'}${maxDisc}%</span>`:''}<div class="p-actions"><button class="btn-wishlist" onclick="event.stopPropagation();STORE.toggleWishlist(${p.id})" title="Wishlist">♡</button><button class="btn-qadd" onclick="${qAddOnclick}">${qAddLabel}</button></div><div class="p-buyrow"><button class="btn-buynow" onclick="${buyNowOnclick}">⚡ Buy Now</button></div></div><div class="p-info"><div class="p-brand">${safeKicker}</div><div class="p-name">${safeName}</div><div class="p-rating">${ratingDisplay}</div><div class="p-price"><span class="sale-price">${priceDisplay}</span>${(baseMRP&&baseMRP!==baseRate)?`<span class="orig-price">₹${baseMRP.toLocaleString('en-IN')}</span>`:''}</div>${tiers?`<div class="tier-offer-tag">⚡ Up to ${maxDisc}% OFF on larger packs</div>`:safeOffer}<div class="p-enter" aria-hidden="true">Shop now<svg viewBox="0 0 15 8" fill="none"><path d="M0 4h13M9.5 1L13 4l-3.5 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div></div>`;
 }

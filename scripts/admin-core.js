@@ -3578,8 +3578,11 @@ let drawerHomeThumbnailPendingUrl = '';
 function renderHomeThumbnailPreview(url) {
   const box = document.getElementById('homeThumbPreview');
   if (!box) return;
+  const src = adminCdnImg(url || '');
   box.innerHTML = url
-    ? `<img src="${adminCdnImg(url)}" alt="Homepage thumbnail" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='Thumbnail unavailable'">`
+    ? (isVideoFileUrl(src)
+      ? `<video src="${src}" muted loop playsinline autoplay preload="metadata" aria-label="Homepage thumbnail video" style="width:100%;height:100%;object-fit:cover;"></video><span class="img-slot-vid-badge">VIDEO</span>`
+      : `<img src="${src}" alt="Homepage thumbnail" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='Thumbnail unavailable'">`)
     : 'No thumbnail';
 }
 function resetHomeThumbnailPreview(url = '') {
@@ -3605,7 +3608,7 @@ function setPendingHomeThumbnailPreview(url) {
   const save = document.getElementById('saveHomeThumbBtn');
   const status = document.getElementById('homeThumbSaveStatus');
   if (save) save.style.display = '';
-  if (status) status.textContent = 'Unsaved gallery selection — click Save Homepage Thumbnail';
+  if (status) status.textContent = 'Unsaved gallery selection — click Save Homepage Media';
   renderHomeThumbnailGallery();
 }
 async function loadHomeThumbnail(productId) {
@@ -3647,7 +3650,7 @@ async function loadHomeThumbnailGallery() {
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
     const imgs = d.data || d.images || d.files || d.photos || (Array.isArray(d) ? d : []);
-    homeThumbGalleryItems = imgs.filter(img => img && img.url && !/\.(?:mp4|webm|mov)(?:\?|$)/i.test(String(img.url)));
+    homeThumbGalleryItems = imgs.filter(img => img && img.url);
     renderHomeThumbnailGallery();
   } catch (e) {
     homeThumbGalleryItems = [];
@@ -3665,12 +3668,12 @@ function renderHomeThumbnailGallery() {
   if (!grid) return;
   const list = homeThumbGalleryItems.filter(img => !homeThumbGalleryQuery || String(img.filename || img.original_name || '').toLowerCase().includes(homeThumbGalleryQuery));
   const selected = drawerHomeThumbnailPendingUrl || drawerHomeThumbnailUrl;
-  if (status) status.textContent = list.length + ' image' + (list.length === 1 ? '' : 's') + (selected ? ' · tap an image to preview' : '');
+  if (status) status.textContent = list.length + ' media file' + (list.length === 1 ? '' : 's') + (selected ? ' · tap a file to preview' : '');
   grid.innerHTML = list.length ? list.map((img, index) => {
     const name = String(img.original_name || img.filename || 'Gallery image');
     const isSelected = String(img.url) === String(selected);
     return `<button type="button" class="home-thumb-gallery-item" data-gallery-index="${index}" style="border:2px solid ${isSelected ? 'var(--brand)' : 'var(--edge)'};background:var(--bg);border-radius:9px;padding:4px;min-width:0;text-align:left;cursor:pointer;">
-      <img src="${adminCdnImg(img.url)}" alt="${esc(name)}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block;">
+      ${isVideoFileUrl(img.url) ? `<video src="${adminCdnImg(img.url)}" muted loop playsinline autoplay preload="metadata" aria-label="${esc(name)}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block;"></video>` : `<img src="${adminCdnImg(img.url)}" alt="${esc(name)}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block;">`}
       <span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.62rem;color:var(--text2);padding:4px 2px 1px;">${esc(name.replace(/\.[^.]+$/, ''))}</span>
     </button>`;
   }).join('') : '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--text3);font-size:.72rem;">No gallery images match</div>';
@@ -3680,18 +3683,18 @@ function renderHomeThumbnailGallery() {
       if (!image) return;
       setPendingHomeThumbnailPreview(image.url);
       renderHomeThumbnailGallery();
-      toast('Image selected — click Save Homepage Thumbnail');
+      toast((isVideoFileUrl(image.url) ? 'Video' : 'Image') + ' selected — click Save Homepage Media');
     });
   });
 }
 async function saveHomeThumbnail() {
-  if (!drawerProductId || !drawerHomeThumbnailPendingUrl) { toast('Choose an image from the gallery first.', 'error'); return; }
+  if (!drawerProductId || !drawerHomeThumbnailPendingUrl) { toast('Choose an image or video from the gallery first.', 'error'); return; }
   try {
     const r = await apiFetch(`/api/admin/products/${drawerProductId}/home-thumbnail`, { method: 'PUT', body: JSON.stringify({ url: drawerHomeThumbnailPendingUrl }) });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || 'Could not save homepage thumbnail');
     resetHomeThumbnailPreview(d.data?.url || drawerHomeThumbnailPendingUrl);
-    toast('Homepage thumbnail saved ✅');
+    toast('Homepage media saved ✅');
   } catch (e) { toast(e.message, 'error'); }
 }
 async function handleHomeThumbnailFileChosen(input) {
@@ -3700,22 +3703,22 @@ async function handleHomeThumbnailFileChosen(input) {
   const fd = new FormData();
   fd.append('image', file);
   try {
-    toast('Uploading homepage thumbnail…');
+    toast(file.type.startsWith('video/') ? 'Uploading homepage thumbnail video…' : 'Uploading homepage thumbnail image…');
     const r = await adminProofUpload(`/api/admin/products/${drawerProductId}/home-thumbnail`, fd, 'Authorize this homepage thumbnail upload?');
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || 'Thumbnail upload failed');
     resetHomeThumbnailPreview(d.data?.url || '');
-    toast('Homepage thumbnail uploaded ✅');
+    toast((file.type.startsWith('video/') ? 'Homepage thumbnail video' : 'Homepage thumbnail image') + ' uploaded ✅');
   } catch (e) { toast(e.message, 'error'); }
 }
 async function clearHomeThumbnail() {
   if (drawerHomeThumbnailPendingUrl) {
     resetHomeThumbnailPreview(drawerHomeThumbnailUrl);
-    toast('Pending gallery selection discarded');
+    toast('Pending media selection discarded');
     return;
   }
   if (!drawerProductId || !drawerHomeThumbnailUrl) return;
-  if (!confirm('Remove this homepage thumbnail? Shop/product images will not be changed.')) return;
+  if (!confirm('Remove this homepage media? Shop/product images will not be changed.')) return;
   try {
     const r = await apiFetch(`/api/admin/products/${drawerProductId}/home-thumbnail`, {method:'DELETE'});
     const d = await r.json().catch(() => ({}));
@@ -5887,7 +5890,7 @@ function renderSiteImgSections(groups, overrides){
             </div>
             <div class="si-actions">
               <input type="file" accept="image/*,.svg,video/*,.mp4,.webm,.mov" id="siteImgFile-${item.key}" style="display:none;" onchange="uploadSiteImage(this, '${item.key}')">
-              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('siteImgFile-${item.key}').click()">📤 ${isOverridden ? 'Replace Image' : 'Upload Image'}</button>
+              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('siteImgFile-${item.key}').click()">📤 ${isOverridden ? 'Replace Image / Video' : 'Upload Image / Video'}</button>
               ${isOverridden ? `<button class="btn btn-danger btn-sm btn-icon" onclick="resetSiteImage('${item.key}', '${current}')" title="Delete this image everywhere and revert to default">🗑️</button>` : ''}
             </div>
           </div>`;
@@ -5948,7 +5951,7 @@ const __eduHtml = function(overrides){
               </div>
               <div class="si-actions">
                 <input type="file" accept="image/*,.svg,video/*,.mp4,.webm,.mov" id="eduFile-${key}" style="display:none;" onchange="uploadEduCreative(this, '${key}')">
-                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('eduFile-${key}').click()">📤 ${has ? 'Replace Image' : 'Upload Image'}</button>
+                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('eduFile-${key}').click()">📤 ${has ? 'Replace Image / Video' : 'Upload Image / Video'}</button>
                 ${has ? `<button class="btn btn-danger btn-sm btn-icon" onclick="deleteEduCreative('${key}', '${url}')" title="Delete this creative">🗑️</button>` : ''}
               </div>
             </div>`;
@@ -5979,7 +5982,7 @@ const __eduHtml = function(overrides){
               </div>
               <div class="si-actions">
                 <input type="file" accept="image/*,.svg,video/*,.mp4,.webm,.mov" id="eduFile-${key}" style="display:none;" onchange="uploadEduCreative(this, '${key}')">
-                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('eduFile-${key}').click()">📤 ${has ? 'Replace Image' : 'Upload Image'}</button>
+                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('eduFile-${key}').click()">📤 ${has ? 'Replace Image / Video' : 'Upload Image / Video'}</button>
                 ${has ? `<button class="btn btn-danger btn-sm btn-icon" onclick="deleteEduCreative('${key}', '${url}')" title="Delete this creative">🗑️</button>` : ''}
               </div>
             </div>`;
@@ -6011,7 +6014,7 @@ async function uploadSiteImage(input, key) {
     // attempts, so a transient network hiccup can never look like a bug.
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        r = await adminProofUpload('/api/upload/image', fd, 'Authorize this site-image upload?');
+        r = await adminProofUpload('/api/upload/image', fd, 'Authorize this image / video upload?');
         d = await r.json();
         if (r.ok) break;
       } catch (e) {
@@ -6032,7 +6035,7 @@ async function uploadSiteImage(input, key) {
     if (!url) { toast('❌ Upload failed — the server returned no file URL', 'error'); return; }
     const put = await apiFetch(`/api/admin/site-media/${encodeURIComponent(key)}`, {method:'PUT', body:JSON.stringify({url})});
     if (!put.ok) { toast('❌ Saved the video but could not link it to the site — tap Refresh and try again', 'error'); return; }
-    toast('✅ Image uploaded — live on the site now');
+    toast('✅ Media uploaded — live on the site now');
     loadSiteImages();
   } catch(e) { toast('Upload error: ' + e.message, 'error'); }
 }
@@ -6061,7 +6064,7 @@ async function uploadEduCreative(input, key) {
     if(!r.ok) { toast(d.error || 'Upload failed', 'error'); return; }
     const url = d.url || d.public_url || '';
     await apiFetch(`/api/admin/site-media/${encodeURIComponent(key)}`, {method:'PUT', body:JSON.stringify({url})});
-    toast('✅ Creative uploaded — appears on the product page now');
+    toast('✅ Image / video uploaded — appears on the product page now');
     loadSiteImages();
   } catch(e) { toast('Upload error: ' + e.message, 'error'); }
   input.value = '';
@@ -6143,7 +6146,7 @@ function renderBannerManagers() {
         ` : ''}
         <div style="display:flex;gap:5px;margin-top:5px;">
           <input type="file" accept="image/*,.webp,.svg,video/*,.mp4,.webm,.mov" id="bannerFile-${prefix}-${b.n}" style="display:none;" onchange="uploadBannerImage('${prefix}', ${b.n}, this)">
-          <button class="btn btn-primary btn-sm" style="flex:1;width:100%;font-size:0.66rem;min-height:28px;" onclick="document.getElementById('bannerFile-${prefix}-${b.n}').click()">📤 ${b.img ? 'Replace Image' : 'Upload Image'}</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;width:100%;font-size:0.66rem;min-height:28px;" onclick="document.getElementById('bannerFile-${prefix}-${b.n}').click()">📤 ${b.img ? 'Replace Image / Video' : 'Upload Image / Video'}</button>
         </div>
       </div>
     </div>`).join(''); }
@@ -6251,7 +6254,7 @@ async function loadFallbackManager() {
             ${url ? '<div style="font-size:0.62rem;color:var(--green-text);">✓ custom image set</div>' : '<div style="font-size:0.62rem;color:var(--text3);">no image yet</div>'}
             <input type="file" accept="image/*,.webp,.svg,video/*,.mp4,.webm,.mov" id="fallbackFile-${cat}" style="display:none;" onchange="uploadFallbackImage('${cat}', this)">
             <div style="display:flex;gap:6px;">
-              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('fallbackFile-${cat}').click()">📤 ${url ? 'Replace Image' : 'Upload Image'}</button>
+              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('fallbackFile-${cat}').click()">📤 ${url ? 'Replace Image / Video' : 'Upload Image / Video'}</button>
               ${url ? '<button class="btn btn-danger btn-sm btn-icon" onclick="deleteFallbackImage(\'' + cat + '\')" title="Remove this fallback">🗑️</button>' : ''}
             </div>
           </div>
@@ -6327,7 +6330,7 @@ function renderPromoMediaGrid() {
         <input class="form-control" style="font-size:0.66rem;padding:3px 6px;min-height:22px;margin-top:5px;" placeholder="Caption (optional)" value="${escAttr(b.alt)}" onchange="setPromoCardAlt(${b.n}, this.value)">
         <div style="margin-top:5px;">
           <input type="file" accept="image/*,.webp,.svg,video/*,.mp4,.webm,.mov" id="promoFile-${b.n}" style="display:none;" onchange="uploadPromoCardImage(${b.n}, this)">
-          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('promoFile-${b.n}').click()">📤 ${b.img ? 'Replace Media' : 'Upload Image / Video'}</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('promoFile-${b.n}').click()">📤 ${b.img ? 'Replace Image / Video' : 'Upload Image / Video'}</button>
         </div>
       </div>
     </div>`).join('');
@@ -6440,7 +6443,7 @@ function renderPromoStripGrid() {
         </div>
         <div style="display:flex;gap:6px;">
           <input type="file" accept="image/*,.webp,.svg,video/*,.mp4,.webm,.mov" id="promoStripFile-${c.id}" style="display:none;" onchange="uploadPromoStripCard('${c.id}',this)">
-          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('promoStripFile-${c.id}').click()">📤 ${url ? 'Replace Media' : 'Upload Image / Video'}</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('promoStripFile-${c.id}').click()">📤 ${url ? 'Replace Image / Video' : 'Upload Image / Video'}</button>
         </div>
       </div>
     </div>`;

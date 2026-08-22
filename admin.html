@@ -1849,7 +1849,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   } catch (e) {}
 })();
 </script>
-<script defer src="scripts/admin-core.js?v=20260822-8"></script>
+<script defer src="scripts/admin-core.js?v=20260822-9"></script>
 <script defer src="scripts/admin-api.js?v=20260822-1"></script>
 <script defer src="scripts/admin-ui.js?v=20260819-6"></script>
 <script defer src="scripts/admin-seo.js?v=20260819-4"></script>
@@ -2667,7 +2667,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   <div class="prod-drawer-body">
     <!-- Image preview -->
     <div class="drawer-field">
-      <div class="drawer-field-label">Product Images <span style="font-weight:400;color:var(--text3);">— click a slot to upload, ✕ to delete everywhere</span></div>
+      <div class="drawer-field-label">Product Images / Videos <span style="font-weight:400;color:var(--text3);">— click a slot to upload, ✕ to delete everywhere</span></div>
       <div class="img-slots">
         <div class="img-slot" id="imgSlot1" data-slot="1" onclick="triggerImgSlotUpload(1)">
           <img class="img-slot-preview" id="imgSlotPreview1"><span class="img-slot-plus" id="imgSlotPlus1">＋</span>
@@ -2685,7 +2685,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
           <img class="img-slot-preview" id="imgSlotPreview5"><span class="img-slot-plus" id="imgSlotPlus5">＋</span>
         </div>
       </div>
-      <div style="font-size:0.68rem;color:var(--text3);margin-top:6px;">Images (JPG/PNG/WebP/SVG) or short videos (MP4/WebM/MOV) · Videos are compressed automatically · Slot 1 is the main product image</div>
+      <div style="font-size:0.68rem;color:var(--text3);margin-top:6px;">Images (JPG/PNG/WebP/SVG) or short videos (MP4/WebM/MOV) · Videos are compressed automatically · Slot 1 is the main product media</div>
       <input type="file" id="imgSlotFileInput" accept="image/*,.svg,video/*,.mp4,.webm,.mov" style="display:none;" onchange="handleImgSlotFileChosen(this)">
       <!-- Hidden fields — keep existing save/load code (dImage..dImage5) working unchanged -->
       <input type="hidden" id="dImage"><input type="hidden" id="dImage2"><input type="hidden" id="dImage3"><input type="hidden" id="dImage4"><input type="hidden" id="dImage5">
@@ -2697,23 +2697,23 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;">
         <div id="homeThumbPreview" style="width:112px;height:112px;border:1px dashed var(--edge);border-radius:14px;background:var(--sub-1);display:grid;place-items:center;overflow:hidden;color:var(--text3);font-size:0.7rem;text-align:center;">No thumbnail</div>
         <div style="display:flex;flex-direction:column;gap:7px;">
-          <button class="btn-secondary" type="button" onclick="triggerHomeThumbnailUpload()">Upload homepage thumbnail</button>
-          <button class="btn-secondary" type="button" onclick="toggleHomeThumbnailSelector()">Choose from Admin Gallery</button>
-          <button class="btn-primary" type="button" id="saveHomeThumbBtn" onclick="saveHomeThumbnail()" style="display:none;">Save Homepage Thumbnail</button>
+          <button class="btn-secondary" type="button" onclick="triggerHomeThumbnailUpload()">Upload homepage image / video</button>
+          <button class="btn-secondary" type="button" onclick="toggleHomeThumbnailSelector()">Choose from Media Gallery</button>
+          <button class="btn-primary" type="button" id="saveHomeThumbBtn" onclick="saveHomeThumbnail()" style="display:none;">Save Homepage Media</button>
           <div id="homeThumbSaveStatus" style="font-size:0.7rem;color:var(--text3);">No homepage thumbnail saved</div>
           <button class="btn-secondary" type="button" id="clearHomeThumbBtn" onclick="clearHomeThumbnail()" style="display:none;">Remove thumbnail</button>
-          <div style="font-size:0.68rem;color:var(--text3);max-width:260px;line-height:1.45;">Used only by homepage Featured and New Arrivals cards. It does not change the Shop gallery or product-detail images.</div>
+          <div style="font-size:0.68rem;color:var(--text3);max-width:260px;line-height:1.45;">Used only by homepage Featured and New Arrivals cards. Images and short videos are supported; it does not change the Shop gallery or product-detail images.</div>
         </div>
       </div>
       <div id="homeThumbSelector" style="display:none;margin-top:8px;border:1px solid var(--edge);border-radius:12px;background:var(--sub-1);padding:10px;">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-          <input id="homeThumbGallerySearch" class="drawer-input" placeholder="Search gallery images…" oninput="filterHomeThumbnailGallery(this.value)" style="flex:1;min-width:0;">
+          <input id="homeThumbGallerySearch" class="drawer-input" placeholder="Search gallery media…" oninput="filterHomeThumbnailGallery(this.value)" style="flex:1;min-width:0;">
           <button class="btn-secondary" type="button" onclick="toggleHomeThumbnailSelector(false)">Close</button>
         </div>
         <div id="homeThumbGalleryStatus" style="font-size:0.68rem;color:var(--text3);margin-bottom:7px;">Loading gallery…</div>
         <div id="homeThumbGalleryGrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;max-height:260px;overflow:auto;"></div>
       </div>
-       <input type="file" id="homeThumbFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;" onchange="handleHomeThumbnailFileChosen(this)">
+       <input type="file" id="homeThumbFileInput" accept="image/*,.svg,video/*,.mp4,.webm,.mov,.m4v,.3gp" style="display:none;" onchange="handleHomeThumbnailFileChosen(this)">
       <input type="hidden" id="dHomeThumbnail">
     </div>
     <!-- Basic -->
@@ -3553,19 +3553,19 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 <!-- ═════════════ PHOTO LIBRARY ═════════════ -->
 <div class="page" id="page-photolibrary">
   <div class="page-hdr">
-    <div><div class="page-title">Photo Library</div><div class="page-sub">All uploaded product images</div></div>
+    <div><div class="page-title">Photo &amp; Video Library</div><div class="page-sub">All uploaded product and website media</div></div>
     <div class="page-actions">
       <label class="toggle-wrap" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;">
         <label class="toggle"><input type="checkbox" id="mediaWebpToggle" checked><span class="toggle-slider"></span></label>
         <span style="font-size:0.75rem;color:var(--text2);">Convert to WebP on upload</span>
       </label>
       <input type="file" id="photoFileInput" accept="image/*,.svg,video/*,.mp4,.webm,.mov" multiple onchange="uploadPhotos(this.files)">
-      <button class="btn btn-primary" onclick="document.getElementById('photoFileInput').click()">＋ Upload Images</button>
+      <button class="btn btn-primary" onclick="document.getElementById('photoFileInput').click()">＋ Upload Images / Videos</button>
     </div>
   </div>
 
   <div class="media-dropzone" id="mediaDropzone">
-    📥 Drag & drop images here to upload — multiple files supported
+    📥 Drag & drop images or videos here to upload — multiple files supported
   </div>
 
   <div id="uploadProgress" style="display:none;margin-bottom:16px;">
