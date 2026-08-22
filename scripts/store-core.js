@@ -591,7 +591,7 @@ function setShopPageSchema() {
         return {
           '@type': 'ListItem',
           'position': p.position || (items.indexOf(p) + 1),
-          'url': 'https://www.ozylix.com/product/' + (p.slug || p.id),
+          'url': 'https://www.ozylix.com/product/' + schemaSlug(p.name),
           'name': p.name || ''
         };
       });

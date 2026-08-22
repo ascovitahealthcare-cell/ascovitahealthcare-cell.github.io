@@ -598,7 +598,11 @@ const LEGACY_PRODUCT_SLUGS = {
 function findProductBySlug(slug) {
   if (!slug || typeof PRODUCTS === 'undefined') return null;
   const wanted = LEGACY_PRODUCT_SLUGS[slug] || slug;
-  return PRODUCTS.find(p => slugify(p.name) === wanted) || null;
+  return PRODUCTS.find(p => {
+    const nameSlug = slugify(p.name);
+    const seoSlug = String(p.seoSlug || p.slug || '').toLowerCase().trim();
+    return nameSlug === wanted || seoSlug === wanted;
+  }) || null;
 }
 
 function openProduct(id) {
@@ -2834,7 +2838,7 @@ function bootApp() {
       setTimeout(function() {
         if (typeof findProductBySlug === 'function' && typeof PRODUCTS !== 'undefined') {
           const prod = findProductBySlug(_pathSlug);
-          if (prod) { showPage('product'); openProduct(prod.id); }
+          if (prod) { openProduct(prod.id); }
           else showPage('shop');
         }
       }, 300);
@@ -2899,10 +2903,15 @@ function bootApp() {
 
 
   try { initHome(); } catch(e) { console.error('initHome:', e); }
-  // Ensure home page is shown
-  document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
-  var home = document.getElementById('page-home');
-  if (home) home.classList.add('active');
+  // Do not overwrite a valid deep route with Home after boot. The route
+  // initializer above owns the initial page selection; Home is only the
+  // fallback when the URL does not name a known page.
+  const _hasKnownBootRoute = _initPage && (_validPages.includes(_initPage) || _initPage === 'blog');
+  if (!_hasKnownBootRoute) {
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+    var home = document.getElementById('page-home');
+    if (home) home.classList.add('active');
+  }
 }
 
 let _bootAppCalled = false;

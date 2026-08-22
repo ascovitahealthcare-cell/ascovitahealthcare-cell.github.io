@@ -37,17 +37,17 @@
 
        This is a client-side backstop. The real fix is Settings → Pages →
        Enforce HTTPS, which redirects before a byte of this file is sent. -->
-    <script src="scripts/security.js?v=20260819-3"></script>
-  <script src="scripts/tracking.js?v=20260819-3"></script>
-  <script src="scripts/seo-core.js?v=20260819-3"></script>
+    <script src="/scripts/security.js?v=20260819-3"></script>
+  <script src="/scripts/tracking.js?v=20260819-3"></script>
+  <script src="/scripts/seo-core.js?v=20260819-3"></script>
 
   <!-- Shared A4 GST tax invoice. Same file is loaded by admin.html, so the
        invoice a customer downloads and the one staff print are one document,
        not two lookalikes that drift apart. Defines OZYLIX_LEGAL,
        IN_STATE_CODES, normaliseOrderForInvoice() and buildInvoiceHTML(). -->
-  <script defer src="scripts/invoice-renderer.js?v=20260821-1"></script>
+  <script defer src="/scripts/invoice-renderer.js?v=20260821-1"></script>
   <!-- 🛒 Fly-to-cart animation (reel-inspired): flying thumbnail arc + badge bump + ✓ Added button flip -->
-  <script defer src="scripts/fly-to-cart.js?v=20260815-2"></script>
+  <script defer src="/scripts/fly-to-cart.js?v=20260815-2"></script>
   <!-- ✅ Indexing directives — placed first so Googlebot reads them before any script loads -->
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
   <meta name="googlebot" content="index, follow, max-image-preview:large">
@@ -279,9 +279,9 @@
   
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/ozylix-icon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/ozylix-icon-16.png">
-  <link rel="apple-touch-icon" href="assets/ozylix-icon-180.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/ozylix-icon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/ozylix-icon-16.png">
+  <link rel="apple-touch-icon" href="/assets/ozylix-icon-180.png">
   <link rel="manifest" href="/manifest.json">
   <link rel="sitemap" type="application/xml" href="https://www.ozylix.com/sitemap.xml">
   <!-- GoKwik Payment — no SDK required -->
@@ -312,8 +312,8 @@
 <!-- Supabase client — used for direct-from-browser review reads/writes (no Render backend involved) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script defer src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
-<script defer src="scripts/shop.js?v=20260819-3"></script>
-<script defer src="scripts/promo-data.js?v=20260819-3"></script>
+<script defer src="/scripts/shop.js?v=20260819-3"></script>
+<script defer src="/scripts/promo-data.js?v=20260819-3"></script>
 
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -347,7 +347,7 @@
      ═══════════════════════════════════════════════════════════════ -->
 
   <!-- Effervescent Bloom — type -->
-  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500;600&family=Schibsted+Grotesk:wght@400..700&display=swap">
   <!-- media="print" makes this non-blocking; the onload promotes it to all.
        A blocking cross-origin stylesheet in <head> delays first paint by a
@@ -5808,7 +5808,7 @@ button, [role="button"] {
 <div class="app-topbar" id="appTopBar">
   <!-- Logo -->
   <a href="#" onclick="showPage('home');return false;" style="display:flex;align-items:center;text-decoration:none;flex-shrink:0;gap:8px;">
-    <img class="app-topbar-logo" src="assets/ozylix-mark.svg" alt="Ozylix" onerror="this.onerror=null;this.style.display='none';" decoding="async">
+    <img class="app-topbar-logo" src="/assets/ozylix-mark.svg" alt="Ozylix" onerror="this.onerror=null;this.style.display='none';" decoding="async">
     <span class="app-topbar-brand-name">Ozylix</span>
   </a>
   <!-- B2B pill only -->
@@ -5875,14 +5875,14 @@ button, [role="button"] {
 </nav>
 
 <!-- ═══ APP NAV SYNC SCRIPT ═══ -->
-<script defer src="scripts/app-nav.js?v=20260819-3"></script>
+<script defer src="/scripts/app-nav.js?v=20260819-3"></script>
 
 
 <!-- ── ANIMATION SYSTEM ELEMENTS ── -->
 <div id="scrollBar"></div>
 <div id="pageTransition"></div>
 
-<script defer src="scripts/animations.js?v=20260821-2"></script>
+<script defer src="/scripts/animations.js?v=20260821-2"></script>
 
 <!-- SVG ICON DEFS — reusable 3D illustrated icons -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -6337,7 +6337,7 @@ button, [role="button"] {
 <nav class="navbar">
   <div class="nav-inner">
     <a href="#" class="nav-logo" onclick="showPage('home')">
-      <img data-media-key="site.logo" src="assets/ozylix-logo.png" alt="Ozylix Logo" fetchpriority="high" decoding="sync" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
+      <img data-media-key="site.logo" src="/assets/ozylix-logo.png" alt="Ozylix Logo" fetchpriority="high" decoding="sync" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
       <div id="logoFallback" class="nav-logo-fallback" style="display:none">
         <div class="nav-logo-leaf"><svg width="22" height="22"><use href="#ico-leaf"/></svg></div>
         <div>
@@ -6577,7 +6577,7 @@ button, [role="button"] {
     </div>
   </section>
 
-  <script defer src="scripts/promo-media.js?v=20260819-3"></script>
+  <script defer src="/scripts/promo-media.js?v=20260819-3"></script>
 
   <!-- ══════════ SITE MEDIA LOADER ══════════
        Every <img data-media-key="..." decoding="async" alt=""> and the CSS vars --about-hero-bg /
@@ -6586,7 +6586,7 @@ button, [role="button"] {
        admin-uploaded replacements and swaps them in. If the request
        fails (offline, backend down, key not set) the page simply keeps
        showing the fallback — nothing ever breaks. -->
-  <script defer src="scripts/site-media.js?v=20260819-5"></script>
+  <script defer src="/scripts/site-media.js?v=20260819-5"></script>
 
   <!-- CATEGORIES -->
   <section class="section" style="padding-bottom:32px">
@@ -6751,7 +6751,7 @@ button, [role="button"] {
     </div>
   </section>
 
-<script defer src="scripts/banners.js?v=20260822-7"></script>
+<script defer src="/scripts/banners.js?v=20260822-7"></script>
 
   <!-- FAQ PREVIEW -->
   <section class="section" style="background:var(--green-wash)">
@@ -7417,7 +7417,7 @@ button, [role="button"] {
 </div>
 <!-- ══════════ END CHECKOUT ══════════ -->
 
-<script defer src="scripts/cart-utils.js?v=20260819-5"></script>
+<script defer src="/scripts/cart-utils.js?v=20260819-5"></script>
 
 
 <!-- ══════════ THANK YOU PAGE ══════════ -->
@@ -8156,9 +8156,9 @@ button, [role="button"] {
 
 
 
-<script defer src="scripts/store-core.js?v=20260822-8"></script>
-<script defer src="scripts/img-hydrator.js?v=20260821-2"></script>
-<script defer src="scripts/product-images.js?v=20260822-1"></script>
+<script defer src="/scripts/store-core.js?v=20260822-8"></script>
+<script defer src="/scripts/img-hydrator.js?v=20260821-2"></script>
+<script defer src="/scripts/product-images.js?v=20260822-1"></script>
 
 <!-- ══════════ SIDE CART DRAWER ══════════ -->
 <div class="side-cart-overlay" id="sideCartOverlay" onclick="closeSideCart()"></div>
@@ -8292,7 +8292,7 @@ button, [role="button"] {
   </div>
 </div>
 
-<script defer src="scripts/pw-strength.js?v=20260819-3"></script>
+<script defer src="/scripts/pw-strength.js?v=20260819-3"></script>
 
 <!-- ══════════ ACCOUNT DASHBOARD PAGE ══════════ -->
 <div class="page" id="page-account" style="padding-top:90px;background:var(--off-white);min-height:100vh">
@@ -8496,7 +8496,7 @@ button, [role="button"] {
   </div>
 </footer>
 
-<script defer src="scripts/auth-core.js?v=20260821-4"></script>
+<script defer src="/scripts/auth-core.js?v=20260821-4"></script>
 
 <div id="stickyCart" style="position:fixed;bottom:0;left:0;right:0;z-index:920;display:none;align-items:center;gap:12px;padding:10px 14px;transform:translateY(100%);background:var(--paper);box-shadow:0 -1px 0 var(--edge),0 -10px 30px rgba(72,62,70,.10)">
   <div style="flex:1;min-width:0">
@@ -8558,7 +8558,7 @@ button, [role="button"] {
   <div style="height:8px;"></div>
 </div>
 
-<script defer src="scripts/drawers.js?v=20260819-3"></script>
+<script defer src="/scripts/drawers.js?v=20260819-3"></script>
 
 
 
@@ -8569,7 +8569,7 @@ button, [role="button"] {
   <!-- Header -->
   <div class="app-menu-header">
     <img class="app-menu-logo" data-media-key="site.logo"
-      src="assets/ozylix-logo.png"
+      src="/assets/ozylix-logo.png"
       alt="Ozylix" onerror="this.style.display='none'" decoding="async">
     <button class="app-menu-close" onclick="closeAppMenu()">✕</button>
   </div>
@@ -8620,7 +8620,7 @@ button, [role="button"] {
 </div>
 
 <!-- ═══ HAMBURGER + MOBILE SLIDE JS ═══ -->
-<script defer src="scripts/app-menu.js?v=20260819-3"></script>
+<script defer src="/scripts/app-menu.js?v=20260819-3"></script>
 
 
   <!-- ═══════════════════════════════════════════════════════════
@@ -8629,7 +8629,7 @@ button, [role="button"] {
        Crawlable by all search engines and AI crawlers
   ═══════════════════════════════════════════════════════════ -->
   
-<script defer src="scripts/tilt-reveal.js?v=20260819-3"></script>
+<script defer src="/scripts/tilt-reveal.js?v=20260819-3"></script>
 
 
 
@@ -8645,19 +8645,19 @@ button, [role="button"] {
 
 <!-- Ozylix — count-up animation for the stat row, fires once when it
      first scrolls into view. -->
-<script defer src="scripts/counters.js?v=20260819-3"></script>
+<script defer src="/scripts/counters.js?v=20260819-3"></script>
 
 <!-- Ozylix — lightweight 3D tilt for product cards & hero visuals.
      Follows the pointer immediately (no lag), reduced-motion safe, and
      does nothing on touch devices where hover has no meaning. -->
-<script defer src="scripts/magnet-deco.js?v=20260819-3"></script>
+<script defer src="/scripts/magnet-deco.js?v=20260819-3"></script>
 
 <!-- Ozylix — button motion (magnetic pull + click ripple) and
      scroll-reveal for every section, not just the hero. -->
-<script defer src="scripts/magnet-observe.js?v=20260819-3"></script>
+<script defer src="/scripts/magnet-observe.js?v=20260819-3"></script>
 
 
-<script defer src="scripts/liquid-bubbles.js?v=20260821-2"></script>
+<script defer src="/scripts/liquid-bubbles.js?v=20260821-2"></script>
 
 <!-- ══ APP LAYER ══ -->
 <style>
@@ -8867,7 +8867,7 @@ button:active, .btn-primary:active, .btn-outline:active,
 }
 
 </style>
-<script defer src="scripts/trust-badges.js?v=20260819-3"></script>
+<script defer src="/scripts/trust-badges.js?v=20260819-3"></script>
 
 
 <!-- ══════════════════════════════════════════════════════════════════════
@@ -9321,12 +9321,12 @@ body:not(.oz-product) #stickyCart { display: none !important; }
 }
 </style>
 
-<script defer src="scripts/cart-footer.js?v=20260819-3"></script>
+<script defer src="/scripts/cart-footer.js?v=20260819-3"></script>
 
-<script defer src="scripts/account-welcome.js?v=20260819-4"></script>
+<script defer src="/scripts/account-welcome.js?v=20260819-4"></script>
 
 
-<script defer src="scripts/platform-copy.js?v=20260819-3"></script>
+<script defer src="/scripts/platform-copy.js?v=20260819-3"></script>
 
 <!-- ══════════════════════════════════════════════════════════════════
      SERVICE WORKER REGISTRATION
@@ -9346,9 +9346,9 @@ body:not(.oz-product) #stickyCart { display: none !important; }
      ══════════════════════════════════════════════════════════════════ -->
 
 
-<script defer src="scripts/scroll-progress.js?v=20260819-3"></script>
+<script defer src="/scripts/scroll-progress.js?v=20260819-3"></script>
 
-<script defer src="scripts/fire-pageview.js?v=20260819-3"></script>
+<script defer src="/scripts/fire-pageview.js?v=20260819-3"></script>
 
 <!-- Ozylix behaviour beacon — sends first-party behaviour events to the
      marketing service so the store owns its own customer data (Meta Pixel
@@ -9356,11 +9356,11 @@ body:not(.oz-product) #stickyCart { display: none !important; }
      store scripts because it WRAPS them rather than duplicating them.
      Fire-and-forget and fully try/catch'd: if the marketing service is down
      or blocked, the shopper sees no difference. -->
-<script defer src="scripts/ozy-track.js?v=20260820-1"></script>
+<script defer src="/scripts/ozy-track.js?v=20260820-1"></script>
 
 <!-- Central contextual popup manager root (max 1 card, never covers CTAs) -->
 <div id="ozylxNotify" aria-live="polite"></div>
-<script defer src="scripts/checkout-draft.js?v=20260819-3"></script>
+<script defer src="/scripts/checkout-draft.js?v=20260819-3"></script>
 
 
 
@@ -9390,7 +9390,7 @@ body:not(.oz-product) #stickyCart { display: none !important; }
 .blog-reader .br-body { font-size:1rem; line-height:1.85; color:#2a2f2a; }
 .blog-reader .br-body p { margin-bottom:16px; }
 </style>
-<script defer src="scripts/blog.js?v=20260819-3"></script>
+<script defer src="/scripts/blog.js?v=20260819-3"></script>
 
 <!-- ═══════════════════════════════════════════════════════════════
      Aug 2026: Front Store Editor (v9.5) — live theme loader.
@@ -9401,9 +9401,9 @@ body:not(.oz-product) #stickyCart { display: none !important; }
      (cached ~60s). An admin browsing with ?preview=1 sees their
      unsaved draft from localStorage instead.
      ═══════════════════════════════════════════════════════════════ -->
-<script defer src="scripts/themes.js?v=20260819-3"></script>
+<script defer src="/scripts/themes.js?v=20260819-3"></script>
 
 <!-- ═════════ OZYLIX v10 STORE LOADER — style presets, combos & content edits ═════════ -->
-<script defer src="scripts/theme-builder.js?v=20260819-3"></script>
+<script defer src="/scripts/theme-builder.js?v=20260819-3"></script>
 </body>
 </html>
