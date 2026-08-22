@@ -5835,29 +5835,12 @@ async function loadSiteImages() {
   const groups = {};
   SITE_IMAGE_CATALOG.forEach(item => { (groups[item.group] = groups[item.group]||[]).push(item); });
 
-  // ── Toolbar: tabs, summary, search, sort (mirrors Photo Library) ──
-  const secNames = Object.keys(groups);
-  const totalOverrides = Object.keys(overrides).length;
-  const toolbar = `
-    <div class="media-tabs" style="margin-top:4px;">
-      <div class="media-tab active" data-sitab="all" onclick="setSiteTab('all', this)">🖼️ All Slots<span class="tab-count">${SITE_IMAGE_CATALOG.length}</span></div>
-      ${secNames.map(g => `<div class="media-tab" data-sitab="${g.toLowerCase().replace(/[^a-z0-9]/g,'')}" onclick="setSiteTab('${g.toLowerCase().replace(/[^a-z0-9]/g,'')}', this)">${g==='Global'?'🌐':g==='About Page'?'📄':'📁'} ${g}<span class="tab-count">${groups[g].length}</span></div>`).join('')}
-      <div class="media-tab" data-sitab="edu" onclick="setSiteTab('edu', this)">🎓 Product Gallery<span class="tab-count">${EDU_CARDS * EDU_PANELS.length}</span></div>
-      <div class="media-summary">
-        <span><b>${totalOverrides}</b> custom ${totalOverrides===1?'override':'overrides'}</span>
-        <span><b>${SITE_IMAGE_CATALOG.length}</b> total slots</span>
-      </div>
-      <input class="media-search" id="siteImgSearch" placeholder="🔍 Search slots…" oninput="filterSiteImages()">
-      <select class="media-sort" id="siteImgSort" onchange="filterSiteImages()">
-        <option value="group">Grouped by section</option>
-        <option value="custom">Custom first</option>
-        <option value="name">Name A–Z</option>
-      </select>
-    </div>
-  `;
+  // The old tab/search/sort toolbar was removed: uploaders now see every
+  // slot in the same order as the storefront flow, with its page location
+  // and slot key printed on the card itself.
   window.__siteImgState = { tab:'all', overrides: overrides };
 
-  document.getElementById('siteImagesGroups').innerHTML = toolbar + renderSiteImgSections(groups, overrides);
+  document.getElementById('siteImagesGroups').innerHTML = renderSiteImgSections(groups, overrides);
   loadEduSection();
 }
 
@@ -5900,11 +5883,11 @@ function renderSiteImgSections(groups, overrides){
                 : '<img src="'+adminCdnImg(current)+'" class="si-media" onerror="this.style.display=\'none\';this.parentElement.querySelector(\'.si-media-empty\')&&(this.parentElement.querySelector(\'.si-media-empty\').style.display=\'flex\')"><div class="si-media-empty" style="display:none;">No image</div>'}
             <div class="si-meta">
               <div class="si-name">${item.label}</div>
-              <div class="si-hint">${item.hint}<br><span class="si-status" style="color:${isOverridden?'var(--green-text)':'var(--text3)'};">${isOverridden?'✓ custom image set':'· using site default'}</span></div>
+              <div class="si-hint"><span class="si-where">Appears on: ${item.hint}</span><span class="si-key">Slot: ${item.key}</span><span class="si-status" style="color:${isOverridden?'var(--green-text)':'var(--text3)'};">${isOverridden?'✓ custom image set':'· using site default'}</span></div>
             </div>
             <div class="si-actions">
               <input type="file" accept="image/*,.svg,video/*,.mp4,.webm,.mov" id="siteImgFile-${item.key}" style="display:none;" onchange="uploadSiteImage(this, '${item.key}')">
-              <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="storeEdOpenGallery(String('${item.key}'))" title="Pick from your photo gallery">🖼️ Gallery</button><button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('siteImgFile-${item.key}').click()">📤 ${isOverridden ? 'Replace' : 'Upload'}</button>
+              <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('siteImgFile-${item.key}').click()">📤 ${isOverridden ? 'Replace Image' : 'Upload Image'}</button>
               ${isOverridden ? `<button class="btn btn-danger btn-sm btn-icon" onclick="resetSiteImage('${item.key}', '${current}')" title="Delete this image everywhere and revert to default">🗑️</button>` : ''}
             </div>
           </div>`;
@@ -5940,7 +5923,7 @@ function filterSiteImages(){
 // ── Product Education Gallery (Know Your Product tabs) ─────────────
 const __eduHtml = function(overrides){
   return `
-    <div class="siteimg-sec" id="siteimgEdu" style="display:none;">
+    <div class="siteimg-sec" id="siteimgEdu" style="display:block;">
       <div class="siteimg-sec-title">
         <div class="siteimg-sec-name">🎓 Product Gallery — "Know Your Product" cards</div>
         <div class="siteimg-sec-count">${EDU_CARDS * EDU_PANELS.length} slots</div>
@@ -5961,11 +5944,11 @@ const __eduHtml = function(overrides){
                 : '<div class="si-media-empty">No image</div>'}
               <div class="si-meta">
                 <div class="si-name">${pl.label} — Card ${i + 1}</div>
-                <div class="si-hint"><span class="si-status" style="color:var(--green-text);font-weight:600;">${has ? '✓ default creative set' : 'empty — upload a creative'}</span></div>
+                <div class="si-hint"><span class="si-where">Appears on: every product page → Know Your Product → ${pl.label}</span><span class="si-key">Slot: ${key}</span><span class="si-status" style="color:var(--green-text);font-weight:600;">${has ? '✓ default creative set' : 'empty — upload a creative'}</span></div>
               </div>
               <div class="si-actions">
                 <input type="file" accept="image/*,.svg,video/*,.mp4,.webm,.mov" id="eduFile-${key}" style="display:none;" onchange="uploadEduCreative(this, '${key}')">
-                <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="storeEdOpenGallery(String('${key}'))" title="Pick from your photo gallery">🖼️ Gallery</button><button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('eduFile-${key}').click()">📤 ${has ? 'Replace' : 'Upload'}</button>
+                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('eduFile-${key}').click()">📤 ${has ? 'Replace Image' : 'Upload Image'}</button>
                 ${has ? `<button class="btn btn-danger btn-sm btn-icon" onclick="deleteEduCreative('${key}', '${url}')" title="Delete this creative">🗑️</button>` : ''}
               </div>
             </div>`;
@@ -5992,11 +5975,11 @@ const __eduHtml = function(overrides){
                 : '<div class="si-media-empty">No image</div>'}
               <div class="si-meta">
                 <div class="si-name">${pl.label} — Card ${i + 1}</div>
-                <div class="si-hint"><span class="si-status" style="color:${has?'var(--green-text)':'var(--text3)'};">${has ? (key.startsWith('edu.global.') ? '✓ default creative set' : '✓ custom creative set') : 'empty — upload a creative'}</span></div>
+                <div class="si-hint"><span class="si-where">Appears on: ${EDU_SLUG} product page → Know Your Product → ${pl.label}</span><span class="si-key">Slot: ${key}</span><span class="si-status" style="color:${has?'var(--green-text)':'var(--text3)'};">${has ? (key.startsWith('edu.global.') ? '✓ default creative set' : '✓ custom creative set') : 'empty — upload a creative'}</span></div>
               </div>
               <div class="si-actions">
                 <input type="file" accept="image/*,.svg,video/*,.mp4,.webm,.mov" id="eduFile-${key}" style="display:none;" onchange="uploadEduCreative(this, '${key}')">
-                <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="storeEdOpenGallery(String('${key}'))" title="Pick from your photo gallery">🖼️ Gallery</button><button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('eduFile-${key}').click()">📤 ${has ? 'Replace' : 'Upload'}</button>
+                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="document.getElementById('eduFile-${key}').click()">📤 ${has ? 'Replace Image' : 'Upload Image'}</button>
                 ${has ? `<button class="btn btn-danger btn-sm btn-icon" onclick="deleteEduCreative('${key}', '${url}')" title="Delete this creative">🗑️</button>` : ''}
               </div>
             </div>`;
@@ -6141,16 +6124,17 @@ function shopBanners() {
 function renderBannerManagers() {
   const hb = document.getElementById('homeBannerManager');
   const sb = document.getElementById('shopBannerManager');
-  const cards = (banners, prefix, withMeta) => banners.map(b => `
+  const cards = (banners, prefix, withMeta) => { const location = prefix === 'home.banner' ? 'Home page hero slider + Shop page hero' : 'Shop page promotion strips below the product grid'; const spec = prefix === 'home.banner' ? 'Landscape 2.33:1 · 1400×600px or 1600×686px' : 'Wide strip 11:1 · about 2200×200px'; return banners.map(b => `
     <div class="card">
       ${isVideoFileUrl(b.img)
         ? '<video src="'+adminCdnImg(b.img)+'" muted loop playsinline preload="metadata" autoplay class="banner-preview" style="object-fit:cover;"></video><span class="img-slot-vid-badge">▶ VIDEO</span>'
         : '<img src="'+adminCdnImg(b.img)+'" class="banner-preview" onerror="this.style.display=\'none\'">'}
       <div style="padding:6px 9px;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:0.72rem;font-weight:600;">${prefix} #${b.n}</span>
+          <span style="font-size:0.72rem;font-weight:600;">${prefix === 'home.banner' ? 'Home hero' : 'Shop strip'} #${b.n}</span>
           <button class="btn btn-danger btn-sm btn-icon" style="width:24px;height:24px;font-size:0.62rem;" onclick="deleteBanner('${prefix}', ${b.n})" title="Remove this banner">🗑️</button>
         </div>
+        <div class="siteimg-usage"><b>Appears on:</b> ${location}<br><span>Recommended: ${spec}</span><br><span>Slot: ${prefix}.${b.n}</span></div>
         ${withMeta ? `
         <div style="display:flex;gap:4px;margin-top:5px;">
           <input class="form-control" style="font-size:0.66rem;padding:3px 6px;min-height:22px;" placeholder="Caption" value="${escAttr(b.alt)}" onchange="setBannerMeta('${prefix}', ${b.n}, 'alt', this.value)">
@@ -6159,10 +6143,10 @@ function renderBannerManagers() {
         ` : ''}
         <div style="display:flex;gap:5px;margin-top:5px;">
           <input type="file" accept="image/*,.webp,.svg,video/*,.mp4,.webm,.mov" id="bannerFile-${prefix}-${b.n}" style="display:none;" onchange="uploadBannerImage('${prefix}', ${b.n}, this)">
-          <button class="btn btn-secondary btn-sm" style="flex:1;width:100%;font-size:0.66rem;min-height:24px;" onclick="storeEdOpenGallery('${prefix}.'+${b.n})" title="Pick from your photo gallery">🖼️ Gallery</button><button class="btn btn-primary btn-sm" style="flex:1;width:100%;font-size:0.66rem;min-height:24px;" onclick="document.getElementById('bannerFile-${prefix}-${b.n}').click()">📤 ${b.img ? 'Replace' : 'Upload'}</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;width:100%;font-size:0.66rem;min-height:28px;" onclick="document.getElementById('bannerFile-${prefix}-${b.n}').click()">📤 ${b.img ? 'Replace Image' : 'Upload Image'}</button>
         </div>
       </div>
-    </div>`).join('');
+    </div>`).join(''); }
   hb.innerHTML = cards(homeBanners(), 'home.banner', true) || emptyMsg('No offer banners yet — upload your first one and the home-page carousel appears.');
   sb.innerHTML = cards(shopBanners(), 'shop.banner', false) || emptyMsg('Only the two built-in banners show — add extras and they appear in order underneath.');
 }
@@ -6263,7 +6247,7 @@ async function loadFallbackManager() {
             ? '<video src="'+adminCdnImg(url)+'" muted loop playsinline preload="metadata" autoplay class="banner-preview" style="object-fit:cover;"></video><span class="img-slot-vid-badge">▶ VIDEO</span>'
             : '<img src="'+adminCdnImg(url)+'" class="banner-preview" onerror="this.style.display=\'none\'">'}
           <div style="padding:6px 9px;">
-            <div style="font-size:0.72rem;font-weight:600;">${cat === 'default' ? 'Default (any category)' : cat.charAt(0).toUpperCase() + cat.slice(1)}</div>
+            <div style="font-size:0.72rem;font-weight:600;">${cat === 'default' ? 'Default product fallback' : cat.charAt(0).toUpperCase() + cat.slice(1) + ' fallback'}</div><div class="siteimg-usage"><b>Appears on:</b> product cards in the ${cat === 'default' ? 'default / unknown' : cat} category when no product photo exists<br><span>Recommended: square 1600×1600px · Slot: fallback.${cat}</span></div>
             ${url ? '<div style="font-size:0.62rem;color:var(--green-text);">✓ custom image set</div>' : '<div style="font-size:0.62rem;color:var(--text3);">no image yet</div>'}
             <input type="file" accept="image/*,.webp,.svg,video/*,.mp4,.webm,.mov" id="fallbackFile-${cat}" style="display:none;" onchange="uploadFallbackImage('${cat}', this)">
             <div style="display:flex;gap:6px;">
@@ -6336,9 +6320,10 @@ function renderPromoMediaGrid() {
         : '<img src="'+adminCdnImg(b.img)+'" class="banner-preview" onerror="this.style.display=\'none\'">'}
       <div style="padding:6px 9px;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:0.72rem;font-weight:600;">Promo Card #${b.n}</span>
+          <span style="font-size:0.72rem;font-weight:600;">Home promo card #${b.n}</span>
           <button class="btn btn-danger btn-sm btn-icon" style="width:24px;height:24px;font-size:0.62rem;" onclick="deletePromoCard(${b.n})" title="Remove this card">🗑️</button>
         </div>
+        <div class="siteimg-usage"><b>Appears on:</b> homepage promo carousel between product sections<br><span>Recommended: square 1400×1400px · Slot: promo.card.${b.n}</span></div>
         <input class="form-control" style="font-size:0.66rem;padding:3px 6px;min-height:22px;margin-top:5px;" placeholder="Caption (optional)" value="${escAttr(b.alt)}" onchange="setPromoCardAlt(${b.n}, this.value)">
         <div style="margin-top:5px;">
           <input type="file" accept="image/*,.webp,.svg,video/*,.mp4,.webm,.mov" id="promoFile-${b.n}" style="display:none;" onchange="uploadPromoCardImage(${b.n}, this)">
@@ -6432,7 +6417,7 @@ function renderPromoStripGrid() {
         : '<div class="banner-preview" style="background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:0.66rem;">No media</div>'}
       <div style="padding:6px 9px;">
         <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:0.72rem;font-weight:600;">Strip Card #${pos} → ${cta}</span>
+          <span style="font-size:0.72rem;font-weight:600;">Home promo strip #${pos} → ${cta}</span>
           <div style="display:flex;gap:4px;">
             ${i > 0 ? '<button class="btn btn-secondary btn-sm btn-icon" onclick="movePromoStripCard(\''+c.id+'\',-1)" title="Move earlier">◀</button>' : ''}
             ${i < (_promoStripAll||[]).length - 1 ? '<button class="btn btn-secondary btn-sm btn-icon" onclick="movePromoStripCard(\''+c.id+'\',1)" title="Move later">▶</button>' : ''}
@@ -6440,6 +6425,7 @@ function renderPromoStripGrid() {
             <button class="btn btn-danger btn-sm btn-icon" onclick="deletePromoStripCard('${c.id}')" title="Remove this card">🗑️</button>
           </div>
         </div>
+        <div class="siteimg-usage"><b>Appears on:</b> homepage scrolling promo strip below the hero<br><span>Recommended: square 1400×1400px or short video · Destination: ${cta}</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
           <select class="form-control" style="font-size:0.78rem;" onchange="setPromoStripField('${c.id}','type',this.value)">
             <option value="image"${(c.type||'image')==='image'?' selected':''}>Image</option>
