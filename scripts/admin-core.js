@@ -846,6 +846,9 @@ function showPage(name) {
   if(_ov) _ov.style.display = 'none';
   document.body.style.overflow = '';
   if (name === 'returns') { try { loadReturns(); } catch(e) { console.error('[loadReturns]', e); } }
+  // A page navigation always dismisses the mobile More drawer so its fixed
+  // backdrop cannot remain above the document after a route change.
+  if (typeof closeAdminMoreMenu === 'function') closeAdminMoreMenu();
   // Sync bottom nav
   if (typeof syncAbn === 'function') syncAbn(name);
   // Lazy loads
@@ -868,6 +871,15 @@ function toggleSidebar() {
   var sb = document.getElementById('sidebar');
   var ov = document.getElementById('sidebarOverlay');
   if (!sb) return;
+  // Mobile uses the bottom navigation exclusively. Keep the desktop sidebar
+  // and its backdrop inert at phone/tablet widths even if an old handler or
+  // keyboard activation calls this function.
+  if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
+    sb.classList.remove('open');
+    if (ov) { ov.classList.remove('open'); ov.style.display = 'none'; }
+    document.body.style.overflow = '';
+    return;
+  }
   var isOpen = sb.classList.toggle('open');
   if (ov) ov.style.display = isOpen ? 'block' : 'none';
   document.body.style.overflow = isOpen ? 'hidden' : '';
