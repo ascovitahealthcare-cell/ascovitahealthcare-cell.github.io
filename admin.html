@@ -1827,6 +1827,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   <link rel="stylesheet" href="styles/admin-advanced.css">
   <link rel="stylesheet" href="styles/admin-redesign.css?v=20260822-1">
   <link rel="stylesheet" href="styles/admin-reference-os.css?v=20260822-4">
+  <link rel="stylesheet" href="styles/admin-palettes.css?v=20260822-5">
 </head>
 <body>
 <script defer src="scripts/admin-core.js?v=20260821-5"></script>
@@ -4275,7 +4276,15 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   <div class="card" style="margin-bottom:16px">
     <div class="card-hdr"><span class="card-title">🎨 Interface Settings</span></div>
     <div style="color:var(--text3);font-size:0.8rem;margin:-10px 0 16px;">Customize your application theme — this changes the look of the entire backoffice for every admin. Data and functionality stay exactly the same. Editable by both Admin and Owner.</div>
-    <div class="theme-picker"><div class="theme-opt" data-theme="deluxe" onclick="setInterfaceTheme('deluxe')">
+    <div class="theme-picker">
+      <div class="palette-grid" aria-label="Admin colour palettes">
+        <div class="theme-opt palette-opt palette-plum" data-theme="plum" onclick="setInterfaceTheme('plum')"><div class="palette-swatch"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="palette-copy"><strong>Royal Plum</strong><span>Deep plum · warmer, more premium</span></div><span class="palette-check">✓</span></div>
+        <div class="theme-opt palette-opt palette-ocean" data-theme="ocean" onclick="setInterfaceTheme('ocean')"><div class="palette-swatch"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="palette-copy"><strong>Ocean Ink</strong><span>Trustworthy blue · calm and precise</span></div><span class="palette-check">✓</span></div>
+        <div class="theme-opt palette-opt palette-forest" data-theme="forest" onclick="setInterfaceTheme('forest')"><div class="palette-swatch"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="palette-copy"><strong>Forest Tea</strong><span>Natural green · wellness-forward</span></div><span class="palette-check">✓</span></div>
+        <div class="theme-opt palette-opt palette-coral" data-theme="coral" onclick="setInterfaceTheme('coral')"><div class="palette-swatch"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="palette-copy"><strong>Sunset Coral</strong><span>Warm coral · energetic and friendly</span></div><span class="palette-check">✓</span></div>
+      </div>
+      <div class="legacy-theme-options">
+      <div class="theme-opt" data-theme="deluxe" onclick="setInterfaceTheme('deluxe')">
         <div class="theme-preview theme-preview-deluxe">
           <div class="theme-check">&#10003;</div>
           <div class="tp-dots"><span class="tp-dot"></span><span class="tp-dot"></span><span class="tp-dot"></span></div>
@@ -4319,6 +4328,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
           <div class="tp-bars"><div class="tp-bar w80"></div><div class="tp-bar w60"></div><div class="tp-bar w40"></div></div>
         </div>
         <div class="theme-opt-label">Navy Glass</div>
+      </div>
       </div>
     </div>
   </div>

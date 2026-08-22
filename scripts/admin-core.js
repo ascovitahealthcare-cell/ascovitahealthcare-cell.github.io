@@ -7538,10 +7538,12 @@ async function checkIntegrations() {
 // and synced to the shared backend settings so the choice is visible
 // to every admin/owner who opens the backoffice, not just this device.
 const THEME_KEY = 'ascovita_theme';
-const VALID_THEMES = ['deluxe','neo','holo','frost','elysia','navy'];   // 'glass' removed
+const VALID_THEMES = ['plum','ocean','forest','coral','deluxe','neo','holo','frost','elysia','navy'];
+const THEME_ALIASES = { deluxe:'plum', neo:'plum', holo:'ocean', frost:'ocean', elysia:'coral', navy:'ocean' };
 
 function applyThemeClass(theme) {
-  theme = VALID_THEMES.includes(theme) ? theme : 'deluxe';
+  theme = THEME_ALIASES[theme] || theme;
+  theme = VALID_THEMES.includes(theme) ? theme : 'plum';
   // Remove any OTHER theme classes first — without this, picking a new
   // theme leaves the old one on <body> and the two skins collide,
   // looking broken until the page is refreshed.

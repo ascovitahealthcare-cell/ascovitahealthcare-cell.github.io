@@ -1,0 +1,73 @@
+/* Ozylix palette system + material variants. Palette choice is persisted by
+   the existing setInterfaceTheme/applyThemeClass functions. */
+body.theme-plum { --os-bg:#f8f4f7; --os-surface:#fff; --os-surface-2:#fbf8fb; --os-ink:#211a21; --os-muted:#726470; --os-subtle:#9b8e99; --os-line:#e9e1e8; --os-green:#753d68; --os-green-dark:#5a2b50; --os-green-soft:#f1e6ef; --os-lime:#e7cfe1; --os-yellow:#f3d9e7; --os-yellow-soft:#faedf4; --os-blue-soft:#ede8f4; --os-purple-soft:#f4eaf5; --os-red-soft:#fff0f2; --os-shadow:0 1px 2px rgba(88,42,76,.04),0 14px 36px rgba(88,42,76,.06); --os-shadow-hover:0 16px 34px rgba(88,42,76,.14); }
+body.theme-ocean { --os-bg:#f3f6f8; --os-surface:#fff; --os-surface-2:#f8fafb; --os-ink:#15202a; --os-muted:#5f6f7b; --os-subtle:#8d9ba4; --os-line:#dee7ec; --os-green:#225a82; --os-green-dark:#153d5d; --os-green-soft:#e4eff6; --os-lime:#cfe1ed; --os-yellow:#e2edf4; --os-yellow-soft:#eef6fa; --os-blue-soft:#e5f0f6; --os-purple-soft:#eceaf5; --os-red-soft:#fff0f0; --os-shadow:0 1px 2px rgba(33,75,103,.04),0 14px 36px rgba(33,75,103,.06); --os-shadow-hover:0 16px 34px rgba(33,75,103,.14); }
+body.theme-forest { --os-bg:#f3f7f3; --os-surface:#fff; --os-surface-2:#f8fbf8; --os-ink:#18241d; --os-muted:#5e6d63; --os-subtle:#8e9c91; --os-line:#dfe8df; --os-green:#2d644f; --os-green-dark:#1c4b39; --os-green-soft:#e6f2e7; --os-lime:#d6e7a8; --os-yellow:#eef0d2; --os-yellow-soft:#f7f5df; --os-blue-soft:#e8f0ec; --os-purple-soft:#eeeef2; --os-red-soft:#fff0ed; --os-shadow:0 1px 2px rgba(43,91,67,.04),0 14px 36px rgba(43,91,67,.06); --os-shadow-hover:0 16px 34px rgba(43,91,67,.14); }
+body.theme-coral { --os-bg:#fbf5f1; --os-surface:#fff; --os-surface-2:#fffaf7; --os-ink:#291c1a; --os-muted:#77665f; --os-subtle:#a08e85; --os-line:#ede1da; --os-green:#d15d3e; --os-green-dark:#9e402c; --os-green-soft:#fbe9de; --os-lime:#f2c992; --os-yellow:#ffd9b8; --os-yellow-soft:#fff0df; --os-blue-soft:#eaf0f1; --os-purple-soft:#f0eaf0; --os-red-soft:#fff0ed; --os-shadow:0 1px 2px rgba(125,64,41,.04),0 14px 36px rgba(125,64,41,.06); --os-shadow-hover:0 16px 34px rgba(125,64,41,.14); }
+
+/* Keep legacy variables in sync with the new palette variables because many
+   existing data-bound controls still use the original names. */
+body.theme-plum, body.theme-ocean, body.theme-forest, body.theme-coral { --bg:var(--os-bg); --bg2:var(--os-surface-2); --bg3:var(--os-surface-2); --surface:var(--os-surface); --surface2:var(--os-surface-2); --border:var(--os-line); --border2:color-mix(in srgb,var(--os-green) 22%,var(--os-line)); --green:var(--os-green); --green-bright:color-mix(in srgb,var(--os-green) 78%,#fff); --green-glow:color-mix(in srgb,var(--os-green) 18%,transparent); --green-text:var(--os-green-dark); --gold:var(--os-green); --gold-text:var(--os-green-dark); --text:var(--os-ink); --text2:var(--os-muted); --text3:var(--os-subtle); }
+
+/* Four palette cards in Settings — modeled after the supplied palette cards. */
+#page-settings .theme-picker { display:block !important; }
+#page-settings .theme-picker > .theme-opt:not(.palette-opt) { display:none !important; }
+#page-settings .palette-grid { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px !important; }
+#page-settings .palette-opt { position:relative !important; display:grid !important; grid-template-columns:88px minmax(0,1fr) 26px !important; align-items:center !important; gap:13px !important; min-height:88px !important; padding:15px 16px !important; border:1px solid var(--os-line) !important; border-radius:16px !important; background:var(--os-surface) !important; box-shadow:0 2px 8px rgba(40,56,45,.035) !important; cursor:pointer !important; transition:transform 180ms cubic-bezier(.2,.8,.2,1),box-shadow 180ms ease,border-color 180ms ease,background 180ms ease !important; }
+#page-settings .palette-opt:hover { transform:translateY(-2px) !important; box-shadow:var(--os-shadow-hover) !important; border-color:color-mix(in srgb,var(--os-green) 35%,var(--os-line)) !important; }
+#page-settings .palette-opt.selected { border-color:var(--os-green) !important; box-shadow:0 0 0 3px color-mix(in srgb,var(--os-green) 12%,transparent),var(--os-shadow) !important; }
+#page-settings .palette-swatch { display:flex !important; align-items:center !important; gap:4px !important; padding:10px !important; border:1px solid var(--os-line) !important; border-radius:12px !important; background:var(--os-surface-2) !important; }
+#page-settings .palette-swatch i { width:10px !important; height:20px !important; border-radius:4px !important; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06) !important; }
+.palette-plum .palette-swatch i:nth-child(1){background:#f7f1f5}.palette-plum .palette-swatch i:nth-child(2){background:#c7a1bd}.palette-plum .palette-swatch i:nth-child(3){background:#82456f}.palette-plum .palette-swatch i:nth-child(4){background:#53616c}.palette-plum .palette-swatch i:nth-child(5){background:#2c2a32}.palette-plum .palette-swatch i:nth-child(6){background:#70405f}
+.palette-ocean .palette-swatch i:nth-child(1){background:#f0f4f6}.palette-ocean .palette-swatch i:nth-child(2){background:#b9d1df}.palette-ocean .palette-swatch i:nth-child(3){background:#2d6991}.palette-ocean .palette-swatch i:nth-child(4){background:#617988}.palette-ocean .palette-swatch i:nth-child(5){background:#1a486a}.palette-ocean .palette-swatch i:nth-child(6){background:#2b5876}
+.palette-forest .palette-swatch i:nth-child(1){background:#eff5ed}.palette-forest .palette-swatch i:nth-child(2){background:#9cc5a8}.palette-forest .palette-swatch i:nth-child(3){background:#397158}.palette-forest .palette-swatch i:nth-child(4){background:#7d7b69}.palette-forest .palette-swatch i:nth-child(5){background:#214d3d}.palette-forest .palette-swatch i:nth-child(6){background:#315f4b}
+.palette-coral .palette-swatch i:nth-child(1){background:#fff4ea}.palette-coral .palette-swatch i:nth-child(2){background:#efaa82}.palette-coral .palette-swatch i:nth-child(3){background:#da6848}.palette-coral .palette-swatch i:nth-child(4){background:#62554d}.palette-coral .palette-swatch i:nth-child(5){background:#a94a36}.palette-coral .palette-swatch i:nth-child(6){background:#df7655}
+#page-settings .palette-copy { min-width:0; display:flex; flex-direction:column; gap:5px; }
+#page-settings .palette-copy strong { color:var(--os-ink); font-size:13px; font-weight:750; }
+#page-settings .palette-copy span { color:var(--os-muted); font-size:11px; line-height:1.35; }
+#page-settings .palette-check { display:grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--os-green); color:#fff; font-size:12px; opacity:0; transform:scale(.75); transition:opacity 160ms ease,transform 160ms ease; }
+#page-settings .palette-opt.selected .palette-check { opacity:1; transform:scale(1); }
+
+/* Material variants: quiet glass for chrome, tactile neo for data cards. */
+#app .topbar, #app .admin-bnav { background:color-mix(in srgb,var(--os-surface) 78%,transparent) !important; backdrop-filter:blur(24px) saturate(145%) !important; }
+#app .card, #app .kpi, #app .oz-section-card, #app .mkt-kpi, #app .table-wrap { box-shadow:var(--os-shadow) !important; }
+#app .card:hover, #app .kpi:hover, #app .oz-section-card:hover, #app .mkt-kpi:hover { box-shadow:var(--os-shadow-hover) !important; }
+#app .kpi, #app .oz-kpi-card, #app .mkt-kpi { transform-style:preserve-3d !important; }
+#app .kpi::before, #app .oz-kpi-card::before, #app .mkt-kpi::before { transform:translateZ(-1px) !important; }
+#app .kpi .kpi-val, #app .oz-kpi-value, #app .mkt-kpi-value { position:relative; z-index:1; text-shadow:0 1px 0 rgba(255,255,255,.65); }
+#app canvas { border-radius:14px !important; background-image:linear-gradient(rgba(111,137,120,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(111,137,120,.055) 1px,transparent 1px) !important; background-size:32px 32px !important; }
+#page-dashboard > div[style*="grid-template-columns:2fr 1fr"] > .card:first-child { position:relative !important; background:linear-gradient(145deg,var(--os-surface),var(--os-yellow-soft)) !important; }
+#page-dashboard > div[style*="grid-template-columns:2fr 1fr"] > .card:first-child::before { content:''; position:absolute; inset:auto -12% -32% 38%; height:150px; border-radius:50%; background:radial-gradient(ellipse, color-mix(in srgb,var(--os-yellow) 28%,transparent), transparent 68%); pointer-events:none; }
+#page-dashboard > div[style*="grid-template-columns:2fr 1fr"] canvas { position:relative; z-index:1; }
+#page-dashboard .spark-card { background:linear-gradient(145deg,var(--os-surface),var(--os-surface-2)) !important; }
+#page-dashboard #indiaMapWrap { box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 10px 30px rgba(30,72,51,.06) !important; }
+
+/* Flow components get a visual connector and an interruptible-looking pulse. */
+#page-automation .oz-flow, #page-marketing .mkt-flow-map { position:relative !important; isolation:isolate; overflow:hidden; }
+#page-automation .oz-flow::after, #page-marketing .mkt-flow-map::after { content:''; position:absolute; left:8%; right:8%; top:50%; height:1px; background:linear-gradient(90deg,transparent,var(--os-green),transparent); opacity:.42; pointer-events:none; }
+#page-automation .oz-flow-node, #page-marketing .mkt-flow-map > * { position:relative; z-index:1; }
+#page-automation .oz-flow-icon { transform:translateZ(7px) !important; box-shadow:0 9px 18px color-mix(in srgb,var(--os-green) 18%,transparent) !important; }
+#page-automation .oz-flow-node.is-active .oz-flow-icon { animation:osFlowBreath 2.4s ease-in-out infinite; }
+@keyframes osFlowBreath { 0%,100%{transform:translateZ(7px) scale(1)}50%{transform:translateZ(12px) scale(1.035)} }
+
+/* More varied cards on operational pages. */
+#page-finance .oz-kpi-card:nth-child(2), #page-marketing .mkt-kpi:nth-child(3) { background:linear-gradient(145deg,var(--os-surface),var(--os-blue-soft)) !important; }
+#page-finance .oz-kpi-card:nth-child(3), #page-marketing .mkt-kpi:nth-child(4) { background:linear-gradient(145deg,var(--os-surface),var(--os-yellow-soft)) !important; }
+#page-finance .oz-kpi-card:nth-child(4), #page-marketing .mkt-kpi:nth-child(5) { background:linear-gradient(145deg,var(--os-surface),var(--os-green-soft)) !important; }
+#page-finance .oz-section-card, #page-marketing .mkt-chart-card { background:linear-gradient(180deg,var(--os-surface),var(--os-surface-2)) !important; }
+
+@media (max-width:760px) {
+  #page-settings .palette-grid { grid-template-columns:1fr !important; }
+  #page-settings .palette-opt { grid-template-columns:78px minmax(0,1fr) 24px !important; padding:13px !important; }
+  #app .topbar, #app .admin-bnav { backdrop-filter:blur(18px) saturate(135%) !important; }
+}
+@media (prefers-reduced-motion:reduce) { #page-automation .oz-flow-node.is-active .oz-flow-icon { animation:none !important; } }
+
+/* Final Settings grid correction: the legacy options are retained in the DOM
+   for compatibility but must not participate in the new layout. */
+#page-settings .theme-picker { display:block !important; width:100% !important; }
+#page-settings .legacy-theme-options { display:none !important; }
+#page-settings .theme-picker > .palette-grid { display:grid !important; width:100% !important; grid-template-columns:repeat(2,minmax(0,1fr)) !important; }
+@media (max-width:760px) {
+  #page-settings .theme-picker > .palette-grid { grid-template-columns:1fr !important; }
+}
