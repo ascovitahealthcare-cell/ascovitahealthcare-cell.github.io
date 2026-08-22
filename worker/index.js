@@ -38,9 +38,10 @@ const SPA_ROUTES = new Set([
   '/wishlist',
 ]);
 
-// /product/<slug> only. Bare /product/ has no product to open, and
-// /product/a/b is not a shape the app produces.
-const PRODUCT_PATH = /^\/product\/[^/]+$/;
+// Customer-facing product URLs are singular. The plural form is accepted only
+// as a legacy inbound route so the SPA can replace it with /product/<slug>.
+// Bare routes and nested paths are not shapes the app produces.
+const PRODUCT_PATH = /^\/(?:product|products)\/[^/]+$/;
 
 function isSpaPath(pathname) {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;

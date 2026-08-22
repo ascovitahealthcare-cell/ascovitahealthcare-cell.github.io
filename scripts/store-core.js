@@ -315,8 +315,11 @@ function mergeBackendProducts(backendProducts) {
 // than throwing "slugify is not defined" and silently doing nothing — which
 // is exactly the case this is meant to cover, when the backend is asleep and
 // Googlebot snapshots the page anyway. Must stay identical to slugify().
-function schemaSlug(str) {
-  return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function schemaSlug(value) {
+  const raw = value && typeof value === 'object'
+    ? (value.seoSlug || value.slug || value.urlSlug || value.name)
+    : value;
+  return String(raw || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
 // The price a shopper actually pays: bulk tier first, then sale, then list.
@@ -481,7 +484,7 @@ function syncProductStructuredData() {
     for (const entry of list.itemListElement) {
       const item = entry.item || entry;
       if (!String(item['@type']).includes('Product')) { kept.push(entry); continue; }
-      const live = PRODUCTS.find(p => schemaSlug(p.name) === String(item.url || '').split('/').pop());
+      const live = PRODUCTS.find(p => schemaSlug(p) === String(item.url || '').split('/').pop());
       if (!live) { kept.push(entry); continue; }
 
       const images = schemaImagesFor(live);
@@ -536,7 +539,7 @@ function setProductPageSchema(p) {
   document.getElementById(ID)?.remove();
   if (!p) return;
   try {
-    const url = 'https://www.ozylix.com/product/' + schemaSlug(p.name);
+    const url = 'https://www.ozylix.com/product/' + schemaSlug(p);
     const node = {
       '@context': 'https://schema.org',
       '@type': 'Product',

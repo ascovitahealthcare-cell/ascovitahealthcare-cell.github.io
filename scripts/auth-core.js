@@ -583,8 +583,19 @@ function showShop(cat) {
 }
 
 function slugify(str) {
-  return str.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
+
+// One canonical product URL everywhere: explicit SEO slug first, then any
+// legacy slug field, then the product name. Never use an internal product ID
+// in a customer-facing backlink.
+function canonicalProductSlug(product) {
+  const raw = product && typeof product === 'object'
+    ? (product.seoSlug || product.slug || product.urlSlug || product.name)
+    : product;
+  return slugify(raw);
+}
+window.canonicalProductSlug = canonicalProductSlug;
 
 // ── Ascofizz → Ozylix slug migration ────────────────────────────────────
 // Product slugs are derived from product names, so renaming the brand moved
@@ -597,15 +608,16 @@ const LEGACY_PRODUCT_SLUGS = {
 
 function findProductBySlug(slug) {
   if (!slug || typeof PRODUCTS === 'undefined') return null;
-  const wanted = LEGACY_PRODUCT_SLUGS[slug] || slug;
+  const cleanSlug = String(slug).replace(/^\/+|\/+$/g, '').toLowerCase();
+  const wanted = LEGACY_PRODUCT_SLUGS[cleanSlug] || cleanSlug;
   return PRODUCTS.find(p => {
     const nameSlug = slugify(p.name);
-    const seoSlug = String(p.seoSlug || p.slug || '').toLowerCase().trim();
-    return nameSlug === wanted || seoSlug === wanted;
+    const productSlug = canonicalProductSlug(p);
+    return nameSlug === wanted || productSlug === wanted;
   }) || null;
 }
 
-function openProduct(id) {
+function openProduct(id, routeOptions) {
   currentProduct = PRODUCTS.find(p => p.id === id);
   window._currentProductId = id; // track for backend sync re-render
   if (currentProduct) window._trackViewItem && window._trackViewItem(currentProduct);
@@ -619,10 +631,15 @@ function openProduct(id) {
   try { if (_rvView[id]) { _rvView[id].expanded = false; _rvView[id].page = 0; } } catch(e) {}
   buildProductPage(currentProduct);
   setTimeout(()=>document.dispatchEvent(new CustomEvent('productPageShown',{detail:currentProduct})),100);
-  // Push clean URL: /product/glutathione-effervescent
+  // Push clean URL: /product/<canonical-seo-slug>. Initial deep links and
+  // legacy plural links replace the current entry so Back does not revisit the
+  // broken URL; normal in-app product clicks still create a history entry.
   try {
-    const slug = slugify(currentProduct.name);
-    history.pushState({ page: 'product', id: id }, '', '/product/' + slug);
+    const slug = canonicalProductSlug(currentProduct);
+    const target = '/product/' + slug;
+    const replace = !!(routeOptions && routeOptions.replace);
+    const method = replace ? 'replaceState' : 'pushState';
+    window.history[method]({ page: 'product', id: id }, '', target);
   } catch(e) {}
   /* Product pages were absent from GA4's Pages report entirely. Opening a
      product does not route through showPage(), so nothing ever sent a
@@ -2823,9 +2840,11 @@ function bootApp() {
   const _fullPath = (_spParam || window.location.pathname).replace(/^\//, '').trim();
   const _pathParts = _fullPath.split('/');
   const _pathPage = _pathParts[0];
-  const _pathSlug = _pathParts[1] || null; // e.g. 'glutathione-effervescent' from /product/glutathione-effervescent
+  const _pathSlug = _pathParts[1] || null; // e.g. 'glutathione-effervescent-tablet'
   const _hashPage = window.location.hash.replace('#', '').trim();
-  const _initPage = _pathPage || _hashPage;
+  // `/products/<slug>` is a legacy inbound format. Treat it as a product
+  // route, then openProduct() replaces it with the singular canonical path.
+  const _initPage = _pathPage === 'products' ? 'product' : (_pathPage || _hashPage);
   // wishlist has a real page section but was missing here, so a direct hit on
   // /wishlist rendered the HOME page at 200 — a soft 404. Keep
   // this list in step with SPA_ROUTES in worker/index.js.
@@ -2838,8 +2857,13 @@ function bootApp() {
       setTimeout(function() {
         if (typeof findProductBySlug === 'function' && typeof PRODUCTS !== 'undefined') {
           const prod = findProductBySlug(_pathSlug);
-          if (prod) { openProduct(prod.id); }
-          else showPage('shop');
+          if (prod) { openProduct(prod.id, { replace: true }); }
+          else {
+            if (_pathPage === 'products') {
+              try { history.replaceState({}, '', '/shop'); } catch(e) {}
+            }
+            showPage('shop');
+          }
         }
       }, 300);
     } else if (_initPage === 'account') {
