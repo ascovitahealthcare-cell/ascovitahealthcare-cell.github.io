@@ -8323,7 +8323,13 @@ button, [role="button"] {
       <div class="account-content">
         <section class="account-welcome" id="accountWelcome" aria-labelledby="awName">
           <div class="aw-greeting">
-            <div class="aw-eyebrow"><span aria-hidden="true">🌿</span> Ozylix Member <span class="aw-eyebrow-pill">ACCOUNT HUB</span></div>
+            <div class="aw-profile-line">
+              <div class="aw-avatar" id="awAvatar" aria-hidden="true">AH</div>
+              <div class="aw-profile-copy">
+                <div class="aw-eyebrow"><span aria-hidden="true">🌿</span> Ozylix Member <span class="aw-eyebrow-pill">ACCOUNT HUB</span></div>
+                <div class="aw-email" id="awEmail">Welcome to your Ozylix account</div>
+              </div>
+            </div>
             <h2 class="aw-name" id="awName">Welcome to your Ozylix account</h2>
             <p class="aw-sub">Orders, deliveries, rewards and saved details — all together.</p>
           </div>
@@ -9243,6 +9249,10 @@ body:not(.oz-product) #stickyCart { display: none !important; }
 #page-account .account-nav-signout .nav-ico { background:rgba(184,66,66,.08); }
 #page-account .account-welcome { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(350px,.92fr); gap:20px; align-items:stretch; padding:24px; border-radius:24px; background:linear-gradient(135deg,#8e2333 0%,#6c317f 52%,#4b4a99 100%); box-shadow:0 18px 36px rgba(102,49,105,.20); overflow:hidden; }
 #page-account .aw-greeting { display:flex; flex-direction:column; justify-content:center; min-width:0; }
+.aw-profile-line { display:flex; align-items:center; gap:12px; min-width:0; }
+.aw-avatar { display:grid; place-items:center; flex:0 0 62px; width:62px; height:62px; border-radius:19px; background:rgba(255,255,255,.92); color:#b83a2f; font-size:1.6rem; font-weight:800; letter-spacing:.04em; box-shadow:0 8px 18px rgba(25,20,40,.14); }
+.aw-profile-copy { min-width:0; }
+.aw-email { overflow:hidden; margin-top:7px; color:rgba(255,255,255,.82); font-size:.86rem; text-overflow:ellipsis; white-space:nowrap; }
 #page-account .aw-eyebrow { display:flex; align-items:center; flex-wrap:wrap; gap:8px; color:rgba(255,255,255,.72); font-size:.68rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
 .aw-eyebrow-pill { padding:4px 8px; border:1px solid rgba(255,255,255,.24); border-radius:99px; color:rgba(255,255,255,.82); font-size:.56rem; letter-spacing:.12em; }
 #page-account .aw-name { margin:12px 0 8px; color:#fff; font-size:clamp(1.35rem,2.4vw,2rem); line-height:1.1; }
@@ -9271,19 +9281,27 @@ body:not(.oz-product) #stickyCart { display: none !important; }
   #page-account .account-welcome { grid-template-columns:1fr; gap:16px; padding:20px; border-radius:20px; }
 }
 @media (max-width: 560px) {
-  #page-account .account-sidebar { padding:12px; border-radius:18px; }
+  #page-account .account-layout { display:flex; flex-direction:column; gap:8px; }
+  #page-account .account-content { display:contents; }
+  #page-account .account-welcome { order:-2; width:100%; }
+  #page-account .account-sidebar { order:-1; width:100%; padding:7px 5px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+  #page-account .account-profile-top, #page-account .account-nav-heading { display:none; }
   #page-account .account-profile-top { gap:10px; padding-bottom:10px; }
-  #page-account .account-nav-heading { margin:12px 2px 6px; font-size:.58rem; }
-  #page-account .account-nav { grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
-  #page-account .account-nav-item { min-height:50px; padding:7px 8px; gap:7px; border-radius:12px; }
-  #page-account .account-nav-copy strong { overflow:visible; white-space:normal; font-size:.7rem; line-height:1.12; }
-  #page-account .account-nav-copy small { display:none; }
-  #page-account .account-nav-item .nav-ico { flex-basis:28px; width:28px; height:28px; font-size:.88rem; border-radius:9px; }
-  #page-account .account-nav-count { min-width:21px; padding:2px 5px; font-size:.6rem; }
-  #page-account .account-nav-arrow { font-size:1rem; }
-  #page-account .account-nav-signout { grid-column:1 / -1; min-height:44px; margin-top:3px; padding-top:8px; border-radius:0 0 10px 10px; }
-  #page-account .account-welcome { gap:10px; padding:14px; border-radius:18px; }
+  #page-account .account-nav { grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; }
+  #page-account .account-nav-item { min-height:54px; padding:6px 3px; gap:3px; border:1px solid rgba(34,54,46,.07); border-radius:12px; background:rgba(255,255,255,.78); box-shadow:0 3px 9px rgba(36,45,40,.06); flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  #page-account .account-nav-copy { flex:0 1 auto; align-items:center; gap:0; }
+  #page-account .account-nav-copy strong { overflow:visible; white-space:normal; font-size:.6rem; line-height:1.08; }
+  #page-account .account-nav-copy small, #page-account .account-nav-arrow { display:none; }
+  #page-account .account-nav-item .nav-ico { flex:0 0 23px; width:23px; height:23px; font-size:.74rem; border-radius:8px; }
+  #page-account .account-nav-count { position:absolute; top:3px; right:4px; min-width:18px; padding:2px 4px; font-size:.54rem; }
+  #page-account .account-nav-item { position:relative; }
+  #page-account .account-nav-signout { grid-column:1 / -1; min-height:39px; margin-top:2px; padding:5px; border:1px solid rgba(184,66,66,.12); border-radius:11px; flex-direction:row; }
+  #page-account .account-nav-signout .nav-ico { flex-basis:22px; width:22px; height:22px; }
+  #page-account .account-nav-signout .account-nav-copy { align-items:flex-start; }
+  #page-account .account-welcome { gap:8px; padding:12px; border-radius:17px; }
   #page-account .aw-sub, #page-account .aw-stat-note { display:none; }
+  .aw-avatar { flex-basis:45px; width:45px; height:45px; border-radius:14px; font-size:1.15rem; }
+  .aw-email { margin-top:4px; font-size:.7rem; }
   #page-account .aw-name { margin:7px 0 0; font-size:1.2rem; }
   #page-account .aw-stats { gap:5px; }
   #page-account .aw-stat { flex-direction:row; align-items:center; gap:6px; padding:8px 7px; border-radius:11px; }
@@ -9296,10 +9314,8 @@ body:not(.oz-product) #stickyCart { display: none !important; }
   #appBottomNav .app-nav-label { font-size:.62rem; }
 }
 @media (max-width: 360px) {
-  #page-account .account-nav { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  #page-account .account-nav-signout { grid-column:1 / -1; }
-  #page-account .account-nav-copy strong { font-size:.66rem; }
-  #page-account .account-nav-item { padding-left:6px; padding-right:6px; }
+  #page-account .account-nav-copy strong { font-size:.56rem; }
+  #page-account .account-nav-item { padding-left:2px; padding-right:2px; }
 }
 </style>
 

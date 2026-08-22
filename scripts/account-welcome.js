@@ -170,6 +170,8 @@ async function refreshAccountWelcome() {
   const ordersEl = document.getElementById('awOrders');
   const pointsEl = document.getElementById('awPoints');
   const savedEl = document.getElementById('awSaved');
+  const avatarEl = document.getElementById('awAvatar');
+  const emailEl = document.getElementById('awEmail');
   if (!host) return;
 
   const user = getCurrentUser();
@@ -179,6 +181,8 @@ async function refreshAccountWelcome() {
     if (ordersEl) ordersEl.textContent = '—';
     if (pointsEl) pointsEl.textContent = '—';
     if (savedEl) savedEl.textContent = '—';
+    if (avatarEl) avatarEl.textContent = 'AH';
+    if (emailEl) emailEl.textContent = 'Sign in to view your account details';
     const accOrders = document.getElementById('accOrdersCount');
     const accPoints = document.getElementById('accVitaCount');
     if (accOrders) accOrders.textContent = '0';
@@ -186,7 +190,12 @@ async function refreshAccountWelcome() {
     if (typeof window.syncAppMenuCounts === 'function') window.syncAppMenuCounts();
     return;
   }
-  if (nameEl) nameEl.textContent = 'Welcome back, ' + (user.name || user.email.split('@')[0]) + ' 👋';
+  const displayName = user.name || user.email.split('@')[0];
+  const nameParts = displayName.trim().split(/\s+/).filter(Boolean);
+  const initials = ((nameParts[0] || 'A')[0] + (nameParts[1] ? nameParts[1][0] : '')).toUpperCase();
+  if (nameEl) nameEl.textContent = 'Welcome back, ' + displayName + ' 👋';
+  if (avatarEl) avatarEl.textContent = initials;
+  if (emailEl) emailEl.textContent = user.email;
 
   // Points (cached vita state, instantaneous)
   const points = Number(getVitaState().balance) || 0;
