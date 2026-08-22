@@ -3978,6 +3978,13 @@ async function saveProductFromDrawer() {
     const r    = await apiFetch(url, {method:meth, body:JSON.stringify(body)});
     const d    = await r.json();
     if(!r.ok) throw new Error(d.error||'Request failed');
+    const savedProductId = drawerProductId || d.data?.id || d.product?.id || d.id;
+    if (drawerHomeThumbnailPendingUrl && savedProductId) {
+      const thumbResponse = await apiFetch(`/api/admin/products/${savedProductId}/home-thumbnail`, { method: 'PUT', body: JSON.stringify({ url: drawerHomeThumbnailPendingUrl }) });
+      const thumbData = await thumbResponse.json().catch(() => ({}));
+      if (!thumbResponse.ok) throw new Error(thumbData.error || 'Product saved, but homepage thumbnail was not saved');
+      resetHomeThumbnailPreview(thumbData.data?.url || drawerHomeThumbnailPendingUrl);
+    }
     toast(drawerProductId ? 'Product updated ✅' : 'Product created ✅');
     closeProductDrawer();
     loadProducts();
