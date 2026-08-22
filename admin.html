@@ -1831,7 +1831,21 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   <link rel="stylesheet" href="styles/admin-mobile-fix.css?v=20260822-1">
 </head>
 <body>
-<script defer src="scripts/admin-core.js?v=20260822-7"></script>
+<script>
+(function(){
+  try {
+    var p = localStorage.getItem('ascovita_theme') || 'plum';
+    var l = localStorage.getItem('ascovita_layout_theme') || 'command';
+    var pa = {deluxe:'plum',neo:'plum',holo:'ocean',frost:'ocean',elysia:'coral',navy:'ocean'};
+    var la = {deluxe:'command',neo:'studio',holo:'signal',frost:'studio',elysia:'studio',navy:'signal'};
+    p = pa[p] || p; l = la[l] || l;
+    if (!/^(plum|ocean|forest|coral)$/.test(p)) p = 'plum';
+    if (!/^(command|studio|signal)$/.test(l)) l = 'command';
+    document.body.classList.add('theme-' + p, 'mode-' + l);
+  } catch (e) {}
+})();
+</script>
+<script defer src="scripts/admin-core.js?v=20260822-8"></script>
 <script defer src="scripts/admin-api.js?v=20260822-1"></script>
 <script defer src="scripts/admin-ui.js?v=20260819-6"></script>
 <script defer src="scripts/admin-seo.js?v=20260819-4"></script>
@@ -1840,6 +1854,16 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
 
 <!-- ══════════════ LOGIN ══════════════ -->
 <div id="loginScreen">
+  <div class="login-3d-scene" aria-hidden="true">
+    <span class="login-3d-grid"></span>
+    <span class="login-3d-orb login-orb-a"></span>
+    <span class="login-3d-orb login-orb-b"></span>
+    <span class="login-3d-ring login-ring-a"></span>
+    <span class="login-3d-ring login-ring-b"></span>
+    <span class="login-3d-wedge login-wedge-a"></span>
+    <span class="login-3d-wedge login-wedge-b"></span>
+    <span class="login-3d-particle particle-a"></span><span class="login-3d-particle particle-b"></span><span class="login-3d-particle particle-c"></span>
+  </div>
   <!-- Rising effervescence. Inline styles because each bubble needs its own
        size, lane and phase; nine is enough to read as continuous without
        giving a low-end phone nine more compositor layers than it needs. -->
