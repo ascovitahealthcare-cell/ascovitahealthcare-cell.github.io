@@ -3564,6 +3564,9 @@ function resetHomeThumbnailPreview(url = '') {
   const save = document.getElementById('saveHomeThumbBtn');
   if (clear) clear.style.display = drawerHomeThumbnailUrl ? '' : 'none';
   if (save) save.style.display = 'none';
+  const status = document.getElementById('homeThumbSaveStatus');
+  if (status) status.textContent = drawerHomeThumbnailUrl ? 'Saved homepage thumbnail' : 'No homepage thumbnail saved';
+  if (document.getElementById('homeThumbSelector')?.style.display !== 'none') renderHomeThumbnailGallery();
 }
 function setPendingHomeThumbnailPreview(url) {
   drawerHomeThumbnailPendingUrl = String(url || '');
@@ -3572,7 +3575,10 @@ function setPendingHomeThumbnailPreview(url) {
   if (field) field.value = drawerHomeThumbnailPendingUrl;
   renderHomeThumbnailPreview(drawerHomeThumbnailPendingUrl);
   const save = document.getElementById('saveHomeThumbBtn');
+  const status = document.getElementById('homeThumbSaveStatus');
   if (save) save.style.display = '';
+  if (status) status.textContent = 'Unsaved gallery selection — click Save Homepage Thumbnail';
+  renderHomeThumbnailGallery();
 }
 async function loadHomeThumbnail(productId) {
   if (!productId) return;
@@ -3588,11 +3594,67 @@ function triggerHomeThumbnailUpload() {
   if (input) { input.value = ''; input.click(); }
 }
 function openHomeThumbnailGallery() {
+  toggleHomeThumbnailSelector(true);
+}
+let homeThumbGalleryItems = [];
+let homeThumbGalleryQuery = '';
+async function toggleHomeThumbnailSelector(force) {
   if (!drawerProductId) { toast('Save the product first, then choose a gallery image.', 'error'); return; }
-  if (typeof window.storeEdOpenGallery !== 'function') { toast('Admin Gallery is unavailable — refresh the page and try again.', 'error'); return; }
-  window._homeThumbnailGalleryActive = true;
-  window._homeThumbnailGalleryProductId = drawerProductId;
-  window.storeEdOpenGallery('Homepage thumbnail · product ' + drawerProductId);
+  const panel = document.getElementById('homeThumbSelector');
+  if (!panel) return;
+  const open = force === undefined ? panel.style.display === 'none' : !!force;
+  panel.style.display = open ? '' : 'none';
+  if (!open) return;
+  const search = document.getElementById('homeThumbGallerySearch');
+  if (search) { search.value = ''; homeThumbGalleryQuery = ''; }
+  await loadHomeThumbnailGallery();
+}
+async function loadHomeThumbnailGallery() {
+  const status = document.getElementById('homeThumbGalleryStatus');
+  const grid = document.getElementById('homeThumbGalleryGrid');
+  if (!grid) return;
+  if (status) status.textContent = 'Loading gallery…';
+  try {
+    const r = await apiFetch('/api/upload/library');
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
+    const imgs = d.data || d.images || d.files || d.photos || (Array.isArray(d) ? d : []);
+    homeThumbGalleryItems = imgs.filter(img => img && img.url && !/\.(?:mp4|webm|mov)(?:\?|$)/i.test(String(img.url)));
+    renderHomeThumbnailGallery();
+  } catch (e) {
+    homeThumbGalleryItems = [];
+    if (status) status.textContent = 'Could not load gallery: ' + e.message;
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--danger);font-size:.72rem;">Gallery unavailable</div>';
+  }
+}
+function filterHomeThumbnailGallery(value) {
+  homeThumbGalleryQuery = String(value || '').trim().toLowerCase();
+  renderHomeThumbnailGallery();
+}
+function renderHomeThumbnailGallery() {
+  const grid = document.getElementById('homeThumbGalleryGrid');
+  const status = document.getElementById('homeThumbGalleryStatus');
+  if (!grid) return;
+  const list = homeThumbGalleryItems.filter(img => !homeThumbGalleryQuery || String(img.filename || img.original_name || '').toLowerCase().includes(homeThumbGalleryQuery));
+  const selected = drawerHomeThumbnailPendingUrl || drawerHomeThumbnailUrl;
+  if (status) status.textContent = list.length + ' image' + (list.length === 1 ? '' : 's') + (selected ? ' · tap an image to preview' : '');
+  grid.innerHTML = list.length ? list.map((img, index) => {
+    const name = String(img.original_name || img.filename || 'Gallery image');
+    const isSelected = String(img.url) === String(selected);
+    return `<button type="button" class="home-thumb-gallery-item" data-gallery-index="${index}" style="border:2px solid ${isSelected ? 'var(--brand)' : 'var(--edge)'};background:var(--bg);border-radius:9px;padding:4px;min-width:0;text-align:left;cursor:pointer;">
+      <img src="${adminCdnImg(img.url)}" alt="${esc(name)}" loading="lazy" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;display:block;">
+      <span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.62rem;color:var(--text2);padding:4px 2px 1px;">${esc(name.replace(/\.[^.]+$/, ''))}</span>
+    </button>`;
+  }).join('') : '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--text3);font-size:.72rem;">No gallery images match</div>';
+  grid.querySelectorAll('[data-gallery-index]').forEach((button, index) => {
+    button.addEventListener('click', () => {
+      const image = list[index];
+      if (!image) return;
+      setPendingHomeThumbnailPreview(image.url);
+      renderHomeThumbnailGallery();
+      toast('Image selected — click Save Homepage Thumbnail');
+    });
+  });
 }
 async function saveHomeThumbnail() {
   if (!drawerProductId || !drawerHomeThumbnailPendingUrl) { toast('Choose an image from the gallery first.', 'error'); return; }

@@ -1828,7 +1828,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   <link rel="stylesheet" href="styles/admin-redesign.css?v=20260822-2">
 </head>
 <body>
-<script defer src="scripts/admin-core.js?v=20260821-5"></script>
+<script defer src="scripts/admin-core.js?v=20260822-6"></script>
 <script defer src="scripts/admin-api.js?v=20260819-7"></script>
 <script defer src="scripts/admin-ui.js?v=20260819-6"></script>
 <script defer src="scripts/admin-seo.js?v=20260819-4"></script>
@@ -2667,11 +2667,20 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
         <div id="homeThumbPreview" style="width:112px;height:112px;border:1px dashed var(--edge);border-radius:14px;background:var(--sub-1);display:grid;place-items:center;overflow:hidden;color:var(--text3);font-size:0.7rem;text-align:center;">No thumbnail</div>
         <div style="display:flex;flex-direction:column;gap:7px;">
           <button class="btn-secondary" type="button" onclick="triggerHomeThumbnailUpload()">Upload homepage thumbnail</button>
-          <button class="btn-secondary" type="button" onclick="openHomeThumbnailGallery()">Use from Admin Gallery</button>
+          <button class="btn-secondary" type="button" onclick="toggleHomeThumbnailSelector()">Choose from Admin Gallery</button>
           <button class="btn-primary" type="button" id="saveHomeThumbBtn" onclick="saveHomeThumbnail()" style="display:none;">Save Homepage Thumbnail</button>
+          <div id="homeThumbSaveStatus" style="font-size:0.7rem;color:var(--text3);">No homepage thumbnail saved</div>
           <button class="btn-secondary" type="button" id="clearHomeThumbBtn" onclick="clearHomeThumbnail()" style="display:none;">Remove thumbnail</button>
           <div style="font-size:0.68rem;color:var(--text3);max-width:260px;line-height:1.45;">Used only by homepage Featured and New Arrivals cards. It does not change the Shop gallery or product-detail images.</div>
         </div>
+      </div>
+      <div id="homeThumbSelector" style="display:none;margin-top:8px;border:1px solid var(--edge);border-radius:12px;background:var(--sub-1);padding:10px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <input id="homeThumbGallerySearch" class="drawer-input" placeholder="Search gallery images…" oninput="filterHomeThumbnailGallery(this.value)" style="flex:1;min-width:0;">
+          <button class="btn-secondary" type="button" onclick="toggleHomeThumbnailSelector(false)">Close</button>
+        </div>
+        <div id="homeThumbGalleryStatus" style="font-size:0.68rem;color:var(--text3);margin-bottom:7px;">Loading gallery…</div>
+        <div id="homeThumbGalleryGrid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;max-height:260px;overflow:auto;"></div>
       </div>
       <input type="file" id="homeThumbFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;" onchange="handleHomeThumbnailFileChosen(this)">
       <input type="hidden" id="dHomeThumbnail">
