@@ -958,29 +958,34 @@ function animateCount(el, from, to, fmt, dur=900) {
 // 3D Bar Chart with line overlay
 // ── Theme-aware chart palette: reads CSS vars so every theme can restyle charts ──
 function chartTheme(){
-  if((localStorage.getItem('ascovita_theme')||'deluxe')==='frost'){
-    return { primary:'#2563EB', secondary:'#0EA5E9', accent:'#0EA5E9', grid:'rgba(15,42,82,0.08)', legend:'#1E3A5F',
-             line:'#22D3EE', fill:'rgba(14,165,233,0.16)', status:'#1D4ED8', warn:'#F59E0B', bad:'#DB2777' };
-  }
-    if((localStorage.getItem('ascovita_theme')||'deluxe')==='elysia'){
-    return { primary:'#f5a623', secondary:'#e8677c', accent:'#8b5cf6', grid:'rgba(245,166,35,0.14)', legend:'#ffe8c4',
-             line:'#f08060', fill:'rgba(245,166,35,0.14)', status:'#f5a623', warn:'#f08060', bad:'#e8677c' };
-  }
-
-    if((localStorage.getItem('ascovita_theme')||'deluxe')==='navy'){
-    return { primary:'#0E7490', secondary:'#06B6D4', accent:'#34D399', grid:'rgba(10,40,80,0.08)', legend:'#1E3A5F',
-             line:'#22D3EE', fill:'rgba(6,182,212,0.18)', status:'#155E75', warn:'#0EA5E9', bad:'#E0558A' };
-  }
-try{
-    const cs=getComputedStyle(document.documentElement);
-    return {
-      primary: cs.getPropertyValue('--chart-primary').trim()||'#547177',
-      secondary: cs.getPropertyValue('--chart-secondary').trim()||'#3B7EA6',
-      accent: cs.getPropertyValue('--chart-accent').trim()||'#8F6417',
-      grid: cs.getPropertyValue('--chart-grid').trim()||'rgba(216,103,110,0.08)',
-      legend: cs.getPropertyValue('--chart-legend').trim()||'rgba(232,237,224,0.9)',
+  try {
+    const cs = getComputedStyle(document.body);
+    const mode = localStorage.getItem(LAYOUT_THEME_KEY) || 'command';
+    const palette = localStorage.getItem(PALETTE_KEY) || 'plum';
+    const base = {
+      primary: cs.getPropertyValue('--chart-primary').trim() || '#547177',
+      secondary: cs.getPropertyValue('--chart-secondary').trim() || '#3B7EA6',
+      accent: cs.getPropertyValue('--chart-accent').trim() || '#8F6417',
+      grid: cs.getPropertyValue('--chart-grid').trim() || 'rgba(216,103,110,0.08)',
+      legend: cs.getPropertyValue('--chart-legend').trim() || 'rgba(232,237,224,0.9)',
+      line: cs.getPropertyValue('--chart-primary').trim() || '#547177',
+      fill: cs.getPropertyValue('--chart-primary').trim() || '#547177',
+      status: cs.getPropertyValue('--chart-primary').trim() || '#547177',
+      warn: cs.getPropertyValue('--chart-accent').trim() || '#8F6417',
+      bad: '#D95C68',
+      lineWidth: mode === 'signal' ? 2.8 : mode === 'studio' ? 2.2 : 2,
+      barDepth: mode === 'studio' ? 9 : mode === 'signal' ? 4 : 6,
+      pointRadius: mode === 'studio' ? 4 : mode === 'signal' ? 2 : 3,
+      palette, mode,
     };
-  }catch(e){return {primary:'#547177',secondary:'#3B7EA6',accent:'#8F6417',grid:'rgba(216,103,110,0.08)',legend:'rgba(232,237,224,0.9)'};}
+    if (mode === 'signal') {
+      base.lineWidth = 2.8;
+      base.barDepth = 4;
+    }
+    return base;
+  } catch (e) {
+    return {primary:'#547177',secondary:'#3B7EA6',accent:'#8F6417',grid:'rgba(216,103,110,0.08)',legend:'rgba(232,237,224,0.9)',line:'#547177',fill:'#547177',status:'#547177',warn:'#8F6417',bad:'#D95C68',lineWidth:2,barDepth:6,pointRadius:3,mode:'command',palette:'plum'};
+  }
 }
 function drawBarChart(canvasId, labels, data, color='#547177', lineData=null) {
   const canvas = document.getElementById(canvasId);
@@ -992,6 +997,7 @@ function drawBarChart(canvasId, labels, data, color='#547177', lineData=null) {
   canvas.style.width = W0+'px'; canvas.style.height = H0+'px';
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr,dpr);
+  const ct = chartTheme();
   const W=W0, H=H0;
   const pad={t:14,r:14,b:32,l:54};
   const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
@@ -999,7 +1005,7 @@ function drawBarChart(canvasId, labels, data, color='#547177', lineData=null) {
   const barW=Math.max(6,(cW/data.length)-5);
 
   // Background grid
-  ctx.strokeStyle=chartTheme().grid; ctx.lineWidth=1;
+  ctx.strokeStyle=ct.grid; ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
     const y=pad.t+cH-(i/4)*cH;
     ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(W-pad.r,y);ctx.stroke();
@@ -1016,7 +1022,7 @@ function drawBarChart(canvasId, labels, data, color='#547177', lineData=null) {
     const bH=Math.max(2,(v/max)*cH);
     const y=pad.t+cH-bH;
     // Side face (3D effect)
-    const sw=6;
+    const sw=ct.barDepth;
     ctx.fillStyle='rgba(0,0,0,0.3)';
     ctx.beginPath();ctx.moveTo(x+barW,y);ctx.lineTo(x+barW+sw,y-sw/2);
     ctx.lineTo(x+barW+sw,y+bH-sw/2);ctx.lineTo(x+barW,y+bH);ctx.closePath();ctx.fill();
@@ -1043,7 +1049,7 @@ function drawBarChart(canvasId, labels, data, color='#547177', lineData=null) {
   // Line overlay
   if(lineData&&lineData.length===data.length){
     const lMax=Math.max(...lineData,1);
-    ctx.strokeStyle=chartTheme().accent;ctx.lineWidth=2;ctx.setLineDash([]);
+    ctx.strokeStyle=ct.accent;ctx.lineWidth=ct.lineWidth;ctx.setLineDash([]);
     ctx.beginPath();
     lineData.forEach((v,i)=>{
       const x=pad.l+i*(cW/data.length)+barW/2+(cW/data.length-barW)/2;
@@ -1055,7 +1061,7 @@ function drawBarChart(canvasId, labels, data, color='#547177', lineData=null) {
     lineData.forEach((v,i)=>{
       const x=pad.l+i*(cW/data.length)+barW/2+(cW/data.length-barW)/2;
       const y=pad.t+cH-(v/lMax)*cH;
-      ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);
+      ctx.beginPath();ctx.arc(x,y,ct.pointRadius,0,Math.PI*2);
       ctx.fillStyle='#8F6417';ctx.fill();
     });
   }
@@ -7537,32 +7543,48 @@ async function checkIntegrations() {
 // skin changes. Stored in localStorage for instant, flash-free load,
 // and synced to the shared backend settings so the choice is visible
 // to every admin/owner who opens the backoffice, not just this device.
-const THEME_KEY = 'ascovita_theme';
-const VALID_THEMES = ['plum','ocean','forest','coral','deluxe','neo','holo','frost','elysia','navy'];
-const THEME_ALIASES = { deluxe:'plum', neo:'plum', holo:'ocean', frost:'ocean', elysia:'coral', navy:'ocean' };
+const PALETTE_KEY = 'ascovita_theme';
+const LAYOUT_THEME_KEY = 'ascovita_layout_theme';
+// Keep THEME_KEY as an alias for older code paths and saved local sessions.
+const THEME_KEY = PALETTE_KEY;
+const VALID_PALETTES = ['plum','ocean','forest','coral'];
+const VALID_THEMES = ['command','studio','signal','deluxe','neo','holo','frost','elysia','navy'];
+const PALETTE_ALIASES = { deluxe:'plum', neo:'plum', holo:'ocean', frost:'ocean', elysia:'coral', navy:'ocean' };
+const THEME_ALIASES = { deluxe:'command', neo:'studio', holo:'signal', frost:'studio', elysia:'studio', navy:'signal' };
 
-function applyThemeClass(theme) {
-  theme = THEME_ALIASES[theme] || theme;
-  theme = VALID_THEMES.includes(theme) ? theme : 'plum';
-  // Remove any OTHER theme classes first — without this, picking a new
-  // theme leaves the old one on <body> and the two skins collide,
-  // looking broken until the page is refreshed.
+function applyPaletteClass(palette) {
+  palette = PALETTE_ALIASES[palette] || palette;
+  palette = VALID_PALETTES.includes(palette) ? palette : 'plum';
   document.body.className.split(/\s+/).forEach(c => {
     if (c.startsWith('theme-')) document.body.classList.remove(c);
   });
-  document.body.classList.add('theme-' + theme);
-  document.querySelectorAll('.theme-opt').forEach(el => {
+  document.body.classList.add('theme-' + palette);
+  document.querySelectorAll('.palette-opt').forEach(el => {
+    el.classList.toggle('selected', el.dataset.theme === palette);
+  });
+}
+// Backward-compatible name used by older inline handlers.
+function applyThemeClass(palette) { applyPaletteClass(palette); }
+
+function applyDashboardTheme(theme) {
+  theme = THEME_ALIASES[theme] || theme;
+  theme = VALID_THEMES.includes(theme) ? theme : 'command';
+  document.body.className.split(/\s+/).forEach(c => {
+    if (c.startsWith('mode-')) document.body.classList.remove(c);
+  });
+  document.body.classList.add('mode-' + theme);
+  document.querySelectorAll('.layout-theme-opt').forEach(el => {
     el.classList.toggle('selected', el.dataset.theme === theme);
   });
 }
 
-async function setInterfaceTheme(theme, opts) {
+async function setInterfaceTheme(palette, opts) {
   opts = opts || {};
-  applyThemeClass(theme);
-  try { localStorage.setItem(THEME_KEY, theme); } catch {}
+  applyPaletteClass(palette);
+  try { localStorage.setItem(PALETTE_KEY, PALETTE_ALIASES[palette] || palette); } catch {}
   if (opts.silent) return;
   try {
-    const r = await apiFetch('/api/admin/settings', {method:'PUT', body:JSON.stringify({interface_theme: theme})});
+    const r = await apiFetch('/api/admin/settings', {method:'PUT', body:JSON.stringify({interface_theme: PALETTE_ALIASES[palette] || palette})});
     if (r && r.ok) toast('Theme updated ✅');
     else toast('Theme applied locally — server save failed', 'warning');
   } catch (e) {
@@ -7571,10 +7593,24 @@ async function setInterfaceTheme(theme, opts) {
   }
 }
 
+async function setDashboardTheme(theme, opts) {
+  opts = opts || {};
+  applyDashboardTheme(theme);
+  const normalized = THEME_ALIASES[theme] || theme;
+  try { localStorage.setItem(LAYOUT_THEME_KEY, normalized); } catch {}
+  if (opts.silent) return;
+  try {
+    const r = await apiFetch('/api/admin/settings', {method:'PUT', body:JSON.stringify({interface_theme_style: normalized})});
+    if (r && r.ok) toast('Dashboard style updated ✅');
+    else toast('Dashboard style applied locally — server save failed', 'warning');
+  } catch (e) { toast('Dashboard style applied locally — offline', 'warning'); }
+}
+
 async function loadSettings() {
   // Apply the locally-remembered theme immediately so the Settings page
   // (and rest of the app) never flashes the wrong skin before the network call resolves.
-  applyThemeClass(localStorage.getItem(THEME_KEY));
+  applyPaletteClass(localStorage.getItem(PALETTE_KEY));
+  applyDashboardTheme(localStorage.getItem(LAYOUT_THEME_KEY));
   try {
     const r = await apiFetch('/api/admin/settings');
     if(!r.ok) return; // silently skip if endpoint doesn't exist yet
@@ -7611,15 +7647,23 @@ async function loadSettings() {
     if(d.offer_label) document.getElementById('offerLabel').value = d.offer_label;
     if(d.offer_sub) document.getElementById('offerSub').value = d.offer_sub;
     if(d.interface_theme) {
-      // Keep an explicit local choice stable after reload. The backend remains
-      // the cross-device fallback, while localStorage prevents an older or
-      // eventually-consistent server value from undoing the palette just picked.
-      const localTheme = THEME_ALIASES[localStorage.getItem(THEME_KEY)] || localStorage.getItem(THEME_KEY);
-      const serverTheme = THEME_ALIASES[d.interface_theme] || d.interface_theme;
-      const selectedTheme = VALID_THEMES.includes(localTheme) ? localTheme : serverTheme;
-      applyThemeClass(selectedTheme);
-      if (!VALID_THEMES.includes(localTheme)) {
-        try { localStorage.setItem(THEME_KEY, selectedTheme); } catch {}
+      // A local palette choice wins on this device; backend remains the
+      // fallback for a new device or a cleared browser session.
+      const localPalette = PALETTE_ALIASES[localStorage.getItem(PALETTE_KEY)] || localStorage.getItem(PALETTE_KEY);
+      const serverPalette = PALETTE_ALIASES[d.interface_theme] || d.interface_theme;
+      const selectedPalette = VALID_PALETTES.includes(localPalette) ? localPalette : serverPalette;
+      applyPaletteClass(selectedPalette);
+      if (!VALID_PALETTES.includes(localPalette)) {
+        try { localStorage.setItem(PALETTE_KEY, selectedPalette); } catch {}
+      }
+    }
+    const serverLayoutTheme = d.interface_theme_style || d.dashboard_theme;
+    if (serverLayoutTheme || localStorage.getItem(LAYOUT_THEME_KEY)) {
+      const localLayoutTheme = THEME_ALIASES[localStorage.getItem(LAYOUT_THEME_KEY)] || localStorage.getItem(LAYOUT_THEME_KEY);
+      const selectedLayoutTheme = VALID_THEMES.includes(localLayoutTheme) ? localLayoutTheme : (THEME_ALIASES[serverLayoutTheme] || serverLayoutTheme);
+      applyDashboardTheme(selectedLayoutTheme);
+      if (!VALID_THEMES.includes(localLayoutTheme)) {
+        try { localStorage.setItem(LAYOUT_THEME_KEY, selectedLayoutTheme); } catch {}
       }
     }
   } catch {}
@@ -7634,7 +7678,8 @@ async function saveSettings() {
 }
 
 async function saveSettingsCore() {
-  const activeThemeOpt = document.querySelector('.theme-opt.selected');
+  const activePaletteOpt = document.querySelector('.palette-opt.selected');
+  const activeLayoutOpt = document.querySelector('.layout-theme-opt.selected');
   const ceilingGlutathioneAcv = Number(document.getElementById('discountCeilingGlutathioneAcv').value);
   const ceilingStandard = Number(document.getElementById('discountCeilingStandard').value);
   if (!Number.isFinite(ceilingGlutathioneAcv) || ceilingGlutathioneAcv < 0 || ceilingGlutathioneAcv > 50 || !Number.isFinite(ceilingStandard) || ceilingStandard < 0 || ceilingStandard > 50) {
@@ -7673,7 +7718,8 @@ async function saveSettingsCore() {
     offer_deadline: document.getElementById('offerDeadline').value ? new Date(document.getElementById('offerDeadline').value).toISOString() : '',
     offer_label: document.getElementById('offerLabel').value.trim(),
     offer_sub: document.getElementById('offerSub').value.trim(),
-    interface_theme: activeThemeOpt ? activeThemeOpt.dataset.theme : (localStorage.getItem(THEME_KEY) || 'deluxe'),
+    interface_theme: activePaletteOpt ? activePaletteOpt.dataset.theme : (localStorage.getItem(PALETTE_KEY) || 'plum'),
+    interface_theme_style: activeLayoutOpt ? activeLayoutOpt.dataset.theme : (localStorage.getItem(LAYOUT_THEME_KEY) || 'command'),
   };
   try {
     const r = await apiFetch('/api/admin/settings', {method:'PUT', body:JSON.stringify(settings)});

@@ -1827,10 +1827,10 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
   <link rel="stylesheet" href="styles/admin-advanced.css">
   <link rel="stylesheet" href="styles/admin-redesign.css?v=20260822-1">
   <link rel="stylesheet" href="styles/admin-reference-os.css?v=20260822-4">
-  <link rel="stylesheet" href="styles/admin-palettes.css?v=20260822-5">
+  <link rel="stylesheet" href="styles/admin-palettes.css?v=20260822-6">
 </head>
 <body>
-<script defer src="scripts/admin-core.js?v=20260821-5"></script>
+<script defer src="scripts/admin-core.js?v=20260822-6"></script>
 <script defer src="scripts/admin-api.js?v=20260819-7"></script>
 <script defer src="scripts/admin-ui.js?v=20260819-6"></script>
 <script defer src="scripts/admin-seo.js?v=20260819-4"></script>
@@ -4277,6 +4277,15 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
     <div class="card-hdr"><span class="card-title">🎨 Interface Settings</span></div>
     <div style="color:var(--text3);font-size:0.8rem;margin:-10px 0 16px;">Customize your application theme — this changes the look of the entire backoffice for every admin. Data and functionality stay exactly the same. Editable by both Admin and Owner.</div>
     <div class="theme-picker">
+      <div class="layout-style-section">
+        <div class="style-section-label"><span>Dashboard Style</span><small>Changes layout, cards, charts, navigation, and motion</small></div>
+        <div class="layout-style-grid" aria-label="Dashboard styles">
+          <div class="layout-theme-opt layout-command" data-theme="command" onclick="setDashboardTheme('command')"><div class="style-preview"><span class="preview-sidebar"></span><span class="preview-hero"></span><span class="preview-row"></span><span class="preview-row short"></span></div><div class="style-copy"><strong>Command Center</strong><span>Dense operations · compact cards · structured graphs</span></div><span class="style-check">✓</span></div>
+          <div class="layout-theme-opt layout-studio" data-theme="studio" onclick="setDashboardTheme('studio')"><div class="style-preview"><span class="preview-orb"></span><span class="preview-canvas"></span><span class="preview-pill"></span></div><div class="style-copy"><strong>Editorial Studio</strong><span>Airy composition · oversized metrics · soft glass</span></div><span class="style-check">✓</span></div>
+          <div class="layout-theme-opt layout-signal" data-theme="signal" onclick="setDashboardTheme('signal')"><div class="style-preview"><span class="preview-grid"></span><span class="preview-signal"></span><span class="preview-bars"></span></div><div class="style-copy"><strong>Signal Grid</strong><span>Dark canvas · telemetry charts · high-focus flows</span></div><span class="style-check">✓</span></div>
+        </div>
+      </div>
+      <div class="palette-section-label"><span>Colour Palette</span><small>Changes colour only — works with every dashboard style</small></div>
       <div class="palette-grid" aria-label="Admin colour palettes">
         <div class="theme-opt palette-opt palette-plum" data-theme="plum" onclick="setInterfaceTheme('plum')"><div class="palette-swatch"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="palette-copy"><strong>Royal Plum</strong><span>Deep plum · warmer, more premium</span></div><span class="palette-check">✓</span></div>
         <div class="theme-opt palette-opt palette-ocean" data-theme="ocean" onclick="setInterfaceTheme('ocean')"><div class="palette-swatch"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="palette-copy"><strong>Ocean Ink</strong><span>Trustworthy blue · calm and precise</span></div><span class="palette-check">✓</span></div>
