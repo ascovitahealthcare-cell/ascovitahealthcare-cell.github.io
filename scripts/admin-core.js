@@ -3546,17 +3546,33 @@ function closeProductDrawer() {
 }
 
 let drawerHomeThumbnailUrl = '';
+let drawerHomeThumbnailPendingUrl = '';
+function renderHomeThumbnailPreview(url) {
+  const box = document.getElementById('homeThumbPreview');
+  if (!box) return;
+  box.innerHTML = url
+    ? `<img src="${adminCdnImg(url)}" alt="Homepage thumbnail" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='Thumbnail unavailable'">`
+    : 'No thumbnail';
+}
 function resetHomeThumbnailPreview(url = '') {
   drawerHomeThumbnailUrl = String(url || '');
+  drawerHomeThumbnailPendingUrl = '';
   const field = document.getElementById('dHomeThumbnail');
   if (field) field.value = drawerHomeThumbnailUrl;
-  const box = document.getElementById('homeThumbPreview');
+  renderHomeThumbnailPreview(drawerHomeThumbnailUrl);
   const clear = document.getElementById('clearHomeThumbBtn');
-  if (!box) return;
-  box.innerHTML = drawerHomeThumbnailUrl
-    ? `<img src="${adminCdnImg(drawerHomeThumbnailUrl)}" alt="Homepage thumbnail" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='Thumbnail unavailable'">`
-    : 'No thumbnail';
+  const save = document.getElementById('saveHomeThumbBtn');
   if (clear) clear.style.display = drawerHomeThumbnailUrl ? '' : 'none';
+  if (save) save.style.display = 'none';
+}
+function setPendingHomeThumbnailPreview(url) {
+  drawerHomeThumbnailPendingUrl = String(url || '');
+  if (!drawerHomeThumbnailPendingUrl) return;
+  const field = document.getElementById('dHomeThumbnail');
+  if (field) field.value = drawerHomeThumbnailPendingUrl;
+  renderHomeThumbnailPreview(drawerHomeThumbnailPendingUrl);
+  const save = document.getElementById('saveHomeThumbBtn');
+  if (save) save.style.display = '';
 }
 async function loadHomeThumbnail(productId) {
   if (!productId) return;
@@ -3578,6 +3594,16 @@ function openHomeThumbnailGallery() {
   window._homeThumbnailGalleryProductId = drawerProductId;
   window.storeEdOpenGallery('Homepage thumbnail · product ' + drawerProductId);
 }
+async function saveHomeThumbnail() {
+  if (!drawerProductId || !drawerHomeThumbnailPendingUrl) { toast('Choose an image from the gallery first.', 'error'); return; }
+  try {
+    const r = await apiFetch(`/api/admin/products/${drawerProductId}/home-thumbnail`, { method: 'PUT', body: JSON.stringify({ url: drawerHomeThumbnailPendingUrl }) });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Could not save homepage thumbnail');
+    resetHomeThumbnailPreview(d.data?.url || drawerHomeThumbnailPendingUrl);
+    toast('Homepage thumbnail saved ✅');
+  } catch (e) { toast(e.message, 'error'); }
+}
 async function handleHomeThumbnailFileChosen(input) {
   const file = input?.files?.[0];
   if (!file || !drawerProductId) return;
@@ -3593,6 +3619,11 @@ async function handleHomeThumbnailFileChosen(input) {
   } catch (e) { toast(e.message, 'error'); }
 }
 async function clearHomeThumbnail() {
+  if (drawerHomeThumbnailPendingUrl) {
+    resetHomeThumbnailPreview(drawerHomeThumbnailUrl);
+    toast('Pending gallery selection discarded');
+    return;
+  }
   if (!drawerProductId || !drawerHomeThumbnailUrl) return;
   if (!confirm('Remove this homepage thumbnail? Shop/product images will not be changed.')) return;
   try {

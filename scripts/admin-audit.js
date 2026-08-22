@@ -1102,13 +1102,13 @@ async function azLoadPerms() {
       if (window._homeThumbnailGalleryActive) {
         const productId = Number(window._homeThumbnailGalleryProductId);
         if (!Number.isSafeInteger(productId) || productId <= 0) throw new Error('No product is selected');
-        const r = await apiFetch('/api/admin/products/' + productId + '/home-thumbnail', { method: 'PUT', body: JSON.stringify({ url: url }) });
-        const d = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(d.error || ('HTTP ' + r.status));
-        if (typeof resetHomeThumbnailPreview === 'function' && typeof drawerProductId !== 'undefined' && drawerProductId === productId) resetHomeThumbnailPreview(d.data?.url || url);
-        toast('✅ Gallery image set as homepage thumbnail');
-        storeEdCloseGallery();
-        return;
+        if (typeof setPendingHomeThumbnailPreview === 'function' && typeof drawerProductId !== 'undefined' && drawerProductId === productId) {
+          setPendingHomeThumbnailPreview(url);
+          toast('Gallery image selected — click Save Homepage Thumbnail');
+          storeEdCloseGallery();
+          return;
+        }
+        throw new Error('The product drawer is no longer open');
       }
       const r = await apiFetch('/api/admin/site-media/' + encodeURIComponent(_seGalKey), { method: 'PUT', body: JSON.stringify({ url: url }) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
