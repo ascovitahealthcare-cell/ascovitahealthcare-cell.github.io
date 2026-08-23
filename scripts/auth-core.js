@@ -973,9 +973,15 @@ function getProductTiers(p) {
   const raw = p && (p._backendTiers || (typeof QTY_TIERS !== 'undefined' ? QTY_TIERS[p.id] : null));
   if (!Array.isArray(raw)) return null;
   const usable = raw.filter((t) =>
-    t && Number.isFinite(Number(t.rate)) && Number(t.rate) > 0 &&
-         Number.isFinite(Number(t.mrp))  && Number(t.mrp)  > 0);
-  return usable.length ? usable : null;
+    t && Number.isFinite(Number(t.rate)) && Number(t.rate) >= 0 &&
+         Number.isFinite(Number(t.mrp))  && Number(t.mrp)  > 0 && Number(t.rate) <= Number(t.mrp)
+  ).map((t, index) => {
+    const mrp = Number(t.mrp), rate = Number(t.rate);
+    return { ...t, discountPct: Number.isFinite(Number(t.discountPct)) ? Number(t.discountPct) : (mrp > 0 ? ((mrp - rate) / mrp) * 100 : 0), savingAmount: Math.max(0, mrp - rate), _offerIndex: index };
+  });
+  if (!usable.length) return null;
+  usable.sort((a, b) => (Number(b.discountPct) - Number(a.discountPct)) || (Number(b.savingAmount) - Number(a.savingAmount)) || (Number(b.tabs) - Number(a.tabs)) || (a._offerIndex - b._offerIndex));
+  return usable.map(({ _offerIndex, ...tier }) => tier);
 }
 
 // Index into the tier list, clamped. selectedTiers survives a backend
@@ -1037,7 +1043,8 @@ function buildTierWidget(p) {
           const per    = tierUnitPrice(tier);
           const packs  = packLabel(tier);
           const off    = Number(tier.discountPct) || 0;
-          const save   = tier.mrp - tier.rate;
+          const save   = Number(tier.savingAmount != null ? tier.savingAmount : tier.mrp - tier.rate) || 0;
+          const offerLabel = tier.offerType === 'buy_get' ? `Buy ${tier.buyQuantity || 1} Get ${tier.freeQuantity || 0}` : (off > 0 ? `${off.toFixed(off % 1 ? 1 : 0)}% off` : 'Offer');
           return `
           <button type="button" role="radio" aria-checked="${isSel}"
                   class="qty-tier${isSel ? ' selected' : ''}${isBest ? ' best-value' : ''}"
@@ -1049,7 +1056,7 @@ function buildTierWidget(p) {
             <span class="qt-rate">${rupee(tier.rate)}</span>
             ${per ? `<span class="qt-unit">${'₹' + per} per tablet</span>` : ''}
             <span class="qt-compare">
-              <s>${rupee(tier.mrp)}</s>${off > 0 ? `<i>${off}% off</i>` : ''}
+              <s>${rupee(tier.mrp)}</s><i>${offerLabel}</i>
             </span>
             ${save > 0 ? `<span class="qt-save">You save ${rupee(save)}</span>` : ''}
           </button>`;
@@ -3647,9 +3654,9 @@ const PAY_METHOD_LABEL = {
 //   milestone 15,000 points unlocks a reward      (milestone_threshold)
 // These mirror vita_config; the server remains the authority and this only
 // reports what was just earned.
-const VITA_EARN_PER_RUPEE   = 1;
-const VITA_REDEEM_PER_RUPEE = 150;
-const VITA_MILESTONE        = 15000;
+let VITA_EARN_PER_RUPEE   = 1;
+let VITA_REDEEM_PER_RUPEE = 150;
+let VITA_MILESTONE        = 15000;
 
 function showVitaEarned(total) {
   const card = document.getElementById('tyVita');
@@ -4632,6 +4639,26 @@ function hydrateVitaHome() {
   });
 }
 
+async function loadVitaPublicConfig() {
+  try {
+    const r = await fetch((typeof API_BASE !== 'undefined' ? API_BASE : '') + '/api/public/vitapoints/config', { headers: { 'Accept': 'application/json' } });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok || !d.data) return;
+    const c = d.data;
+    VITA_EARN_PER_RUPEE = c.points_per_rupee_earn == null ? 1 : Math.max(0, Number(c.points_per_rupee_earn));
+    VITA_REDEEM_PER_RUPEE = c.points_per_rupee_redeem == null ? 150 : Math.max(1, Number(c.points_per_rupee_redeem));
+    VITA_MILESTONE = c.milestone_threshold == null ? 15000 : Math.max(0, Number(c.milestone_threshold));
+    VITA.EARN_PER_RUPEE = VITA_EARN_PER_RUPEE;
+    VITA.POINTS_PER_RUPEE = VITA_REDEEM_PER_RUPEE;
+    VITA.TIER_50_THRESHOLD = VITA_MILESTONE;
+    if (c.release_hold_days != null) VITA.HOLD_DAYS = Math.max(0, Number(c.release_hold_days) || 0);
+    if (c.milestone_max_discount != null) VITA.MILESTONE_MAX_DISCOUNT = Math.max(0, Number(c.milestone_max_discount) || 0);
+    if (c.milestone_min_order != null) VITA.MILESTONE_MIN_ORDER = Math.max(0, Number(c.milestone_min_order) || 0);
+    hydrateVitaHome();
+    if (typeof updateVitaMicrocopy === 'function') updateVitaMicrocopy();
+  } catch (_) { /* defaults keep the storefront usable while the backend wakes */ }
+}
+
 // "Join free" — there is nothing to join, which is the nice part: points
 // start accruing on the first delivered order of any account. So the
 // button does the only useful thing it can, which depends on whether
@@ -4647,9 +4674,10 @@ function vitaHomeCta() {
 }
 
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', hydrateVitaHome);
+  document.addEventListener('DOMContentLoaded', () => { hydrateVitaHome(); loadVitaPublicConfig(); });
 } else {
   hydrateVitaHome();
+  loadVitaPublicConfig();
 }
 
 

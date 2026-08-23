@@ -3509,10 +3509,19 @@ function openProductDrawer(productId) {
           const qty = tabs != null ? Math.max(1, Math.round(tabs / tabletsPerPack)) : (parseInt(row.qty || row.units) || 1);
           const mrp = parseFloat(row.mrp || row.price) || (p.price * qty);
           const rate = parseFloat(row.rate || row.sale_price) || mrp;
+          const offerType = row.offerType || row.offer_type || (row.buyQuantity != null || row.freeQuantity != null ? 'buy_get' : 'discount');
+          const discountType = row.discountType || row.discount_type || 'percent';
           const discount = row.discountPct != null ? parseFloat(row.discountPct)
                           : row.discount != null ? parseFloat(row.discount)
                           : (mrp > 0 ? Math.round((1 - rate/mrp) * 100) : 0);
-          drawerTiers.push({ rid: ++_tierRowSeq, qty, discount, mrp, rate });
+          drawerTiers.push({
+            rid: ++_tierRowSeq, qty, discount, mrp, rate,
+            offerType: offerType === 'buy_get' ? 'buy_get' : 'discount',
+            buyQuantity: Math.max(1, parseInt(row.buyQuantity ?? row.buy_quantity) || qty),
+            freeQuantity: Math.max(0, parseInt(row.freeQuantity ?? row.free_quantity ?? row.getQuantity) || 0),
+            discountType: discountType === 'amount' || discountType === 'fixed' ? 'amount' : 'percent',
+            discountAmount: parseFloat(row.discountValue ?? row.discount_value) || Math.max(0, mrp - rate),
+          });
         });
       }
     } catch {}
@@ -3935,91 +3944,93 @@ function syncFromDiscountPct() {
   updateDrawerPricePreview();
 }
 
-// ── Quantity Tier Discount editor ─────────────────────────────
-// Each tier: { qty, discount, mrp, rate } — mrp/rate auto-calculated from product MRP + discount %.
+// ── Mixed offer-tier editor ───────────────────────────────────
+// Four rows maximum. Each row is either a Buy X/Get Y offer or a
+// percentage/fixed discount. Calculated fields are preview-only; the backend
+// validates and recalculates them before persistence and checkout.
 let drawerTiers = [];
 let _tierRowSeq = 0;
+const MAX_DRAWER_TIERS = 4;
 
+function tierBaseValues(t) {
+  const unit = parseFloat(document.getElementById('dPrice').value) || 0;
+  const tabsPerPack = Math.max(1, parseInt(document.getElementById('dTabsPerPack')?.value) || 15);
+  const type = t.offerType === 'buy_get' ? 'buy_get' : 'discount';
+  if (type === 'buy_get') {
+    t.buyQuantity = Math.max(1, parseInt(t.buyQuantity) || 1);
+    t.freeQuantity = Math.max(0, parseInt(t.freeQuantity) || 0);
+    t.qty = t.buyQuantity + t.freeQuantity;
+    t.mrp = unit * t.qty;
+    t.rate = unit * t.buyQuantity;
+    t.discount = t.mrp > 0 ? (1 - t.rate / t.mrp) * 100 : 0;
+  } else {
+    t.qty = Math.max(1, parseInt(t.qty) || 1);
+    t.mrp = unit * t.qty;
+    t.discountType = t.discountType === 'amount' ? 'amount' : 'percent';
+    t.discount = Math.max(0, Math.min(99, parseFloat(t.discount) || 0));
+    if (t.discountType === 'amount') {
+      t.discountAmount = Math.min(t.mrp, Math.max(0, parseFloat(t.discountAmount) || 0));
+      t.rate = Math.max(0, t.mrp - t.discountAmount);
+      t.discount = t.mrp > 0 ? (t.discountAmount / t.mrp) * 100 : 0;
+    } else {
+      t.rate = Math.max(0, t.mrp * (1 - t.discount / 100));
+      t.discountAmount = t.mrp - t.rate;
+    }
+    t.buyQuantity = t.qty;
+    t.freeQuantity = 0;
+  }
+  t.tabs = t.qty * tabsPerPack;
+  return t;
+}
 function addTierRow(prefill) {
-  const mrp = parseFloat(document.getElementById('dPrice').value) || 0;
+  if (drawerTiers.length >= MAX_DRAWER_TIERS) { toast('Maximum 4 offer tiers per product', 'error'); return; }
   const nextQty = prefill?.qty || (drawerTiers.length ? Math.max(...drawerTiers.map(t=>t.qty||0)) + 1 : 1);
-  drawerTiers.push({
+  drawerTiers.push(tierBaseValues({
     rid: ++_tierRowSeq,
+    offerType: prefill?.offerType || 'discount',
     qty: prefill?.qty ?? nextQty,
-    discount: prefill?.discount ?? 0,
-    mrp: prefill?.mrp ?? (mrp * (prefill?.qty ?? nextQty)),
-    rate: prefill?.rate ?? (mrp * (prefill?.qty ?? nextQty))
-  });
+    buyQuantity: prefill?.buyQuantity ?? 1,
+    freeQuantity: prefill?.freeQuantity ?? 0,
+    discountType: prefill?.discountType || 'percent',
+    discount: prefill?.discount ?? prefill?.discountPct ?? 0,
+    discountAmount: prefill?.discountAmount ?? 0,
+    rate: prefill?.rate ?? 0,
+  }));
   renderTierRows();
 }
-function removeTierRow(rid) {
-  drawerTiers = drawerTiers.filter(t => t.rid !== rid);
-  renderTierRows();
-}
+function removeTierRow(rid) { drawerTiers = drawerTiers.filter(t => t.rid !== rid); renderTierRows(); }
 function updateTierRow(rid, field, value) {
   const t = drawerTiers.find(x => x.rid === rid);
   if (!t) return;
-  const mrp = parseFloat(document.getElementById('dPrice').value) || 0;
-  if (field === 'qty') {
-    t.qty = Math.max(1, parseInt(value) || 1);
-    t.mrp = mrp * t.qty;
-    t.rate = Math.round(t.mrp * (1 - (t.discount||0)/100));
-  } else if (field === 'discount') {
-    t.discount = Math.max(0, Math.min(99, parseFloat(value) || 0));
-    t.mrp = mrp * t.qty;
-    t.rate = Math.round(t.mrp * (1 - t.discount/100));
-  } else if (field === 'rate') {
-    t.rate = parseFloat(value) || 0;
-    t.mrp = mrp * t.qty;
-    t.discount = t.mrp > 0 ? Math.round((1 - t.rate/t.mrp) * 100) : 0;
-  }
+  if (field === 'offerType') t.offerType = value;
+  else if (field === 'discountType') t.discountType = value;
+  else if (field === 'discount') t.discount = Math.min(99, Math.max(0, parseFloat(value) || 0));
+  else if (field === 'discountAmount') t.discountAmount = Math.max(0, parseFloat(value) || 0);
+  else if (field === 'qty') t.qty = Math.max(1, parseInt(value) || 1);
+  else if (field === 'buyQuantity') t.buyQuantity = Math.max(1, parseInt(value) || 1);
+  else if (field === 'freeQuantity') t.freeQuantity = Math.max(0, parseInt(value) || 0);
+  tierBaseValues(t);
   renderTierRows();
 }
-function recalcAllTierRows() {
-  const mrp = parseFloat(document.getElementById('dPrice').value) || 0;
-  drawerTiers.forEach(t => {
-    t.mrp = mrp * t.qty;
-    t.rate = Math.round(t.mrp * (1 - (t.discount||0)/100));
-  });
-  renderTierRows();
-}
+function recalcAllTierRows() { drawerTiers.forEach(tierBaseValues); renderTierRows(); }
 function renderTierRows() {
   const container = document.getElementById('tierRowsContainer');
   const empty = document.getElementById('tierRowsEmpty');
   if (!container) return;
+  drawerTiers.forEach(tierBaseValues);
   drawerTiers.sort((a,b) => (a.qty||0) - (b.qty||0));
-  if (!drawerTiers.length) {
-    container.innerHTML = '';
-    if (empty) empty.style.display = 'block';
-    return;
-  }
+  if (!drawerTiers.length) { container.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
   if (empty) empty.style.display = 'none';
-  container.innerHTML = drawerTiers.map(t => `
-    <div class="tier-row">
-      <div class="tier-row-grid">
-        <div>
-          <div class="tier-row-label">Pack Qty</div>
-          <input class="tier-row-input" type="number" min="1" value="${t.qty}" onchange="updateTierRow(${t.rid},'qty',this.value)">
-        </div>
-        <div>
-          <div class="tier-row-label">Discount %</div>
-          <input class="tier-row-input" type="number" min="0" max="99" value="${t.discount}" onchange="updateTierRow(${t.rid},'discount',this.value)">
-        </div>
-        <div>
-          <div class="tier-row-label">Tier MRP (₹)</div>
-          <input class="tier-row-input" type="number" value="${t.mrp.toFixed(0)}" disabled style="opacity:0.6;">
-        </div>
-        <div>
-          <div class="tier-row-label">Sale Rate (₹)</div>
-          <input class="tier-row-input" type="number" min="0" value="${t.rate.toFixed(0)}" onchange="updateTierRow(${t.rid},'rate',this.value)">
-        </div>
-      </div>
-      <div class="tier-row-foot">
-        <div class="tier-row-preview">${t.qty * (parseInt(document.getElementById('dTabsPerPack')?.value) || 15)} tablets (${t.qty} pack${t.qty>1?'s':''}) → <b>${t.discount}% off</b> · ₹${t.rate.toFixed(0)} <span style="text-decoration:line-through;color:var(--text3);">₹${t.mrp.toFixed(0)}</span></div>
-        <button class="tier-row-remove" type="button" onclick="removeTierRow(${t.rid})">✕ Remove</button>
-      </div>
-    </div>
-  `).join('');
+  container.innerHTML = drawerTiers.map(t => {
+    const isBuyGet = t.offerType === 'buy_get';
+    const tabs = t.tabs || t.qty * (parseInt(document.getElementById('dTabsPerPack')?.value) || 15);
+    const pct = Math.round((t.discount || 0) * 100) / 100;
+    return `<div class="tier-row"><div class="tier-row-grid">
+      <div><div class="tier-row-label">Offer Type</div><select class="tier-row-input" onchange="updateTierRow(${t.rid},'offerType',this.value)"><option value="discount" ${!isBuyGet?'selected':''}>Discount</option><option value="buy_get" ${isBuyGet?'selected':''}>Buy X / Get Y</option></select></div>
+      ${isBuyGet ? `<div><div class="tier-row-label">Buy Qty</div><input class="tier-row-input" type="number" min="1" value="${t.buyQuantity}" onchange="updateTierRow(${t.rid},'buyQuantity',this.value)"></div><div><div class="tier-row-label">Free Qty</div><input class="tier-row-input" type="number" min="0" value="${t.freeQuantity}" onchange="updateTierRow(${t.rid},'freeQuantity',this.value)"></div>` : `<div><div class="tier-row-label">Pack Qty</div><input class="tier-row-input" type="number" min="1" value="${t.qty}" onchange="updateTierRow(${t.rid},'qty',this.value)"></div><div><div class="tier-row-label">Discount Type</div><select class="tier-row-input" onchange="updateTierRow(${t.rid},'discountType',this.value)"><option value="percent" ${t.discountType!=='amount'?'selected':''}>Percentage</option><option value="amount" ${t.discountType==='amount'?'selected':''}>Fixed ₹</option></select></div><div><div class="tier-row-label">${t.discountType==='amount'?'Discount ₹':'Discount %'}</div><input class="tier-row-input" type="number" min="0" max="${t.discountType==='amount' ? t.mrp : 99}" value="${t.discountType==='amount' ? Math.round(t.discountAmount*100)/100 : pct}" onchange="updateTierRow(${t.rid},'${t.discountType==='amount'?'discountAmount':'discount'}',this.value)"></div>`}
+      <div><div class="tier-row-label">Tier MRP (₹)</div><input class="tier-row-input" type="number" value="${t.mrp.toFixed(2)}" disabled style="opacity:0.6;"></div><div><div class="tier-row-label">Sale Rate (₹)</div><input class="tier-row-input" type="number" value="${t.rate.toFixed(2)}" disabled style="opacity:0.6;"></div>
+    </div><div class="tier-row-foot"><div class="tier-row-preview">${tabs} tablets · ${isBuyGet ? `Buy ${t.buyQuantity} Get ${t.freeQuantity}` : `${pct.toFixed(2)}% effective saving`} → <b>₹${t.rate.toFixed(2)}</b> <span style="text-decoration:line-through;color:var(--text3);">₹${t.mrp.toFixed(2)}</span></div><button class="tier-row-remove" type="button" onclick="removeTierRow(${t.rid})">✕ Remove</button></div></div>`;
+  }).join('');
 }
 async function saveProductFromDrawer() {
   const name = document.getElementById('dName').value.trim();
@@ -4037,12 +4048,20 @@ async function saveProductFromDrawer() {
     sale_price:       parseFloat(document.getElementById('dSalePrice').value)||null,
     discount_pct:     parseFloat(document.getElementById('dDiscountPct').value)||null,
     tablets_per_pack: parseInt(document.getElementById('dTabsPerPack').value)||15,
-    tiers:            drawerTiers.map(t => ({
-                         tabs: t.qty * (parseInt(document.getElementById('dTabsPerPack').value)||15),
-                         discountPct: t.discount,
-                         mrp: Math.round(t.mrp),
-                         rate: Math.round(t.rate),
-                       })),
+    tiers:            drawerTiers.map(t => {
+                         tierBaseValues(t);
+                         return {
+                           tabs: t.tabs,
+                           offerType: t.offerType === 'buy_get' ? 'buy_get' : 'discount',
+                           buyQuantity: t.buyQuantity,
+                           freeQuantity: t.freeQuantity,
+                           discountType: t.offerType === 'buy_get' ? null : t.discountType,
+                           discountValue: t.offerType === 'buy_get' ? 0 : (t.discountType === 'amount' ? t.discountAmount : t.discount),
+                           discountPct: t.discount,
+                           mrp: Math.round(t.mrp * 100) / 100,
+                           rate: Math.round(t.rate * 100) / 100,
+                         };
+                       }),
     offer_text:       document.getElementById('dOfferText').value,
     hsn:              document.getElementById('dHsn').value||'30049099',
     stock:            parseInt(document.getElementById('dStock').value)||0,
@@ -7668,6 +7687,7 @@ async function loadSettings() {
         try { localStorage.setItem(PALETTE_KEY, selectedPalette); } catch {}
       }
     }
+    await loadVitaConfig();
     const serverLayoutTheme = d.interface_theme_style || d.dashboard_theme;
     if (serverLayoutTheme || localStorage.getItem(LAYOUT_THEME_KEY)) {
       const localLayoutTheme = THEME_ALIASES[localStorage.getItem(LAYOUT_THEME_KEY)] || localStorage.getItem(LAYOUT_THEME_KEY);
@@ -7678,6 +7698,59 @@ async function loadSettings() {
       }
     }
   } catch {}
+}
+
+async function loadVitaConfig() {
+  try {
+    const r = await apiFetch('/api/admin/vitapoints/config');
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `Server error (${r.status})`);
+    const values = Object.fromEntries((d.config || []).map(row => [row.key, row.value]));
+    const map = {
+      points_per_rupee_earn: 'vpPointsPerRupeeEarn', points_per_rupee_redeem: 'vpPointsPerRupeeRedeem',
+      max_earn_per_order: 'vpMaxEarnPerOrder', max_redeem_per_order: 'vpMaxRedeemPerOrder',
+      release_hold_days: 'vpReleaseHoldDays', points_expiry_months: 'vpPointsExpiryMonths',
+      milestone_threshold: 'vpMilestoneThreshold', milestone_max_discount: 'vpMilestoneMaxDiscount',
+      milestone_min_order: 'vpMilestoneMinOrder',
+    };
+    Object.entries(map).forEach(([key, id]) => { if (values[key] !== undefined && document.getElementById(id)) document.getElementById(id).value = values[key]; });
+    const rate = Number(values.points_per_rupee_redeem || 150);
+    const status = document.getElementById('vitaConfigStatus');
+    if (status) status.textContent = `Backend rate: ${rate.toLocaleString('en-IN')} points = ₹1 · values loaded`;
+  } catch (e) {
+    const status = document.getElementById('vitaConfigStatus');
+    if (status) status.textContent = 'Could not load backend VitaPoints values';
+  }
+}
+
+async function saveVitaConfig() {
+  const fields = {
+    points_per_rupee_earn: 'vpPointsPerRupeeEarn', points_per_rupee_redeem: 'vpPointsPerRupeeRedeem',
+    max_earn_per_order: 'vpMaxEarnPerOrder', max_redeem_per_order: 'vpMaxRedeemPerOrder',
+    release_hold_days: 'vpReleaseHoldDays', points_expiry_months: 'vpPointsExpiryMonths',
+    milestone_threshold: 'vpMilestoneThreshold', milestone_max_discount: 'vpMilestoneMaxDiscount',
+    milestone_min_order: 'vpMilestoneMinOrder',
+  };
+  const values = {};
+  for (const [key, id] of Object.entries(fields)) {
+    const n = Number(document.getElementById(id)?.value);
+    if (!Number.isFinite(n) || n < 0 || (key === 'points_per_rupee_redeem' && n < 1)) { toast(`Invalid VitaPoints value for ${key}`, 'error'); return; }
+    values[key] = n;
+  }
+  const run = async () => {
+    for (const [key, value] of Object.entries(values)) {
+      const r = await apiFetch(`/api/admin/vitapoints/config/${encodeURIComponent(key)}`, { method: 'PUT', body: JSON.stringify({ value }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || `Could not save ${key}`);
+    }
+    const status = document.getElementById('vitaConfigStatus');
+    if (status) status.textContent = `Saved · ${Number(values.points_per_rupee_redeem).toLocaleString('en-IN')} points = ₹1`;
+    toast('VitaPoints settings saved ✅');
+  };
+  try {
+    if (typeof confirmCriticalAction === 'function') await confirmCriticalAction('Save VitaPoints economics? These values affect future loyalty calculations.', run);
+    else await run();
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 async function saveSettings() {

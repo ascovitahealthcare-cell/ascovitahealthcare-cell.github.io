@@ -30,14 +30,17 @@
   };
 
   // ── VITA POINTS MICRO-DISPLAY ──
-  try {
-    var e = typeof VITA_EARN_PER_RUPEE !== 'undefined' ? VITA_EARN_PER_RUPEE : 1;
-    var v = typeof VITA_REDEEM_PER_RUPEE !== 'undefined' ? VITA_REDEEM_PER_RUPEE : 150;
-    var a = document.getElementById('vitaMicroEarn');
-    var b = document.getElementById('vitaMicroValue');
-    if (a) a.textContent = e + ' point' + (e > 1 ? 's' : '') + ' per ₹1';
-    if (b) b.textContent = v + ' points = ₹1 off';
-  } catch (x) { /* decorative — never break the page */ }
+  window.updateVitaMicrocopy = function () {
+    try {
+      var e = typeof VITA_EARN_PER_RUPEE !== 'undefined' ? VITA_EARN_PER_RUPEE : 1;
+      var v = typeof VITA_REDEEM_PER_RUPEE !== 'undefined' ? VITA_REDEEM_PER_RUPEE : 150;
+      var a = document.getElementById('vitaMicroEarn');
+      var b = document.getElementById('vitaMicroValue');
+      if (a) a.textContent = e + ' point' + (e > 1 ? 's' : '') + ' per ₹1';
+      if (b) b.textContent = v + ' points = ₹1 off';
+    } catch (x) { /* decorative — never break the page */ }
+  };
+  window.updateVitaMicrocopy();
 
   // ── SERVICE WORKER ──
   if ('serviceWorker' in navigator) {

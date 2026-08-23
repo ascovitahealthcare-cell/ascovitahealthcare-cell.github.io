@@ -494,7 +494,7 @@ input[type=file]{display:none;}
 .price-preview-mrp{ font-size:0.85rem; color:var(--text3); text-decoration:line-through; }
 .price-preview-disc{ background:rgba(74,138,40,0.15); color:var(--green-text); border-radius:6px; padding:3px 9px; font-size:0.8rem; font-weight:700; margin-left:auto; }
 .tier-row{ background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:10px; }
-.tier-row-grid{ display:grid; grid-template-columns:0.8fr 0.9fr 1fr 1fr; gap:8px; align-items:end; }
+.tier-row-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(118px,1fr)); gap:8px; align-items:end; }
 .tier-row-label{ font-size:0.65rem; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; }
 .tier-row-input{ width:100%; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:7px 9px; color:var(--text); font-size:0.8rem; outline:none; }
 .tier-row-input:focus{ border-color:var(--green); }
@@ -2803,7 +2803,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <div class="section-ico gold">📦</div>
       <div style="flex:1;">
         <div style="font-weight:700;font-size:0.88rem;">Quantity Tier Discount</div>
-        <div style="font-size:0.7rem;color:var(--text3);">1 pack, 2 pack, 3 pack… each with its own % off — shown as pack-deal cards on the storefront</div>
+        <div style="font-size:0.7rem;color:var(--text3);">Up to 4 offer tiers. Mix Buy X/Get Y and percentage or fixed discounts; the strongest valid offer is highlighted on the storefront.</div>
       </div>
       <button class="btn btn-secondary btn-sm" type="button" onclick="addTierRow()">＋ Add Tier</button>
     </div>
@@ -2813,7 +2813,7 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <div style="font-size:0.68rem;color:var(--text3);margin-top:4px;">e.g. 15 — this is what turns "2 packs" into "30 Tablets" on the storefront card</div>
     </div>
     <div id="tierRowsContainer"></div>
-    <div id="tierRowsEmpty" style="font-size:0.78rem;color:var(--text3);padding:10px 2px;">No tiers yet — click "＋ Add Tier" to create pack deals like 1 pack / 2 pack / 3 pack, each auto-calculating its rate from a % off MRP.</div>
+    <div id="tierRowsEmpty" style="font-size:0.78rem;color:var(--text3);padding:10px 2px;">No tiers yet — click "＋ Add Tier" to create up to four mixed offers. The storefront ranks them by effective savings.</div>
 
     <!-- Inventory -->
     <div class="section-ico-hdr" style="margin-top:20px;"><div class="section-ico blue">📊</div><div style="font-weight:700;font-size:0.88rem;">Inventory</div></div>
@@ -4432,6 +4432,28 @@ body.theme-frost .card.frost-navy .kpi-val, body.theme-frost .card.frost-navy .k
       <div class="form-group" style="margin-bottom:14px"><label class="form-label">Offer headline</label><input type="text" class="form-control" id="offerLabel" value="Mix & Match — bundle discounts on every pack" maxlength="120"></div>
       <div class="form-group"><label class="form-label">Offer explanation</label><input type="text" class="form-control" id="offerSub" value="Add any 4 items and the cheapest one is free. No code needed." maxlength="180"></div>
       <div style="margin-top:14px;padding:10px 12px;background:rgba(94,145,121,.10);border-radius:8px;color:var(--text3);font-size:.74rem;line-height:1.5;">Notifications are never sent without browser permission. Customers can choose Allow, Not now, or Do not show again.</div>
+    </div>
+    <div class="card" id="vitaPointsConfigCard">
+      <div class="card-hdr"><span class="card-title">💎 VitaPoints Controls</span><span class="badge badge-gold owner-only">Owner only</span></div>
+      <div style="color:var(--text3);font-size:0.8rem;line-height:1.55;margin:-10px 0 16px;">All values are backend-controlled and apply to new calculations after save. Existing balances and paid orders are not rewritten. Current default redemption is 150 points = ₹1.</div>
+      <div class="form-row col2">
+        <div class="form-group"><label class="form-label">Points earned per ₹1</label><input type="number" class="form-control" id="vpPointsPerRupeeEarn" min="0" step="0.01" value="1"></div>
+        <div class="form-group"><label class="form-label">Points per ₹1 redemption</label><input type="number" class="form-control" id="vpPointsPerRupeeRedeem" min="1" step="1" value="150"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label class="form-label">Max earned per order</label><input type="number" class="form-control" id="vpMaxEarnPerOrder" min="0" step="1" value="5000"></div>
+        <div class="form-group"><label class="form-label">Max redeemed per order</label><input type="number" class="form-control" id="vpMaxRedeemPerOrder" min="0" step="1" value="5000"></div>
+      </div>
+      <div class="form-row col2">
+        <div class="form-group"><label class="form-label">Release hold (days)</label><input type="number" class="form-control" id="vpReleaseHoldDays" min="0" step="1" value="7"></div>
+        <div class="form-group"><label class="form-label">Points expiry (months, 0 = never)</label><input type="number" class="form-control" id="vpPointsExpiryMonths" min="0" step="1" value="0"></div>
+      </div>
+      <div class="form-row col3">
+        <div class="form-group"><label class="form-label">Milestone threshold</label><input type="number" class="form-control" id="vpMilestoneThreshold" min="0" step="1" value="15000"></div>
+        <div class="form-group"><label class="form-label">Milestone max discount (₹)</label><input type="number" class="form-control" id="vpMilestoneMaxDiscount" min="0" step="0.01" value="100"></div>
+        <div class="form-group"><label class="form-label">Milestone min order (₹)</label><input type="number" class="form-control" id="vpMilestoneMinOrder" min="0" step="0.01" value="299"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;flex-wrap:wrap;"><span id="vitaConfigStatus" style="font-size:.72rem;color:var(--text3);">Loading backend values…</span><button class="btn btn-gold owner-only" type="button" onclick="saveVitaConfig()">💾 Save VitaPoints</button></div>
     </div>
     <div class="card">
       <div class="card-hdr"><span class="card-title">💰 Tax Settings (GST)</span></div>
