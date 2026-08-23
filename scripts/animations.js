@@ -57,6 +57,12 @@
 
   // ── CLICK WAVE ──
   document.addEventListener('click', function(e) {
+    // The global wave was decorative work on every link and touch tap. Keep
+    // feedback for primary controls only, and skip it for reduced-motion or
+    // low-power/touch devices where it competes with scrolling.
+    const btn = e.target.closest('.btn-primary, .btn-gold, .btn-outline, .add-cart-btn');
+    if (reduceMotion || lowPowerDevice || !btn) return;
+
     const wave = document.createElement('div');
     wave.className = 'click-wave';
     wave.style.left = e.clientX + 'px';
@@ -65,7 +71,6 @@
     setTimeout(function() { wave.remove(); }, 700);
 
     // Ripple on buttons
-    const btn = e.target.closest('.btn-primary, .btn-gold, .btn-outline, .add-cart-btn');
     if (btn) {
       const r = document.createElement('span');
       r.className = 'ripple-effect';

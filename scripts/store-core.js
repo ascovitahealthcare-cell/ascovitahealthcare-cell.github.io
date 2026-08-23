@@ -1161,7 +1161,14 @@ async function loadProductRatings() {
     // everyone, and this function just aggregates the shared result.
     // If something else already kicked off the batch (nothing does by
     // default), the first Supabase call happens here — still exactly one.
-    const rows = await loadReviewsBatch();
+    // store-core is deferred before auth-core; wait briefly for the shared
+    // reviews loader instead of throwing when this file is loaded dynamically
+    // after DOMContentLoaded or on a slow device.
+    const reviewDeadline = Date.now() + 8000;
+    while (typeof loadReviewsBatch !== 'function' && Date.now() < reviewDeadline) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    const rows = typeof loadReviewsBatch === 'function' ? await loadReviewsBatch() : [];
     const totals = {};
     (rows || []).forEach((r) => {
       const id = r.productId;
@@ -1570,7 +1577,10 @@ function renderProductCard(p, options = {}){
   const hasRealImage = !!(homeThumb || (p && p.image && String(p.image).trim()));
   const disc=p.salePrice&&p.price?Math.round((1-p.salePrice/p.price)*100):0;
   const rawTiers=p._backendTiers||QTY_TIERS[p.id];
-  const tiers=rawTiers ? rawTiers.filter(t=>t.rate!=null&&t.mrp!=null&&Number(t.mrp)>0&&Number(t.rate)>=0&&Number(t.rate)<=Number(t.mrp)).map((t,i)=>({...t,discountPct:Number.isFinite(Number(t.discountPct))?Number(t.discountPct):((Number(t.mrp)-Number(t.rate))/Number(t.mrp))*100,savingAmount:Math.max(0,Number(t.mrp)-Number(t.rate)),_offerIndex:i})).sort((a,b)=>(b.discountPct-a.discountPct)||(b.savingAmount-a.savingAmount)||(Number(b.tabs||0)-Number(a.tabs||0))||(a._offerIndex-b._offerIndex)).map(({_offerIndex,...t})=>t) : null;
+  const normalizedTiers = Array.isArray(rawTiers) ? rawTiers.filter(t=>t&&t.rate!=null&&t.mrp!=null&&Number(t.mrp)>0&&Number(t.rate)>=0&&Number(t.rate)<=Number(t.mrp)).map((t,i)=>({...t,discountPct:Number.isFinite(Number(t.discountPct))?Number(t.discountPct):((Number(t.mrp)-Number(t.rate))/Number(t.mrp))*100,savingAmount:Math.max(0,Number(t.mrp)-Number(t.rate)),_offerIndex:i})).sort((a,b)=>(b.discountPct-a.discountPct)||(b.savingAmount-a.savingAmount)||(Number(b.tabs||0)-Number(a.tabs||0))||(a._offerIndex-b._offerIndex)).map(({_offerIndex,...t})=>t) : [];
+  // An unpriced tier table is not a tiered offer. Treat it as absent so an
+  // empty array can never make tiers[0].rate throw during catalogue render.
+  const tiers=normalizedTiers.length ? normalizedTiers : null;
   const maxDisc=tiers?Math.max(...tiers.map(t=>Number(t.discountPct)||0)):disc;
   const baseRate=tiers?tiers[0].rate:(p.salePrice||p.price);
   const baseMRP=tiers?tiers[0].mrp:p.price;

@@ -5579,7 +5579,7 @@ button, [role="button"] {
 .edu-tab {
   background: var(--paper, #FBF3E8); border: 1px solid rgba(125,98,89,.22);
   border-radius: 999px; padding: 8px 16px; font-size: .78rem; font-weight: 600;
-  color: var(--t-mid, #3d4a44); cursor: pointer; transition: all .2s ease;
+  color: var(--t-mid, #3d4a44); cursor: pointer; transition: background-color .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 .edu-tab.active { background: var(--green, #4d6a4e); color: #fff; border-color: var(--green, #4d6a4e); box-shadow: 0 4px 12px rgba(77,106,78,.3); }
 .edu-panel { display: none; animation: fz-in .4s var(--rise, ease-out) both; }
@@ -5808,7 +5808,7 @@ button, [role="button"] {
 <div class="app-topbar" id="appTopBar">
   <!-- Logo -->
   <a href="#" onclick="showPage('home');return false;" style="display:flex;align-items:center;text-decoration:none;flex-shrink:0;gap:8px;">
-    <img class="app-topbar-logo" src="/assets/ozylix-mark.svg" alt="Ozylix" onerror="this.onerror=null;this.style.display='none';" decoding="async">
+    <img class="app-topbar-logo" src="/assets/ozylix-mark.svg" alt="Ozylix" fetchpriority="high" decoding="async">
     <span class="app-topbar-brand-name">Ozylix</span>
   </a>
   <!-- B2B pill only -->
@@ -7161,7 +7161,7 @@ button, [role="button"] {
              short line of copy: the full rules live at the destination. -->
         <button type="button" class="mm-shop-banner" id="mmShopBanner" onclick="goMixMatch()">
           <span class="mm-visual" aria-hidden="true">
-            <img src="" alt="" id="mmShopImg" data-media-key="shop.banner.mix_match" loading="lazy" style="display:none" onerror="this.style.display='none'">
+            <img src="" alt="Mix and Match bundle discount banner" id="mmShopImg" data-media-key="shop.banner.mix_match" loading="lazy" style="display:none" onerror="this.style.display='none'">
             <span class="mm-visual-ico">🎁</span>
           </span>
           <span class="mm-copy">
@@ -7175,7 +7175,7 @@ button, [role="button"] {
              real future date. -->
         <div id="shopOfferBar"></div>
         <div class="shop-banner-slot" id="shopBannerSlot1" data-no-img="yes">
-          <img src="" alt="" id="shopBannerImg1" data-media-key="shop.banner.1" loading="lazy" style="display:none" onerror="this.style.display='none'">
+          <img src="" alt="Ozylix supplement offer banner" id="shopBannerImg1" data-media-key="shop.banner.1" loading="lazy" style="display:none" onerror="this.style.display='none'">
           <div class="sb-overlay"><div class="sb-copy">
             <h3>&#10024; Wellness, made in India</h3>
             <p>FSSAI approved, crafted at our Anand facility</p>
@@ -7184,7 +7184,7 @@ button, [role="button"] {
         <div class="shop-banner-slot is-vita" id="shopBannerSlot2" data-no-img="yes"
              onclick="openVitaPopup()" role="button" tabindex="0"
              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openVitaPopup()}">
-          <img src="" alt="" id="shopBannerImg2" data-media-key="shop.banner.2" loading="lazy" style="display:none" onerror="this.style.display='none'">
+          <img src="" alt="VitaPoints rewards banner" id="shopBannerImg2" data-media-key="shop.banner.2" loading="lazy" style="display:none" onerror="this.style.display='none'">
           <div class="sb-overlay"><div class="sb-copy">
             <span class="vp3d" aria-hidden="true"><picture><source srcset="/assets/vitapoint-3d/vitapoint-coin-still.webp" media="(prefers-reduced-motion: reduce)"><img src="/assets/vitapoint-3d/vitapoint-coin.webp" alt="" width="176" height="176" loading="lazy" decoding="async"></picture></span>
             <h3>&#128142; Shop. Earn. Redeem.</h3>
