@@ -2514,6 +2514,42 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
 }
 .qt-save { margin-top: 3px; font-size: .68rem; font-weight: 700; color: var(--t-mid); }
 
+/* ── Offer thumbnails on each pack tier ────────────────────────────────────
+   One small image per pack the customer receives, with the free ones flagged.
+   The row is the quantity stated visually rather than in a fourth line of
+   small text. Fixed 34px boxes with explicit img dimensions: these sit inside
+   a two-column grid on phones and must not reflow it when they decode. */
+.qt-thumbs {
+  display: flex; align-items: center; justify-content: center;
+  gap: 3px; margin: 5px 0 1px; min-height: 36px;
+}
+.qt-thumb {
+  position: relative; width: 34px; height: 34px; flex: 0 0 auto;
+  border-radius: 9px; overflow: hidden;
+  background: var(--paper, #fff);
+  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+}
+.qt-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The free pack has to be distinguishable at a glance from the paid ones
+   beside it, at 34px, without a legend — hence a ring plus a word, not a
+   colour alone. Same green as the "+N FREE" badge, so the two read as one
+   statement rather than two unrelated marks. */
+.qt-thumb-free { box-shadow: 0 0 0 2px #15803D, 0 1px 4px rgba(0,0,0,.12); }
+.qt-thumb-free b {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: #15803D; color: #fff;
+  font-size: .42rem; font-weight: 800; letter-spacing: .06em;
+  line-height: 1.55; text-align: center;
+}
+.qt-thumb-more {
+  font-size: .62rem; font-weight: 800; color: var(--t-mid);
+  padding: 0 3px; flex: 0 0 auto;
+}
+@media (max-width: 560px) {
+  .qt-thumbs { gap: 2px; min-height: 32px; }
+  .qt-thumb { width: 30px; height: 30px; border-radius: 8px; }
+}
+
 /* ── Discount badge on each pack tier ──────────────────────────────────────
    The saving used to be a low-contrast tint pill next to a struck MRP that
    phones hid outright (see the 560px block below), so on the screen most

@@ -17,7 +17,7 @@
 // changing this string is what actually evicts the bad copy from devices
 // already carrying it. Bump it on any deploy that fixes a page-breaking
 // bug — a fix nobody can receive is not shipped.
-const CACHE_NAME = 'ozylix-pwa-v23';
+const CACHE_NAME = 'ozylix-pwa-v24';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache on install (your core pages)
@@ -179,7 +179,12 @@ self.addEventListener('push', event => {
     body: data.body || 'Check out our latest offers!',
     icon: '/assets/ozylix-icon-192.png',
     badge: '/assets/ozylix-icon-192.png',
-    data: { url: data.url || '/' }
+    data: { url: data.url || '/' },
+    // The sender groups related messages under a tag (cart recovery, offer,
+    // review request). Honouring it means a second message in the same group
+    // REPLACES the first in the tray instead of stacking beside it — three
+    // cart reminders should not read as three separate abandoned carts.
+    tag: data.tag || 'ozylix-marketing'
   };
   event.waitUntil(self.registration.showNotification(title, options));
 });

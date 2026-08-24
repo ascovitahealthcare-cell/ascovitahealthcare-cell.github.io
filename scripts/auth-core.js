@@ -1002,6 +1002,48 @@ function tierUnitPrice(tier) {
                     : per.toFixed(per < 10 ? 2 : 1);
 }
 
+// ── OFFER THUMBNAILS ───────────────────────────────────────────────────────
+// A tier card said "60 tablets · 2 months · Buy 2 + 1 free" in four separate
+// lines of small text, and left the customer to assemble the offer out of
+// them. Showing the packs makes the quantity the first thing read rather than
+// the last: three boxes, one of them flagged free, is understood before any
+// of the words are.
+//
+// Capped at MAX_THUMBS so a 4-pack tier does not shrink each box to a smudge
+// on a 390px screen; anything beyond that becomes a "+N" chip. Every <img>
+// carries explicit dimensions because these render inside a grid that must
+// not reflow once they load.
+const OFFER_THUMB_MAX = 4;
+
+function buildOfferThumbs(p, tier) {
+  const src = typeof getProductImg === 'function' ? getProductImg(p) : (p && p.image);
+  if (!src) return '';
+
+  const free = tier.offerType === 'buy_get' ? Math.max(0, Number(tier.freeQuantity) || 0) : 0;
+  // Units the customer physically receives. buy-get states it directly;
+  // everything else derives it from pack size, the same way packLabel does.
+  const smallest = Number(tier._unitTabs) || 0;
+  const paid = free > 0
+    ? Math.max(1, Number(tier.buyQuantity) || 1)
+    : (smallest ? Math.max(1, Math.round(Number(tier.tabs) / smallest)) : 1);
+  const total = paid + free;
+  if (total < 2 && free === 0) return '';   // a single pack shows nothing new
+
+  const shown = Math.min(total, OFFER_THUMB_MAX);
+  const overflow = total - shown;
+  let out = '';
+  for (let i = 0; i < shown; i++) {
+    // Free units are the LAST ones, which is how the offer is worded.
+    const isFree = free > 0 && i >= shown - Math.min(free, shown);
+    out += `<span class="qt-thumb${isFree ? ' qt-thumb-free' : ''}">`
+        +  `<img src="${src}" alt="" width="34" height="34" loading="lazy" decoding="async">`
+        +  (isFree ? '<b>FREE</b>' : '')
+        +  '</span>';
+  }
+  if (overflow > 0) out += `<span class="qt-thumb-more">+${overflow}</span>`;
+  return `<span class="qt-thumbs" aria-hidden="true">${out}</span>`;
+}
+
 function buildTierWidget(p) {
   const tiers = getProductTiers(p);
   if (!tiers) return '';            // no tiers, or none priced yet
@@ -1020,7 +1062,15 @@ function buildTierWidget(p) {
   // smallest one. The old code hardcoded 15/30/45 and fell through to
   // "4 Packs" for everything else, which labelled the 60-tablet Multidiata
   // box — a single carton — as four packs.
-  const unit = Number(tiers[0].tabs) || 0;
+  // The SMALLEST pack, found by looking. getProductTiers() sorts by discount
+  // descending, so tiers[0] is the deepest-discount tier — usually the
+  // LARGEST pack. Reading the unit off it made `n` a fraction for every
+  // smaller tier and 1 for the largest, so packLabel() returned '' for all of
+  // them and "3 packs of 15" never appeared on any product.
+  const unit = tiers.reduce((min, t) => {
+    const n = Number(t.tabs) || 0;
+    return n > 0 && (min === 0 || n < min) ? n : min;
+  }, 0);
   const packLabel = (tier) => {
     const n = unit ? Number(tier.tabs) / unit : 0;
     if (!Number.isInteger(n) || n < 2) return '';
@@ -1038,6 +1088,7 @@ function buildTierWidget(p) {
       </div>
       <div class="qty-tiers-grid" role="radiogroup" aria-label="Choose a pack size">
         ${tiers.map((tier, i) => {
+          tier._unitTabs = unit;
           const isSel  = i === sel;
           const isBest = i === bestIdx;
           const per    = tierUnitPrice(tier);
@@ -1064,6 +1115,7 @@ function buildTierWidget(p) {
             ${isBest ? '<span class="qt-flag">Best value</span>' : ''}
             <span class="qt-size"><b>${tier.tabs}</b> tablets · ${durationLabel(tier.tabs)}</span>
             <span class="qt-packs">${packs || '&nbsp;'}</span>
+            ${buildOfferThumbs(p, tier)}
             <span class="qt-dose">1 tablet a day</span>
             <span class="qt-rate">${rupee(tier.rate)}</span>
             ${per ? `<span class="qt-unit">${'₹' + per} per tablet</span>` : ''}
