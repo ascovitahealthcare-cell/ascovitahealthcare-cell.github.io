@@ -961,13 +961,34 @@ function _persistSelectedTiers(){ try { localStorage.setItem('asc_selected_tiers
 // month, so the 15-tab tier read "1 month supply" and the 60-tab carton
 // read "4 months" — both wrong. Dosage is ONE tablet a day, so:
 //   15 tabs = 15 days · 30 tabs = 30 days (one month) · 60 tabs = 2 months.
-function durationLabel(tabs) {
-  const n = Number(tabs) || 0;
-  if (n <= 15) return n + '-day' + (n === 1 ? '' : '') + ' pack';
+// dosePerDay comes from the product (admin: "Tablets per day"). It used to be
+// assumed to be 1 for the whole catalogue, so a twice-daily product's 60-tab
+// pack was sold as "2 months" when it is one. Falls back to 1 when unset,
+// which is how every existing product already behaves.
+function durationLabel(tabs, dosePerDay) {
+  const per = Number(dosePerDay) > 0 ? Number(dosePerDay) : 1;
+  const n = Math.round((Number(tabs) || 0) / per);   // days of supply
+  if (n <= 0) return '';
+  if (n < 30) return n + ' day' + (n === 1 ? '' : 's');
   const months = Math.floor(n / 30);
   const days = n % 30;
   if (days) return months + ' month' + (months === 1 ? '' : 's') + ' + ' + days + ' days';
   return months + ' month' + (months === 1 ? '' : 's');
+}
+
+// "4 tubes · 60 tablets". Only claims a unit count when the pack size divides
+// evenly into the tier — a 50-tab tier on a 15-tab tube is not 3.33 tubes, so
+// it states the tablets alone rather than something it cannot stand behind.
+function packComposition(tier, tabletsPerPack, packUnit) {
+  const tabs = Number(tier.tabs) || 0;
+  const perPack = Number(tabletsPerPack) || 0;
+  const noun = String(packUnit || 'pack').trim().replace(/s$/, '') || 'pack';
+  if (!tabs) return '';
+  if (perPack > 0 && tabs % perPack === 0) {
+    const units = tabs / perPack;
+    if (units >= 2) return units + ' ' + noun + 's · ' + tabs + ' tablets';
+  }
+  return tabs + ' tablets';
 }
 function getProductTiers(p) {
   const raw = p && (p._backendTiers || (typeof QTY_TIERS !== 'undefined' ? QTY_TIERS[p.id] : null));
@@ -1020,8 +1041,6 @@ function buildOfferThumbs(p, tier) {
   if (!src) return '';
 
   const free = tier.offerType === 'buy_get' ? Math.max(0, Number(tier.freeQuantity) || 0) : 0;
-  // Units the customer physically receives. buy-get states it directly;
-  // everything else derives it from pack size, the same way packLabel does.
   const smallest = Number(tier._unitTabs) || 0;
   const paid = free > 0
     ? Math.max(1, Number(tier.buyQuantity) || 1)
@@ -1029,18 +1048,27 @@ function buildOfferThumbs(p, tier) {
   const total = paid + free;
   if (total < 2 && free === 0) return '';   // a single pack shows nothing new
 
-  const shown = Math.min(total, OFFER_THUMB_MAX);
-  const overflow = total - shown;
-  let out = '';
-  for (let i = 0; i < shown; i++) {
-    // Free units are the LAST ones, which is how the offer is worded.
-    const isFree = free > 0 && i >= shown - Math.min(free, shown);
-    out += `<span class="qt-thumb${isFree ? ' qt-thumb-free' : ''}">`
-        +  `<img src="${src}" alt="" width="34" height="34" loading="lazy" decoding="async">`
-        +  (isFree ? '<b>FREE</b>' : '')
-        +  '</span>';
+  const pack = (isFree, count) =>
+    `<span class="qt-thumb${isFree ? ' qt-thumb-free' : ''}">`
+    + `<img src="${src}" alt="" width="34" height="34" loading="lazy" decoding="async">`
+    + (count > 1 ? `<i class="qt-thumb-x">×${count}</i>` : '')
+    + (isFree ? '<b>FREE</b>' : '')
+    + '</span>';
+
+  let out;
+  if (total <= OFFER_THUMB_MAX) {
+    // Few enough to draw literally, one box per pack.
+    out = '';
+    for (let i = 0; i < paid; i++) out += pack(false, 1);
+    for (let i = 0; i < free; i++) out += pack(true, 1);
+  } else {
+    // Too many to draw one-for-one. The first attempt truncated the literal
+    // row and appended "+N", which on a buy-3-get-3 rendered as one paid box,
+    // three FREE boxes and "+2" — it read as though almost everything was
+    // free. Collapsing to one box per KIND with a multiplier keeps the ratio
+    // honest at any size: "×3" paid beside "×3 FREE".
+    out = pack(false, paid) + (free > 0 ? pack(true, free) : '');
   }
-  if (overflow > 0) out += `<span class="qt-thumb-more">+${overflow}</span>`;
   return `<span class="qt-thumbs" aria-hidden="true">${out}</span>`;
 }
 
@@ -1050,7 +1078,13 @@ function buildTierWidget(p) {
   const sel = currentTierIdx(p, tiers);
   const t = tiers[sel];
   const saving = t.mrp - t.rate;
-  const rupee = (n) => '₹' + Number(n).toLocaleString('en-IN');
+  // Whole rupees. Interpolated tiers produced values like 999.01, and a price
+  // carrying two decimals of arithmetic noise reads to a customer as a mistake.
+  const rupee = (n) => '₹' + Math.round(Number(n) || 0).toLocaleString('en-IN');
+  const tabletsPerPack = Number(p.tabletsPerPack) || 0;
+  const packUnit = p.packUnit || '';
+  const dosePerDay = Number(p.dosePerDay) > 0 ? Number(p.dosePerDay) : 1;
+  const doseText = dosePerDay === 1 ? '1 tablet a day' : dosePerDay + ' tablets a day';
 
   // Best value is the deepest discount, resolved once rather than inside
   // the map — with `Math.max` recomputed per card it was O(n²) and, more
@@ -1093,16 +1127,21 @@ function buildTierWidget(p) {
           const isBest = i === bestIdx;
           const per    = tierUnitPrice(tier);
           const packs  = packLabel(tier);
-          const off    = Number(tier.discountPct) || 0;
+          // Whole percent. 28.5% OFF shipped to customers; a discount is a
+          // headline number, not a measurement, and the half point buys nothing.
+          const off    = Math.round(Number(tier.discountPct) || 0);
           const save   = Number(tier.savingAmount != null ? tier.savingAmount : tier.mrp - tier.rate) || 0;
           // What the offer IS, said the way a shopper reads it. A buy-get tier
           // is a free-item offer first and a percentage second, so it leads
           // with the free units; everything else leads with the percentage.
           const freeUnits = tier.offerType === 'buy_get' ? (Number(tier.freeQuantity) || 0) : 0;
-          const pctText = off > 0 ? `${off.toFixed(off % 1 ? 1 : 0)}% OFF` : '';
-          const offerLabel = freeUnits > 0
+          const pctText = off > 0 ? `${off}% OFF` : '';
+          // An admin-written label wins over the generated one — that is the
+          // point of the field. Falls back to the generated wording when blank.
+          const custom = String(tier.displayLabel || '').trim();
+          const offerLabel = custom || (freeUnits > 0
             ? `Buy ${tier.buyQuantity || 1} + ${freeUnits} free`
-            : (off > 0 ? `${off.toFixed(off % 1 ? 1 : 0)}% off` : 'Offer');
+            : (off > 0 ? `${off}% off` : 'Offer'));
           // The badge is the one thing on the card that has to survive being
           // glanced at. Free units beat a percentage for a buy-get tier; a
           // buy-get tier with no percentage still gets a badge, which the old
@@ -1113,10 +1152,11 @@ function buildTierWidget(p) {
                   class="qty-tier${isSel ? ' selected' : ''}${isBest ? ' best-value' : ''}"
                   onclick="selectTier(${p.id}, ${i})">
             ${isBest ? '<span class="qt-flag">Best value</span>' : ''}
-            <span class="qt-size"><b>${tier.tabs}</b> tablets · ${durationLabel(tier.tabs)}</span>
-            <span class="qt-packs">${packs || '&nbsp;'}</span>
+            <span class="qt-size"><b>${tier.tabs}</b> tablets</span>
+            <span class="qt-term">${durationLabel(tier.tabs, dosePerDay)}</span>
             ${buildOfferThumbs(p, tier)}
-            <span class="qt-dose">1 tablet a day</span>
+            <span class="qt-packs">${packComposition(tier, tabletsPerPack, packUnit)}</span>
+            <span class="qt-dose">${esc(doseText)}</span>
             <span class="qt-rate">${rupee(tier.rate)}</span>
             ${per ? `<span class="qt-unit">${'₹' + per} per tablet</span>` : ''}
             <span class="qt-compare">

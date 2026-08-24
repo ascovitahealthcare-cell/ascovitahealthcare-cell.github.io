@@ -3496,6 +3496,8 @@ function openProductDrawer(productId) {
     // Load quantity tier discounts, if any
     const tabletsPerPack = parseInt(p.tablets_per_pack) || 15;
     document.getElementById('dTabsPerPack').value = tabletsPerPack;
+    document.getElementById('dDosePerDay').value = p.dose_per_day != null ? p.dose_per_day : 1;
+    document.getElementById('dPackUnit').value  = p.pack_unit || '';
     drawerTiers = [];
     _tierRowSeq = 0;
     try {
@@ -3565,6 +3567,8 @@ function openProductDrawer(productId) {
     renderAllImgSlots();
     document.getElementById('dActive').value='true';
     document.getElementById('dTabsPerPack').value='15';
+    document.getElementById('dDosePerDay').value='1';
+    document.getElementById('dPackUnit').value='';
     document.getElementById('dPrice').value='';
     document.getElementById('dSalePrice').value='';
     document.getElementById('dDiscountPct').value='';
@@ -4048,6 +4052,8 @@ async function saveProductFromDrawer() {
     sale_price:       parseFloat(document.getElementById('dSalePrice').value)||null,
     discount_pct:     parseFloat(document.getElementById('dDiscountPct').value)||null,
     tablets_per_pack: parseInt(document.getElementById('dTabsPerPack').value)||15,
+    dose_per_day:     parseFloat(document.getElementById('dDosePerDay').value)||1,
+    pack_unit:        (document.getElementById('dPackUnit').value||'').trim()||null,
     tiers:            drawerTiers.map(t => {
                          tierBaseValues(t);
                          return {

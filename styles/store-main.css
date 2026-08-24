@@ -2520,6 +2520,26 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
 }
 .qt-save { margin-top: 3px; font-size: .68rem; font-weight: 700; color: var(--t-mid); }
 
+/* Days-of-supply, derived from the product's own dose rather than assumed. It
+   is the line customers actually compare packs on, so it sits directly under
+   the tablet count as a quiet chip rather than another bold number. */
+.qt-term {
+  margin-top: 1px; font-size: .7rem; font-weight: 600;
+  color: var(--t-mid); letter-spacing: .01em;
+}
+/* "4 tubes · 60 tablets" — what the box physically contains. */
+.qt-packs { font-size: .66rem; color: var(--t-low); }
+
+/* Multiplier on a collapsed thumbnail. Above four packs the row stops drawing
+   one box per pack and draws one box per KIND, so the count has to be legible
+   on top of the image itself. */
+.qt-thumb-x {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-style: normal; font-size: .72rem; font-weight: 800; color: #fff;
+  background: rgba(0,0,0,.42); letter-spacing: .02em;
+}
+.qt-thumb-free .qt-thumb-x { bottom: 9px; }
+
 /* ── Offer thumbnails on each pack tier ────────────────────────────────────
    One small image per pack the customer receives, with the free ones flagged.
    The row is the quantity stated visually rather than in a fourth line of
@@ -2595,7 +2615,11 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
   .qty-tier { padding: 17px 8px 10px; gap: 1px; }
   .qt-size { font-size: .7rem; }
   .qt-size b { font-size: 1.2rem; }
-  .qt-packs { display: none; }
+  /* Un-hidden. This line used to read "3 packs of 15" — a restatement of the
+     tablet count above it, so hiding it on phones cost nothing. It now reads
+     "3 tubes · 90 tablets": what is physically in the box, which is the thing
+     customers were asking for and cannot get from any other line on the card. */
+  .qt-packs { font-size: .6rem; }
   .qt-rate { margin-top: 5px; font-size: 1rem; }
   .qt-unit { font-size: .63rem; }
   .qt-compare { margin-top: 4px; gap: 5px; font-size: .62rem; }

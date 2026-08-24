@@ -1162,10 +1162,22 @@
       </div>
       <button class="btn btn-secondary btn-sm" type="button" onclick="addTierRow()">＋ Add Tier</button>
     </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
     <div class="drawer-field" style="max-width:220px;">
       <div class="drawer-field-label">Tablets per Pack</div>
       <input class="drawer-input" type="number" min="1" id="dTabsPerPack" value="15" onchange="recalcAllTierRows()">
       <div style="font-size:0.68rem;color:var(--text3);margin-top:4px;">e.g. 15 — this is what turns "2 packs" into "30 Tablets" on the storefront card</div>
+    </div>
+    <div class="drawer-field" style="max-width:220px;">
+      <div class="drawer-field-label">Tablets per Day</div>
+      <input class="drawer-input" type="number" min="0.5" step="0.5" id="dDosePerDay" value="1">
+      <div style="font-size:0.68rem;color:var(--text3);margin-top:4px;">The storefront divides the tablet count by this to say how long a pack lasts. A twice-daily product with 60 tablets is 1 month, not 2.</div>
+    </div>
+    <div class="drawer-field" style="max-width:220px;">
+      <div class="drawer-field-label">Pack Unit</div>
+      <input class="drawer-input" type="text" id="dPackUnit" value="" placeholder="tube, strip, box…" maxlength="24">
+      <div style="font-size:0.68rem;color:var(--text3);margin-top:4px;">What one pack is called. The card reads "4 tubes · 60 tablets". Leave blank for "pack".</div>
+    </div>
     </div>
     <div id="tierRowsContainer"></div>
     <div id="tierRowsEmpty" style="font-size:0.78rem;color:var(--text3);padding:10px 2px;">No tiers yet — click "＋ Add Tier" to create up to four mixed offers. The storefront ranks them by effective savings.</div>

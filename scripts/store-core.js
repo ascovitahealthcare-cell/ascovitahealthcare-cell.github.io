@@ -242,6 +242,13 @@ function mergeBackendProducts(backendProducts) {
       // SEO
       if (bp.seo_keywords) p.seoKeywords = parseArr(bp.seo_keywords);
       if (bp.meta_description) p.metaDescription = bp.meta_description;
+      // Pack composition and dosage, admin-controlled per product. The tier
+      // widget needs all three to say what a pack IS ("4 tubes · 60 tablets")
+      // and how long it lasts, instead of assuming 15 tablets a tube and one
+      // a day for every product in the catalogue.
+      if (bp.tablets_per_pack != null) p.tabletsPerPack = parseInt(bp.tablets_per_pack) || null;
+      if (bp.dose_per_day    != null) p.dosePerDay     = parseFloat(bp.dose_per_day) || null;
+      if (bp.pack_unit       != null) p.packUnit       = String(bp.pack_unit || '').trim() || null;
       // Tiers flag
       if (bp.has_tiers != null) p.hasTiers = bp.has_tiers;
       if (bp.tiers) {
@@ -280,6 +287,9 @@ function mergeBackendProducts(backendProducts) {
         description: bp.description || '',
         keyIngredients: ki,
         howToUse:    bp.how_to_use || '',
+        tabletsPerPack: parseInt(bp.tablets_per_pack) || null,
+        dosePerDay:     parseFloat(bp.dose_per_day) || null,
+        packUnit:       String(bp.pack_unit || '').trim() || null,
         hasTiers:    bp.has_tiers || false,
         _backendTiers: (() => { try { const t = Array.isArray(bp.tiers) ? bp.tiers : JSON.parse(bp.tiers||'null'); return (Array.isArray(t) && t.length && t[0].rate != null) ? t : null; } catch(e) { return null; } })(),
         seoKeywords: parseArr(bp.seo_keywords),
