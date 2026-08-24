@@ -14,6 +14,74 @@
   Cache-Control: no-store, private, max-age=0
   X-Robots-Tag: noindex, nofollow
 
+# ── HTML documents: always revalidate ────────────────────────────────────────
+# This has to exist for the immutable rules below to be safe. index.html is what
+# names the ?v= of every script and stylesheet, so a stale copy of it keeps
+# pointing at the PREVIOUS asset URLs — and those are now pinned for a year.
+# Cache the HTML and the page freezes completely: new deploy, old markup, old
+# assets, no expiry that will ever release it.
+#
+# no-cache does not mean "do not store". It means "store it, but revalidate
+# before serving". The round trip is a 304 with no body when nothing changed,
+# which is cheap, and correctness here is worth more than one conditional GET.
+#
+# Every SPA route is listed because the Worker answers each of them with
+# index.html, and a _headers rule matches on the REQUEST path, not on the file
+# that ends up being served. Keep this list in step with SPA_ROUTES in
+# worker/index.js.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/shop
+  Cache-Control: no-cache
+/blog
+  Cache-Control: no-cache
+/blog/*
+  Cache-Control: no-cache
+/about
+  Cache-Control: no-cache
+/contact
+  Cache-Control: no-cache
+/faq
+  Cache-Control: no-cache
+/advisor
+  Cache-Control: no-cache
+/account
+  Cache-Control: no-cache
+/wishlist
+  Cache-Control: no-cache
+/cart
+  Cache-Control: no-cache
+/notifications
+  Cache-Control: no-cache
+/privacy
+  Cache-Control: no-cache
+/terms
+  Cache-Control: no-cache
+/shipping
+  Cache-Control: no-cache
+/refund
+  Cache-Control: no-cache
+/accessibility
+  Cache-Control: no-cache
+/download
+  Cache-Control: no-cache
+/vita-points
+  Cache-Control: no-cache
+/conduct
+  Cache-Control: no-cache
+/discount-policy
+  Cache-Control: no-cache
+/product/*
+  Cache-Control: no-cache
+/products/*
+  Cache-Control: no-cache
+/404.html
+  Cache-Control: no-cache
+/offline.html
+  Cache-Control: no-cache
+
 # ── Static asset caching (Aug 2026 perf pass) ────────────────────────────────
 # Every reference to these paths carries a ?v= query string, and the storefront
 # bumps it on each deploy, so the URL itself changes when the content does.
