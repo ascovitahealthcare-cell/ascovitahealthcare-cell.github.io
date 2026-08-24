@@ -407,8 +407,22 @@ async function autReconNow() {
 
 
 /* ══ block 12 (origin 808087-809183, 1079 B) ══ */
-window.MARKETING_SUPABASE_URL = "https://wyvpuafzirwlwweifzao.supabase.co";
-  window.MARKETING_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5dnB1YWZ6aXJ3bHd3ZWlmemFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQyODU0NTUsImV4cCI6MjA5OTg2MTQ1NX0.JG_DIQJef2rshO7TYwrk1p0DqTLR3JUQeJbQHO8K8rg";
+/* The marketing project's URL and anon key used to be declared here and used to
+   read PostgREST directly. Both are gone.
+
+   An anon key is public by design — this file is served to every storefront
+   visitor — and the seven tables it reached carried `for select using (true)`,
+   which is not "the admin panel may read this" but "any role holding a key
+   may". Campaign budgets, ad-set ROAS and the monthly strategy were readable
+   by anyone who viewed source. Reads now take the same route writes already
+   did: the main backend's /api/marketing/* proxy, which checks the admin JWT
+   and the marketing.manage permission, then attaches the internal key
+   server-side where a browser can never see it.
+
+   Removing the key from this file does NOT by itself close the hole — the key
+   is already in public git history and cannot be un-published. Migration 006
+   in the marketing repo revokes the policies, and THAT is the fix. This change
+   is its prerequisite: it stops the dashboard depending on those reads. */
   /* Marketing calls now go through the main backend's /api/marketing/* proxy
      instead of straight to the marketing service.
 
@@ -425,13 +439,37 @@ window.MARKETING_SUPABASE_URL = "https://wyvpuafzirwlwweifzao.supabase.co";
 
 
 /* ══ block 13 (origin 809286-837221, 27918 B) ══ */
-// Requires window.MARKETING_SUPABASE_URL / MARKETING_SUPABASE_ANON_KEY / MARKETING_BACKEND_URL
-// to be set, and the supabase-js UMD script loaded, above this block.
-let mktSupabase = null;
-function mktInit() {
-  if (mktSupabase || !window.supabase || !window.MARKETING_SUPABASE_URL) return;
-  mktSupabase = window.supabase.createClient(window.MARKETING_SUPABASE_URL, window.MARKETING_SUPABASE_ANON_KEY);
+// Requires window.MARKETING_BACKEND_URL to be set above this block. The
+// supabase-js client this used to build is gone — see the note above.
+
+// mktGet(path) — read marketing data through the authenticated proxy.
+//
+// Returns { data, error } so the call sites below keep the shape they already
+// had when this was a supabase-js query. The proxy answers 401/403 when the
+// admin session is missing or lacks marketing.manage, and those surface as a
+// readable error rather than an empty panel.
+async function mktGet(path) {
+  try {
+    // No Authorization header is set here on purpose. The fetch shim further
+    // down this file attaches the admin bearer token to every /api/marketing
+    // URL already; setting it twice would just risk the two drifting apart.
+    const res = await fetch(window.MARKETING_BACKEND_URL + path, {
+      headers: { Accept: 'application/json' }
+    });
+    if (res.status === 401 || res.status === 403) {
+      return { data: null, error: { message: 'Not authorised for marketing data — sign in again, or ask an owner for the marketing.manage permission.' } };
+    }
+    if (!res.ok) return { data: null, error: { message: 'Marketing service returned ' + res.status } };
+    const body = await res.json();
+    return { data: Array.isArray(body) ? body : (body && body.data !== undefined ? body.data : body), error: null };
+  } catch (e) {
+    return { data: null, error: { message: e.message || 'Could not reach the marketing service' } };
+  }
 }
+// Kept so the many `if (!mktSupabase)` guards below still read naturally: the
+// panel is "configured" when it knows where the proxy is.
+function mktInit() { /* nothing to build any more */ }
+const mktSupabase = { get configured() { return !!window.MARKETING_BACKEND_URL; } };
 
 function mktShowTab(tab) {
   document.querySelectorAll('.mkt-tab').forEach(t => t.style.display = 'none');
@@ -461,8 +499,8 @@ async function mktLoadOverview() {
   mktInit();
   if (!mktSupabase) return;
   const [{ data: adSets }, { data: campaigns }] = await Promise.all([
-    mktSupabase.from('ad_sets').select('*'),
-    mktSupabase.from('campaigns').select('status'),
+    mktGet('/api/adsets'),
+    mktGet('/api/campaigns'),
   ]);
 
   const active = (adSets || []).filter(a => a.status === 'active');
@@ -580,7 +618,7 @@ async function mktLoadStrategy() {
   mktInit();
   const view = document.getElementById('mkt-strategy-view');
   if (!mktSupabase) { view.innerHTML = '<p class="mkt-empty">Marketing Supabase not configured.</p>'; return; }
-  const { data, error } = await mktSupabase.from('monthly_strategies').select('*').eq('is_active', true).maybeSingle();
+  const { data, error } = await mktGet('/api/strategy/current');
   if (error) { view.innerHTML = '<p class="mkt-empty">Failed to load: ' + mktEsc(error.message) + '</p>'; return; }
   mktCurrentStrategy = data;
 
@@ -734,7 +772,7 @@ async function mktLoadStrategyHistory() {
   mktInit();
   const list = document.getElementById('mkt-strategy-history-list');
   if (!mktSupabase) { list.innerHTML = '<p class="mkt-empty">Marketing Supabase not configured.</p>'; return; }
-  const { data, error } = await mktSupabase.from('monthly_strategies').select('*').order('month', { ascending: false });
+  const { data, error } = await mktGet('/api/strategy/history');
   if (error) { list.innerHTML = '<p class="mkt-empty">Failed to load: ' + mktEsc(error.message) + '</p>'; return; }
   list.innerHTML = (data || []).map(s => `
     <div class="mkt-angle">
@@ -752,7 +790,7 @@ async function mktLoadAdSets() {
   mktInit();
   const box = document.getElementById('mkt-adsets-table');
   if (!mktSupabase) { box.innerHTML = '<p class="mkt-empty">Marketing Supabase not configured.</p>'; return; }
-  const { data, error } = await mktSupabase.from('ad_sets').select('*').order('last_roas', { ascending: false });
+  const { data, error } = await mktGet('/api/adsets');
   if (error) { box.innerHTML = '<p class="mkt-empty">Failed to load: ' + mktEsc(error.message) + '</p>'; return; }
   if (!data.length) { box.innerHTML = '<p class="mkt-empty">No ad sets yet — these populate once a daily report has run against a launched campaign.</p>'; return; }
 
@@ -813,7 +851,7 @@ async function mktLoadWinners() {
   mktInit();
   const box = document.getElementById('mkt-winners-grid');
   if (!mktSupabase) { box.innerHTML = '<p class="mkt-empty">Marketing Supabase not configured.</p>'; return; }
-  const { data, error } = await mktSupabase.from('ad_sets').select('*').eq('last_verdict', 'scale').order('last_roas', { ascending: false });
+  const { data, error } = await mktGet('/api/adsets/scaling');
   if (error) { box.innerHTML = '<p class="mkt-empty">Failed to load: ' + mktEsc(error.message) + '</p>'; return; }
   if (!data.length) { box.innerHTML = '<p class="mkt-empty">Nothing crossed the scale threshold yet.</p>'; return; }
   box.innerHTML = data.map(a => `
@@ -875,7 +913,7 @@ async function mktLoadCampaigns() {
   const list = document.getElementById('mkt-campaign-list');
   if (!list) return;
   if (!mktSupabase) { list.innerHTML = '<p>Marketing Supabase not configured yet — fill in window.MARKETING_SUPABASE_URL above.</p>'; return; }
-  const { data, error } = await mktSupabase.from('campaigns').select('*').order('created_at', { ascending: false }).limit(20);
+  const { data, error } = await mktGet('/api/campaigns');
   if (error) { list.innerHTML = '<p>Failed to load: ' + mktEsc(error.message) + '</p>'; return; }
   list.innerHTML = data.map(c => `
     <div class="mkt-angle">
@@ -950,7 +988,7 @@ async function mktLoadReportLogs() {
   mktInit();
   const list = document.getElementById('mkt-report-log-list');
   if (!mktSupabase || !list) return;
-  const { data, error } = await mktSupabase.from('performance_logs').select('*').order('created_at', { ascending: false }).limit(20);
+  const { data, error } = await mktGet('/api/reports/logs?limit=20');
   if (error) { list.innerHTML = '<p>Failed to load: ' + mktEsc(error.message) + '</p>'; return; }
   list.innerHTML = data.map(r => `
     <div class="mkt-angle" style="display:flex;justify-content:space-between;">
@@ -1399,9 +1437,11 @@ if (typeof _mktOrigShowPage === 'function') {
     if (!q) return mktLoadTopIntent();
     if (!mktSupabase) { el.innerHTML = '<p class="mkt-empty">Marketing Supabase not configured.</p>'; return; }
     el.innerHTML = '<p class="mkt-empty">Searching…</p>';
-    mktSupabase.from('mkt_profiles')
-      .select('id,email,intent_score,value_score,lifecycle_stage,total_orders,total_revenue,last_seen,last_product_viewed')
-      .ilike('email', '%' + q + '%').eq('is_test', false).limit(50)
+    // This search has never returned anything. mkt_profiles has RLS enabled with
+    // no policies, which correctly denies the anon key it used to be queried
+    // with, so the panel showed "No match" for every term. It goes through the
+    // proxy now, against an endpoint added alongside this change.
+    mktGet('/api/dash/profiles?q=' + encodeURIComponent(q))
       .then(function (r) {
         if (r.error) throw new Error(r.error.message);
         if (!r.data.length) { el.innerHTML = '<p class="mkt-empty">No match for “' + esc(q) + '”.</p>'; return; }
@@ -1973,7 +2013,8 @@ if (typeof _mktOrigShowPage === 'function') {
 
   function attachStoreRecord(profileId) {
     if (!mktSupabase) return;
-    mktSupabase.from('mkt_profiles').select('email,customer_id').eq('id', profileId).maybeSingle()
+    // Same story as the search above — dead against the anon key, live via the proxy.
+    mktGet('/api/dash/profiles/' + encodeURIComponent(profileId))
       .then(function (r) {
         var p = r && r.data;
         if (!p || !p.customer_id) return;
