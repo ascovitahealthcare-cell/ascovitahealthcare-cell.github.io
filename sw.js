@@ -17,7 +17,7 @@
 // changing this string is what actually evicts the bad copy from devices
 // already carrying it. Bump it on any deploy that fixes a page-breaking
 // bug — a fix nobody can receive is not shipped.
-const CACHE_NAME = 'ozylix-pwa-v22';
+const CACHE_NAME = 'ozylix-pwa-v23';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache on install (your core pages)
@@ -41,6 +41,10 @@ const CORE_FILES = [
   '/assets/favicon.svg',
   '/assets/ozylix-icon-192.png',
   '/assets/ozylix-icon-512.png',
+  // Storefront CSS, extracted out of index.html (Aug 2026 perf pass). The
+  // page is unstyled offline without these, so they belong in the core set.
+  '/styles/store-main.css',
+  '/styles/store-account-mobile.css',
   '/scripts/security.js',
   '/scripts/tracking.js',
   '/scripts/seo-core.js',
