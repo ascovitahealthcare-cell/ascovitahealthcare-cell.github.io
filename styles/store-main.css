@@ -506,7 +506,13 @@ button:disabled, .btn-primary:disabled, .btn-gold:disabled {
 [data-magnet] { transition: transform .2s var(--rise); }
 
 /* ══ REVEAL ═══════════════════════════════════════════════════════ */
-[data-reveal] {
+/* opacity:0 here is a promise that JavaScript will arrive and undo it. Since the
+   reveal engine now loads in an idle callback after load, that promise is kept
+   later than it used to be — and if animations.js ever fails to load at all it
+   is never kept, leaving real content permanently invisible. So the rule is
+   gated on a class an inline script in index.html sets, and that same script
+   clears it on a timer. Content cannot outlive its own reveal engine. */
+html.reveal-armed [data-reveal] {
   opacity: 0;
   transform-style: preserve-3d;
   transition: opacity .5s var(--rise), transform .6s var(--rise);
