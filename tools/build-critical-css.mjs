@@ -32,9 +32,12 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const PORT = 8931;
 const VIEWPORTS = [[390, 844, true], [768, 1024, true], [1440, 900, false]];
 // Which stylesheet feeds which inline <style> block in index.html.
+// Point at the MINIFIED sheets, because those are what index.html links and so
+// what Chromium reports coverage against. tools/build-assets.mjs generates them;
+// run it first if you have just edited the source stylesheets.
 const TARGETS = [
-  { css: 'styles/store-main.css',           styleId: 'critical-css' },
-  { css: 'styles/store-account-mobile.css', styleId: 'critical-css-account' },
+  { css: 'styles/store-main.min.css',           styleId: 'critical-css' },
+  { css: 'styles/store-account-mobile.min.css', styleId: 'critical-css-account' },
 ];
 
 const MIME = { '.html':'text/html', '.css':'text/css', '.js':'text/javascript', '.json':'application/json',

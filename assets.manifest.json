@@ -1,0 +1,18 @@
+{
+  "scripts/admin-api.js": "be018582db9fc2bf",
+  "scripts/admin-audit.js": "c0a5c1df6ee1f178",
+  "scripts/admin-core.js": "ab5d398956d09d10",
+  "scripts/admin-ui.js": "f671762dc3fdd8e9",
+  "scripts/auth-core.js": "15fca65605417ca3",
+  "scripts/banners.js": "cd14bf6fd0ed880f",
+  "scripts/invoice-renderer.js": "51aaf2cafb17d22b",
+  "scripts/ozy-track.js": "3c8c65198a09d3f0",
+  "scripts/seo-core.js": "6abfa9cf67e18fad",
+  "scripts/store-core.js": "9fdf51b9eb123f5a",
+  "scripts/theme-builder.js": "d575eedb431da870",
+  "styles/admin-main.css": "063bf10f95877ca6",
+  "styles/admin-palettes.css": "605130aa31169755",
+  "styles/admin-reference-os.css": "8a0b389155d89a41",
+  "styles/store-account-mobile.css": "a432794dcdf86c4e",
+  "styles/store-main.css": "94db44dea838e9bb"
+}

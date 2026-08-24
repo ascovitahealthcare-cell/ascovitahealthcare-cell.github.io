@@ -7,3 +7,6 @@ node_modules/
 # Wrangler writes local state here. It sits inside the assets directory (the
 # repo root), so it must stay out of git AND out of the deploy — see .assetsignore.
 .wrangler/
+
+# Symlinked into place when running tools/*.mjs locally; never committed.
+node_modules
