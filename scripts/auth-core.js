@@ -1044,7 +1044,19 @@ function buildTierWidget(p) {
           const packs  = packLabel(tier);
           const off    = Number(tier.discountPct) || 0;
           const save   = Number(tier.savingAmount != null ? tier.savingAmount : tier.mrp - tier.rate) || 0;
-          const offerLabel = tier.offerType === 'buy_get' ? `Buy ${tier.buyQuantity || 1} Get ${tier.freeQuantity || 0}` : (off > 0 ? `${off.toFixed(off % 1 ? 1 : 0)}% off` : 'Offer');
+          // What the offer IS, said the way a shopper reads it. A buy-get tier
+          // is a free-item offer first and a percentage second, so it leads
+          // with the free units; everything else leads with the percentage.
+          const freeUnits = tier.offerType === 'buy_get' ? (Number(tier.freeQuantity) || 0) : 0;
+          const pctText = off > 0 ? `${off.toFixed(off % 1 ? 1 : 0)}% OFF` : '';
+          const offerLabel = freeUnits > 0
+            ? `Buy ${tier.buyQuantity || 1} + ${freeUnits} free`
+            : (off > 0 ? `${off.toFixed(off % 1 ? 1 : 0)}% off` : 'Offer');
+          // The badge is the one thing on the card that has to survive being
+          // glanced at. Free units beat a percentage for a buy-get tier; a
+          // buy-get tier with no percentage still gets a badge, which the old
+          // markup did not give it at all.
+          const badgeText = freeUnits > 0 ? `+${freeUnits} FREE` : pctText;
           return `
           <button type="button" role="radio" aria-checked="${isSel}"
                   class="qty-tier${isSel ? ' selected' : ''}${isBest ? ' best-value' : ''}"
@@ -1056,7 +1068,7 @@ function buildTierWidget(p) {
             <span class="qt-rate">${rupee(tier.rate)}</span>
             ${per ? `<span class="qt-unit">${'₹' + per} per tablet</span>` : ''}
             <span class="qt-compare">
-              <s>${rupee(tier.mrp)}</s><i>${offerLabel}</i>
+              <s>${rupee(tier.mrp)}</s><i class="qt-badge${freeUnits > 0 ? ' qt-badge-free' : ''}">${badgeText || offerLabel}</i>
             </span>
             ${save > 0 ? `<span class="qt-save">You save ${rupee(save)}</span>` : ''}
           </button>`;

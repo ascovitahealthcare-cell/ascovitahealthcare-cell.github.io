@@ -2514,6 +2514,27 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
 }
 .qt-save { margin-top: 3px; font-size: .68rem; font-weight: 700; color: var(--t-mid); }
 
+/* ── Discount badge on each pack tier ──────────────────────────────────────
+   The saving used to be a low-contrast tint pill next to a struck MRP that
+   phones hid outright (see the 560px block below), so on the screen most
+   customers actually use there was nothing to read the discount off. This is
+   the element meant to survive a glance, so it is solid rather than tinted.
+
+   It sits in the normal flow, inside .qt-compare. Floating it into the card
+   corner was tried and does not work here: the tier grid is two columns on a
+   phone, so an absolutely positioned badge overlapped the "Best value" flag
+   on one card and was clipped by the grid edge on the other. */
+.qt-compare i.qt-badge {
+  padding: 3px 9px; border-radius: var(--r-pill);
+  font-size: .66rem; font-weight: 800; letter-spacing: .03em;
+  line-height: 1.45; white-space: nowrap; font-style: normal;
+  color: #fff; background: #B45309;
+}
+/* A free-unit offer is a different promise from a percentage — it reads as
+   getting something rather than paying less — so it gets its own colour
+   instead of being one more amber percentage. */
+.qt-compare i.qt-badge-free { background: #15803D; }
+
 .qty-discount-footer {
   display: flex; align-items: center; justify-content: space-between;
   gap: 10px; flex-wrap: wrap; margin-top: 12px;
@@ -2536,8 +2557,13 @@ img[src=""], img[data-awaiting-upload] { visibility: hidden; width: 100%; }
   .qt-rate { margin-top: 5px; font-size: 1rem; }
   .qt-unit { font-size: .63rem; }
   .qt-compare { margin-top: 4px; gap: 5px; font-size: .62rem; }
-  .qt-compare s { display: none; }
+  /* The struck MRP used to be hidden here to save a line of height. It is the
+     comparison that makes a discount legible — without it the card shows a
+     price and a claim and nothing to weigh either against — so it stays, one
+     size smaller. */
+  .qt-compare s { font-size: .6rem; }
   .qt-save { font-size: .63rem; }
+  .qt-compare i.qt-badge { font-size: .62rem; padding: 2px 8px; }
   .qd-hint { display: none; }
 }
 
