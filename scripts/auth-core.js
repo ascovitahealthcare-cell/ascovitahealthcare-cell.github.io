@@ -1002,6 +1002,48 @@ function tierUnitPrice(tier) {
                     : per.toFixed(per < 10 ? 2 : 1);
 }
 
+// ── OFFER THUMBNAILS ───────────────────────────────────────────────────────
+// A tier card said "60 tablets · 2 months · Buy 2 + 1 free" in four separate
+// lines of small text, and left the customer to assemble the offer out of
+// them. Showing the packs makes the quantity the first thing read rather than
+// the last: three boxes, one of them flagged free, is understood before any
+// of the words are.
+//
+// Capped at MAX_THUMBS so a 4-pack tier does not shrink each box to a smudge
+// on a 390px screen; anything beyond that becomes a "+N" chip. Every <img>
+// carries explicit dimensions because these render inside a grid that must
+// not reflow once they load.
+const OFFER_THUMB_MAX = 4;
+
+function buildOfferThumbs(p, tier) {
+  const src = typeof getProductImg === 'function' ? getProductImg(p) : (p && p.image);
+  if (!src) return '';
+
+  const free = tier.offerType === 'buy_get' ? Math.max(0, Number(tier.freeQuantity) || 0) : 0;
+  // Units the customer physically receives. buy-get states it directly;
+  // everything else derives it from pack size, the same way packLabel does.
+  const smallest = Number(tier._unitTabs) || 0;
+  const paid = free > 0
+    ? Math.max(1, Number(tier.buyQuantity) || 1)
+    : (smallest ? Math.max(1, Math.round(Number(tier.tabs) / smallest)) : 1);
+  const total = paid + free;
+  if (total < 2 && free === 0) return '';   // a single pack shows nothing new
+
+  const shown = Math.min(total, OFFER_THUMB_MAX);
+  const overflow = total - shown;
+  let out = '';
+  for (let i = 0; i < shown; i++) {
+    // Free units are the LAST ones, which is how the offer is worded.
+    const isFree = free > 0 && i >= shown - Math.min(free, shown);
+    out += `<span class="qt-thumb${isFree ? ' qt-thumb-free' : ''}">`
+        +  `<img src="${src}" alt="" width="34" height="34" loading="lazy" decoding="async">`
+        +  (isFree ? '<b>FREE</b>' : '')
+        +  '</span>';
+  }
+  if (overflow > 0) out += `<span class="qt-thumb-more">+${overflow}</span>`;
+  return `<span class="qt-thumbs" aria-hidden="true">${out}</span>`;
+}
+
 function buildTierWidget(p) {
   const tiers = getProductTiers(p);
   if (!tiers) return '';            // no tiers, or none priced yet
@@ -1020,7 +1062,15 @@ function buildTierWidget(p) {
   // smallest one. The old code hardcoded 15/30/45 and fell through to
   // "4 Packs" for everything else, which labelled the 60-tablet Multidiata
   // box — a single carton — as four packs.
-  const unit = Number(tiers[0].tabs) || 0;
+  // The SMALLEST pack, found by looking. getProductTiers() sorts by discount
+  // descending, so tiers[0] is the deepest-discount tier — usually the
+  // LARGEST pack. Reading the unit off it made `n` a fraction for every
+  // smaller tier and 1 for the largest, so packLabel() returned '' for all of
+  // them and "3 packs of 15" never appeared on any product.
+  const unit = tiers.reduce((min, t) => {
+    const n = Number(t.tabs) || 0;
+    return n > 0 && (min === 0 || n < min) ? n : min;
+  }, 0);
   const packLabel = (tier) => {
     const n = unit ? Number(tier.tabs) / unit : 0;
     if (!Number.isInteger(n) || n < 2) return '';
@@ -1038,13 +1088,26 @@ function buildTierWidget(p) {
       </div>
       <div class="qty-tiers-grid" role="radiogroup" aria-label="Choose a pack size">
         ${tiers.map((tier, i) => {
+          tier._unitTabs = unit;
           const isSel  = i === sel;
           const isBest = i === bestIdx;
           const per    = tierUnitPrice(tier);
           const packs  = packLabel(tier);
           const off    = Number(tier.discountPct) || 0;
           const save   = Number(tier.savingAmount != null ? tier.savingAmount : tier.mrp - tier.rate) || 0;
-          const offerLabel = tier.offerType === 'buy_get' ? `Buy ${tier.buyQuantity || 1} Get ${tier.freeQuantity || 0}` : (off > 0 ? `${off.toFixed(off % 1 ? 1 : 0)}% off` : 'Offer');
+          // What the offer IS, said the way a shopper reads it. A buy-get tier
+          // is a free-item offer first and a percentage second, so it leads
+          // with the free units; everything else leads with the percentage.
+          const freeUnits = tier.offerType === 'buy_get' ? (Number(tier.freeQuantity) || 0) : 0;
+          const pctText = off > 0 ? `${off.toFixed(off % 1 ? 1 : 0)}% OFF` : '';
+          const offerLabel = freeUnits > 0
+            ? `Buy ${tier.buyQuantity || 1} + ${freeUnits} free`
+            : (off > 0 ? `${off.toFixed(off % 1 ? 1 : 0)}% off` : 'Offer');
+          // The badge is the one thing on the card that has to survive being
+          // glanced at. Free units beat a percentage for a buy-get tier; a
+          // buy-get tier with no percentage still gets a badge, which the old
+          // markup did not give it at all.
+          const badgeText = freeUnits > 0 ? `+${freeUnits} FREE` : pctText;
           return `
           <button type="button" role="radio" aria-checked="${isSel}"
                   class="qty-tier${isSel ? ' selected' : ''}${isBest ? ' best-value' : ''}"
@@ -1052,11 +1115,12 @@ function buildTierWidget(p) {
             ${isBest ? '<span class="qt-flag">Best value</span>' : ''}
             <span class="qt-size"><b>${tier.tabs}</b> tablets · ${durationLabel(tier.tabs)}</span>
             <span class="qt-packs">${packs || '&nbsp;'}</span>
+            ${buildOfferThumbs(p, tier)}
             <span class="qt-dose">1 tablet a day</span>
             <span class="qt-rate">${rupee(tier.rate)}</span>
             ${per ? `<span class="qt-unit">${'₹' + per} per tablet</span>` : ''}
             <span class="qt-compare">
-              <s>${rupee(tier.mrp)}</s><i>${offerLabel}</i>
+              <s>${rupee(tier.mrp)}</s><i class="qt-badge${freeUnits > 0 ? ' qt-badge-free' : ''}">${badgeText || offerLabel}</i>
             </span>
             ${save > 0 ? `<span class="qt-save">You save ${rupee(save)}</span>` : ''}
           </button>`;
@@ -2855,7 +2919,11 @@ function bootApp() {
   // wishlist has a real page section but was missing here, so a direct hit on
   // /wishlist rendered the HOME page at 200 — a soft 404. Keep
   // this list in step with SPA_ROUTES in worker/index.js.
-  const _validPages = ['home','shop','blog','about','contact','faq','advisor','account','product','wishlist','notifications','privacy','terms','shipping','refund','accessibility','download'];
+  // 'cart', 'vita-points', 'conduct' and 'discount-policy' are real sections in
+  // index.html that showPage() already pushes into the URL, but they were absent
+  // here — so Back out of one of them restored nothing and left the customer on
+  // a page whose URL no longer matched what they were looking at.
+  const _validPages = ['home','shop','blog','about','contact','faq','advisor','account','product','wishlist','cart','notifications','privacy','terms','shipping','refund','accessibility','download','vita-points','conduct','discount-policy'];
   // Legacy /b2b links now redirect to the Ascovita corporate B2B page
   if (_initPage === 'b2b') { window.location.href = 'https://www.ascovita.com/#/capabilities'; }
   if (_initPage && (_validPages.includes(_initPage) || _initPage === 'blog')) {

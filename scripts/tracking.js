@@ -35,9 +35,14 @@
       else { window.addEventListener('load', function () { setTimeout(__loadFb, 1500); }); }
     }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
     if (window.META_PIXEL_ID && !window._fbq) { fbq('init', window.META_PIXEL_ID); fbq('track', 'PageView'); }
-    document.write('<noscript><img height="1" width="1" style="display:none" ' +
-      'src="https://www.facebook.com/tr?id=' + encodeURIComponent(window.META_PIXEL_ID) +
-      '&ev=PageView&noscript=1" alt=""></noscript>');
+    // The <noscript> pixel that used to be written here has been removed. It was
+    // emitted BY JavaScript, so it only ever existed on pages where scripts run —
+    // exactly the pages where a browser ignores <noscript> and never requests the
+    // image. It tracked nobody. What it did do was call document.write() during
+    // parsing, which stalls the HTML parser and forced this file to stay
+    // render-blocking (a deferred script's document.write() blanks the document).
+    // With it gone, tracking.js loads with defer. The real no-JS pixel belongs in
+    // a literal <noscript> block in index.html, not here.
   }
 
   // ── GOOGLE IDENTITY SERVICES (bot-gated) ──

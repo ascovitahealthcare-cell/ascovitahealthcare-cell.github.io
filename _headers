@@ -13,3 +13,29 @@
 /admin
   Cache-Control: no-store, private, max-age=0
   X-Robots-Tag: noindex, nofollow
+
+# ── Static asset caching (Aug 2026 perf pass) ────────────────────────────────
+# Every reference to these paths carries a ?v= query string, and the storefront
+# bumps it on each deploy, so the URL itself changes when the content does.
+# Without an explicit rule they were served with no max-age at all: a revalidation
+# round-trip per file, per page load — the slowest part of a repeat visit on a
+# phone. immutable also stops the browser revalidating on a manual reload.
+/styles/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/scripts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Logos and icons are referenced WITHOUT a ?v=, so the URL does not change when
+# the file does. 30 days with revalidation, not immutable: replacing a logo must
+# still reach people, and these are already served from the edge.
+/assets/*
+  Cache-Control: public, max-age=2592000
+
+# The service worker must never be cached long: it is how every other cached
+# asset gets invalidated, so a stale copy freezes the whole PWA on old files.
+/sw.js
+  Cache-Control: no-cache
+
+/manifest.json
+  Cache-Control: public, max-age=3600

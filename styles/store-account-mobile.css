@@ -1,0 +1,378 @@
+/* ═══════════════════════════════════════════════════════════════════
+   ACCOUNT AREA — mobile
+   Last stylesheet in the document, so it settles the ties.
+
+   Three separate faults showed up on a real iPhone:
+     · The invoices and VitaPoints tables are 5-column <table>s inside a
+       container with overflow:hidden. With `td{overflow-wrap:anywhere}`
+       set globally they did not overflow — they shredded, breaking order
+       ids and rupee amounts mid-character.
+     · .account-nav is flex-wrap with centred justification, so six items
+       of unequal width wrapped into a ragged 2-1-2 arrangement with
+       orphans floating mid-row.
+     · The ambient .particle bubbles sit at z-index 0 with the account
+       card painting no background of its own, so they drifted over the
+       menu instead of behind it.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Tables scroll; they never break a word ───────────────────────── */
+.account-panel table,
+.vita-hist table {
+  min-width: max-content;
+}
+.account-panel table td, .account-panel table th,
+.vita-hist table td,     .vita-hist table th {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+@media (max-width: 900px) {
+  /* The wrapper each table already sits in becomes the scroll container.
+     :has() lets this attach to the existing markup without touching the
+     render functions; the fallback below covers browsers without it. */
+  .account-panel div:has(> table),
+  .vita-hist {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .account-panel, .vita-hist { max-width: 100%; }
+  .account-panel table, .vita-hist table { display: block; overflow-x: auto; }
+  .account-panel table > thead, .account-panel table > tbody,
+  .vita-hist table > thead,     .vita-hist table > tbody {
+    display: table;
+    width: max-content;
+    min-width: 100%;
+  }
+  /* Tighter cells so more of each row is visible before scrolling. */
+  .account-panel table td, .account-panel table th,
+  .vita-hist table td,     .vita-hist table th {
+    padding: 11px 13px !important;
+    font-size: .8rem !important;
+  }
+
+  /* ── Account menu: an even grid instead of ragged wrapping ──────── */
+  .account-nav {
+    display: grid;
+    /* `1fr 1fr` resolves to minmax(auto, 1fr), and a grid item defaults to
+       min-width:auto — so the track can never shrink below the widest
+       label. "Track Shipment" and "Profile & Address" pushed the columns
+       to 215px + 191px inside a 306px card and hung off the right edge.
+       minmax(0, 1fr) lets the tracks actually be half each. */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .account-nav-item {
+    width: 100%;
+    min-width: 0;          /* same reason — the item must be allowed to shrink */
+    min-height: 52px;
+    justify-content: flex-start;
+    padding: 12px 11px;
+    border-radius: 14px;
+    background: var(--paper-hi, #fff);
+    box-shadow: var(--neo-1, 0 1px 3px rgba(0,0,0,.06));
+    font-size: .78rem;
+    line-height: 1.22;
+    text-align: left;
+    touch-action: manipulation;
+  }
+  /* Let a long label use two lines rather than force the column wider. */
+  .account-nav-item > span:not(.nav-ico) { min-width: 0; overflow-wrap: anywhere; }
+  .account-nav-item .nav-ico { flex: none; }
+  /* Sign Out is an action, not another destination. Matched on the real
+     handler — doLogout() — not a guessed one. */
+  .account-nav-item[onclick*="doLogout"],
+  .account-nav-item[onclick*="logout"],
+  .account-nav-item.danger {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  /* ── The card owns its own background, so nothing drifts across it ─ */
+  .account-sidebar, .account-panel, .account-card {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Very narrow phones: one column reads better than two cramped ones. */
+@media (max-width: 360px) {
+  .account-nav { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PROMO CARDS — the text column was being crushed to nothing
+   .promo-card is flex:0 0 min(78vw,430px) with align-items:stretch, and
+   .promo-card-media is aspect-ratio:1/1. On a 360px screen that card is
+   281px wide and 268px tall, so the square image claimed 268px of it and
+   left 13px for the text. Measured: .promo-perk needed 154px and got 29.
+   Everything in that column was ellipsised down to a character or two.
+   Capping the image share gives the text roughly two thirds back.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+  .promo-card { flex: 0 0 min(86vw, 400px); min-height: 232px; }
+  .promo-card-media {
+    flex: 0 0 38%;
+    max-width: 38%;
+    aspect-ratio: auto;      /* height comes from the card, not the width */
+    align-self: stretch;
+  }
+  .promo-card-text { padding: 20px 16px 20px 18px; }
+  .promo-perk { font-size: .56rem; padding: 4px 9px; }
+  .promo-card-cta { width: 100%; justify-content: center; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CHECKOUT — shorter on a phone
+   The form is ten fields. At ≤600px `.form-row` collapsed every pair to
+   one column, so name, city/state and pin/country each took two full
+   rows instead of one — roughly 300px of extra scrolling between the
+   cart and the pay button, on the one screen where scrolling costs
+   money. These pairs are short enough to sit side by side at 320px.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  #page-checkout .form-row { grid-template-columns: 1fr 1fr; gap: 10px; }
+  /* Address line 1 is the one field that genuinely needs the full width. */
+  #page-checkout .form-row.single { grid-template-columns: 1fr; }
+
+  /* Tighter vertical rhythm — same fields, less travel. */
+  #page-checkout .form-group { margin-bottom: 12px; }
+  #page-checkout .form-label {
+    font-size: .68rem;
+    margin-bottom: 4px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  /* 16px is the floor: below it iOS zooms the page on focus and never
+     zooms back, which is the fastest way to lose a checkout. */
+  #page-checkout .form-input { font-size: 16px; padding: 11px 13px; }
+
+  #page-checkout .ck-section-title { margin-top: 16px !important; font-size: .95rem; }
+  /* The page sets padding-top:90px inline for the fixed header; a phone
+     header is far shorter than that. */
+  #page-checkout { padding-top: 66px !important; }
+  #page-checkout h1 { font-size: 1.4rem; margin-bottom: 14px; }
+  #page-checkout .breadcrumb { margin-bottom: 10px; font-size: .74rem; }
+
+  /* The country field is fixed at India and not editable. It keeps its
+     place in the DOM — validateCheckoutForm() finds fields by
+     placeholder and fillSavedAddress() by index — but it does not need
+     to look like something awaiting input. */
+  #page-checkout input[readonly] { opacity: .62; }
+
+  /* Payment methods were 474px of the form — four cards, each with a
+     subtitle repeating what the title already says. The icon and the name
+     identify the method; "Visa, Mastercard, RuPay accepted" does not
+     change anyone's choice on a phone. */
+  #page-checkout .pay-method { padding: 11px 13px; gap: 11px; }
+  #page-checkout .pm-info > *:last-child { display: none; }
+  #page-checkout .pm-info > *:first-child { font-size: .86rem; line-height: 1.3; }
+  #page-checkout .pm-icon { font-size: 1.15rem; }
+  #page-checkout .pm-badge { font-size: .62rem; padding: 2px 7px; }
+  /* 2026-08: compact gateway row stays a 3-column band on phones — it was
+     already a fraction of the height of the old four-card layout it
+     replaces. */
+  #page-checkout .pay-methods-compact { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  #page-checkout .pay-method-compact { padding: 8px 8px; gap: 6px; }
+  #page-checkout .pmc-info > *:first-child { font-size: .7rem; }
+  #page-checkout .pmc-info > *:last-child { font-size: .56rem; }
+
+  /* Room for the sticky pay bar. */
+  #page-checkout .checkout-layout { padding-bottom: 96px; }
+
+  /* Emphasis was inverted. "Pay Securely via GoKwik" rendered at page tone
+     — a quiet neumorphic extrusion — while the COD button underneath it
+     carries an inline linear-gradient built from --seal/--f-citrus, both
+     of which resolve to --indigo. The secondary action was the loud one.
+     The primary gets the fill; COD becomes the quiet extrusion. */
+  #page-checkout #onlinePayBtn {
+    background: var(--indigo) !important;
+    color: #fff !important;
+    box-shadow: var(--lit-indigo) !important;
+  }
+  #page-checkout #codBtn {
+    background: var(--paper) !important;
+    color: var(--t-hi) !important;
+    box-shadow: var(--neo-1) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   STICKY PAY BAR — mobile
+   Both pay buttons live at the bottom of .cart-summary-box, which on a
+   phone stacks under the form: about 2,400px of scrolling between
+   arriving at checkout and being able to pay. This puts the total and
+   the primary action permanently in reach, the way every native
+   checkout does. It calls the same initiatePayment()/initiateCOD()
+   handlers and mirrors the total straight out of the rendered summary,
+   so there is no second copy of the pricing maths to drift.
+   ═══════════════════════════════════════════════════════════════════ */
+#ozPayBar {
+  display: none;
+  position: fixed; left: 0; right: 0; z-index: 930;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+  /* Page tone, not white: this is an extruded surface in the same
+     neumorphic system as everything else, and a white slab on parchment
+     reads as a different material. */
+  background: var(--paper, #F5F3F4);
+  box-shadow: 0 -1px 0 var(--edge), 0 -8px 28px rgba(72,62,70,.14);
+  align-items: center; gap: 12px;
+}
+#ozPayBar .opb-total { flex: 0 0 auto; line-height: 1.15; }
+#ozPayBar .opb-label { font-size: .62rem; letter-spacing: .07em; text-transform: uppercase; color: var(--t-low, #7a857b); }
+#ozPayBar .opb-amt   { font-size: 1.06rem; font-weight: 800; color: var(--t-hi, #1D2320); font-variant-numeric: tabular-nums; }
+#ozPayBar .opb-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+#ozPayBar .opb-pay {
+  border: none; border-radius: 13px; padding: 12px 16px; min-height: 46px;
+  font-size: .85rem; font-weight: 800; cursor: pointer; white-space: nowrap;
+  background: var(--indigo, #547177); color: #fff; touch-action: manipulation;
+}
+/* FIX (Aug 2026): COD used to be a small underlined link under the pay button,
+   leaving a dead gap beneath it. The owner asked for COD as a proper button
+   styled exactly like the payment button — same size, same gradient, side by
+   side, no gap. */
+#ozPayBar .opb-cod {
+  border: none; border-radius: 13px; padding: 12px 16px; min-height: 46px;
+  font-size: .85rem; font-weight: 800; cursor: pointer; white-space: nowrap;
+  background: var(--indigo-lo, #8E2333); color: #fff; touch-action: manipulation;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+}
+@media (max-width: 900px) {
+  body.oz-checkout #ozPayBar { display: flex; }
+  /* FIX (Aug 2026): the pay bar used bottom:0 with z-index 900 while the
+     app-bottom-nav sits at bottom:0 with z-index 925 — the two bars merged
+     into one strip, hiding the pay bar (and the inline COD/Pay buttons) behind
+     the nav. The pay bar now floats above the app nav (z-index 930) with its
+     bottom edge raised above the nav height plus the iPhone home indicator,
+     so both payment options stay visible and tappable at the checkout bottom. */
+  body.oz-checkout #ozPayBar {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 68px);
+    border-radius: 18px 18px 0 0;
+  }
+  body.oz-checkout #page-checkout { padding-bottom: 180px !important; }
+  /* The class is .wa-fab — the earlier rule guessed at .wa-bubble and never
+     matched, so the button still sat on top of the COD link. */
+  body.oz-checkout .wa-fab {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 108px) !important;
+  }
+}
+
+/* #stickyCart is the product page's add-to-cart bar. An IntersectionObserver
+   shows it when the real Add button scrolls away, but nothing ever hides it
+   again on navigation — so it followed the customer to checkout and sat
+   underneath the pay bar, two fixed bars stacked on top of each other. It
+   belongs to the product page and nowhere else. */
+body:not(.oz-product) #stickyCart { display: none !important; }
+
+/* The ambient bubbles are decoration. They belong behind everything and
+   must never intercept a tap. */
+.particle { z-index: -1 !important; pointer-events: none !important; }
+
+/* ══════════ ACCOUNT HUB REFRESH ══════════ */
+#page-account .account-layout { align-items: start; gap: 20px; }
+#page-account .account-sidebar {
+  padding: 20px;
+  border: 1px solid rgba(34, 54, 46, .08);
+  border-radius: 24px;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 14px 34px rgba(36, 45, 40, .08);
+}
+.account-profile-top { display:flex; align-items:center; gap:13px; padding-bottom:18px; border-bottom:1px solid rgba(34,54,46,.08); }
+.account-identity { min-width:0; }
+.account-overline, .account-nav-heading { color:var(--green,#3d755a); font-size:.64rem; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+.account-overline { margin-bottom:5px; }
+.account-name { line-height:1.18; }
+.account-email { max-width:210px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.account-nav-heading { margin:19px 2px 10px; color:var(--t-low,#7c8780); letter-spacing:.11em; }
+#page-account .account-nav { display:flex; flex-direction:column; gap:8px; }
+#page-account .account-nav-item {
+  display:flex; align-items:center; gap:11px; width:100%; min-height:62px; padding:11px 12px;
+  border:1px solid transparent; border-radius:16px; background:transparent; box-shadow:none;
+  color:var(--t-mid,#4e5952); text-align:left; transition:background .18s ease, border-color .18s ease, transform .18s ease;
+}
+#page-account .account-nav-item:hover { background:rgba(61,117,90,.06); border-color:rgba(61,117,90,.12); transform:translateY(-1px); }
+#page-account .account-nav-item.active { background:linear-gradient(135deg,rgba(218,239,230,.96),rgba(237,246,241,.96)); border-color:rgba(61,117,90,.30); color:var(--green,#3d755a); box-shadow:0 7px 16px rgba(61,117,90,.10); }
+#page-account .account-nav-item .nav-ico { display:grid; place-items:center; flex:0 0 36px; width:36px; height:36px; border-radius:12px; background:rgba(255,255,255,.82); font-size:1.1rem; }
+.account-nav-copy { display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; }
+.account-nav-copy strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.82rem; line-height:1.2; }
+.account-nav-copy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--t-low,#7c8780); font-size:.67rem; line-height:1.2; }
+.account-nav-count, .account-nav-arrow { flex:0 0 auto; }
+.account-nav-count { min-width:24px; padding:3px 7px; border-radius:99px; background:rgba(61,117,90,.12); color:var(--green,#3d755a); font-size:.66rem; font-weight:800; text-align:center; }
+.account-nav-count-gold { background:rgba(196,146,14,.13); color:#9a7410; }
+.account-nav-arrow { color:var(--t-dim,#9ba49e); font-size:1.25rem; line-height:1; }
+#page-account .account-nav-signout { margin-top:8px; border-top:1px solid rgba(34,54,46,.08); border-radius:0 0 12px 12px; padding-top:17px; color:var(--red,#b84242); }
+#page-account .account-nav-signout .nav-ico { background:rgba(184,66,66,.08); }
+#page-account .account-welcome { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(350px,.92fr); gap:20px; align-items:stretch; padding:24px; border-radius:24px; background:linear-gradient(135deg,#8e2333 0%,#6c317f 52%,#4b4a99 100%); box-shadow:0 18px 36px rgba(102,49,105,.20); overflow:hidden; }
+#page-account .aw-greeting { display:flex; flex-direction:column; justify-content:center; min-width:0; }
+.aw-profile-line { display:flex; align-items:center; gap:12px; min-width:0; }
+.aw-avatar { display:grid; place-items:center; flex:0 0 62px; width:62px; height:62px; border-radius:19px; background:rgba(255,255,255,.92); color:#b83a2f; font-size:1.6rem; font-weight:800; letter-spacing:.04em; box-shadow:0 8px 18px rgba(25,20,40,.14); }
+.aw-profile-copy { min-width:0; }
+.aw-email { display:flex; align-items:center; gap:6px; overflow:hidden; margin-top:7px; color:rgba(255,255,255,.82); font-size:.86rem; }
+.aw-email > span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.aw-email-icon { display:inline-grid; place-items:center; flex:0 0 20px; width:20px; height:20px; border:1px solid rgba(255,255,255,.25); border-radius:7px; color:#fff; font-size:.7rem; }
+#page-account .aw-eyebrow { display:flex; align-items:center; flex-wrap:wrap; gap:8px; color:rgba(255,255,255,.72); font-size:.68rem; font-weight:800; letter-spacing:.15em; text-transform:uppercase; }
+.aw-eyebrow-pill { padding:4px 8px; border:1px solid rgba(255,255,255,.24); border-radius:99px; color:rgba(255,255,255,.82); font-size:.56rem; letter-spacing:.12em; }
+#page-account .aw-name { margin:12px 0 8px; color:#fff; font-size:clamp(1.35rem,2.4vw,2rem); line-height:1.1; }
+#page-account .aw-sub { max-width:420px; margin:0; color:rgba(255,255,255,.76); font-size:.88rem; line-height:1.55; }
+#page-account .aw-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; align-items:stretch; }
+#page-account .aw-stat { display:flex; align-items:flex-start; gap:9px; min-width:0; padding:14px 12px; border:1px solid rgba(255,255,255,.22); border-radius:17px; background:rgba(255,255,255,.12); color:#fff; text-align:left; cursor:pointer; transition:background .18s ease, transform .18s ease; }
+#page-account .aw-stat:hover { background:rgba(255,255,255,.19); transform:translateY(-2px); }
+.aw-stat-icon { display:grid; place-items:center; flex:0 0 28px; width:28px; height:28px; border-radius:10px; background:rgba(255,255,255,.18); font-size:.9rem; }
+#page-account .aw-stat > span:last-child { display:flex; min-width:0; flex-direction:column; }
+#page-account .aw-stat-val { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:1.22rem; line-height:1.1; }
+#page-account .aw-stat-lbl { display:block; margin-top:5px; color:rgba(255,255,255,.88); font-size:.69rem; font-weight:700; }
+#page-account .aw-stat-note { display:block; margin-top:5px; color:rgba(255,255,255,.60); font-size:.6rem; line-height:1.2; }
+.app-menu-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:0 16px 11px; }
+.app-menu-summary button { display:flex; min-width:0; flex-direction:column; align-items:flex-start; padding:11px 12px; border:1px solid rgba(61,117,90,.16); border-radius:15px; background:rgba(61,117,90,.07); color:var(--t-hi,#1f2b24); text-align:left; }
+.app-menu-summary button:active { transform:scale(.98); }
+.app-menu-summary strong { overflow:hidden; max-width:100%; text-overflow:ellipsis; white-space:nowrap; color:var(--green,#3d755a); font-size:1.02rem; line-height:1.1; }
+.app-menu-summary span { margin-top:4px; color:var(--t-low,#7c8780); font-size:.62rem; font-weight:700; }
+.app-menu-live-badge { min-width:24px !important; text-align:center; }
+@media (max-width: 900px) {
+  #page-account { padding-top:calc(env(safe-area-inset-top, 0px) + 106px) !important; }
+  #page-account .account-layout { gap:14px; }
+  #page-account .account-sidebar { padding:16px; border-radius:20px; }
+  #page-account .account-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  #page-account .account-nav-item { min-width:0; min-height:70px; padding:10px; }
+  #page-account .account-nav-signout { grid-column:1 / -1; min-height:58px; }
+  #page-account .account-welcome { grid-template-columns:1fr; gap:16px; padding:20px; border-radius:20px; }
+}
+@media (max-width: 560px) {
+  #page-account .account-layout { display:flex; flex-direction:column; gap:8px; }
+  #page-account .account-content { display:contents; }
+  #page-account .account-welcome { order:-2; width:100%; }
+  #page-account .account-sidebar { order:-1; width:100%; padding:7px 5px; border:0; border-radius:0; background:transparent; box-shadow:none; }
+  #page-account .account-profile-top, #page-account .account-nav-heading { display:none; }
+  #page-account .account-profile-top { gap:10px; padding-bottom:10px; }
+  #page-account .account-nav { grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; }
+  #page-account .account-nav-item { min-height:54px; padding:6px 3px; gap:3px; border:1px solid rgba(34,54,46,.07); border-radius:12px; background:rgba(255,255,255,.78); box-shadow:0 3px 9px rgba(36,45,40,.06); flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  #page-account .account-nav-copy { flex:0 1 auto; align-items:center; gap:0; }
+  #page-account .account-nav-copy strong { overflow:visible; white-space:normal; font-size:.6rem; line-height:1.08; }
+  #page-account .account-nav-copy small, #page-account .account-nav-arrow { display:none; }
+  #page-account .account-nav-item .nav-ico { flex:0 0 23px; width:23px; height:23px; font-size:.74rem; border-radius:8px; }
+  #page-account .account-nav-count { position:absolute; top:3px; right:4px; min-width:18px; padding:2px 4px; font-size:.54rem; }
+  #page-account .account-nav-item { position:relative; }
+  #page-account .account-nav-signout { grid-column:1 / -1; min-height:39px; margin-top:2px; padding:5px; border:1px solid rgba(184,66,66,.12); border-radius:11px; flex-direction:row; }
+  #page-account .account-nav-signout .nav-ico { flex-basis:22px; width:22px; height:22px; }
+  #page-account .account-nav-signout .account-nav-copy { align-items:flex-start; }
+  #page-account .account-welcome { gap:8px; padding:12px; border-radius:17px; }
+  #page-account .aw-sub, #page-account .aw-stat-note { display:none; }
+  .aw-avatar { flex-basis:45px; width:45px; height:45px; border-radius:14px; font-size:1.15rem; }
+  .aw-email { margin-top:4px; font-size:.7rem; }
+  .aw-email-icon { flex-basis:17px; width:17px; height:17px; border-radius:6px; font-size:.58rem; }
+  #page-account .aw-name { margin:7px 0 0; font-size:1.2rem; }
+  #page-account .aw-stats { gap:5px; }
+  #page-account .aw-stat { flex-direction:row; align-items:center; gap:6px; padding:8px 7px; border-radius:11px; }
+  #page-account .aw-stat-icon { flex-basis:23px; width:23px; height:23px; font-size:.75rem; border-radius:8px; }
+  #page-account .aw-stat-val { font-size:.9rem; }
+  #page-account .aw-stat-lbl { margin-top:2px; font-size:.56rem; }
+  .app-menu-summary { margin-left:13px; margin-right:13px; }
+  #appBottomNav { padding-top:4px; padding-bottom:calc(4px + env(safe-area-inset-bottom, 0px)); }
+  #appBottomNav .app-nav-item { min-height:44px; }
+  #appBottomNav .app-nav-label { font-size:.62rem; }
+}
+@media (max-width: 360px) {
+  #page-account .account-nav-copy strong { font-size:.56rem; }
+  #page-account .account-nav-item { padding-left:2px; padding-right:2px; }
+}

@@ -16,10 +16,6 @@ wrangler.jsonc
 SECURITY.md
 gitignore
 
-# Superseded Ascovita billing page, ~95 KB, referenced from nowhere in the site.
-# Left in the repository, just not published.
-abababababababab.html
-
 # GitHub Pages leftovers with no meaning on Cloudflare.
 CNAME
 .nojekyll
@@ -35,12 +31,7 @@ node_modules
 **/.DS_Store
 
 # Internal pages, reports, scripts, templates, and build tooling — never publish.
-_page_staff.html
-_page_customer360.html
 platform_review_report.md
-invoice-template.js
 llms.txt
-scripts/dedupe_staff.py
 scripts/sanity_check.py
-scripts/insert_customer360.py
 tools/
