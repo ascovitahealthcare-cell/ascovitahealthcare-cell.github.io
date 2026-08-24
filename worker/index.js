@@ -20,8 +20,8 @@
  * returned 404. `_redirects` was removed rather than left half-working, so
  * routing has exactly one source of truth: this file.
  *
- * Keep SPA_ROUTES in step with `_validPages` in index.html (search for
- * `const _validPages`). A route listed here but missing there renders the home
+ * Keep SPA_ROUTES in step with `_validPages` in scripts/auth-core.js (search
+ * for `const _validPages`). A route listed here but missing there renders the home
  * page under a different URL — a soft 404, which is worse than a real one.
  */
 
@@ -36,6 +36,23 @@ const SPA_ROUTES = new Set([
   '/account',
   '/b2b', // index.html forwards this on to the Ascovita corporate site
   '/wishlist',
+  // ── Added Aug 2026 ───────────────────────────────────────────────────────
+  // These had drifted out of step with the SPA. showPage() pushes '/' + page
+  // into the address bar for every one of them, so the URL a customer ends up
+  // holding — bookmarked, refreshed on flaky mobile data, or pasted to someone
+  // else — was a URL this Worker answered with a hard 404. The page rendered
+  // fine right up until the moment anyone reloaded it.
+  '/cart',
+  '/notifications',
+  '/privacy',
+  '/terms',
+  '/shipping',
+  '/refund',
+  '/accessibility',
+  '/download',
+  '/vita-points',
+  '/conduct',
+  '/discount-policy',
 ]);
 
 // Customer-facing product URLs are singular. The plural form is accepted only

@@ -2855,7 +2855,11 @@ function bootApp() {
   // wishlist has a real page section but was missing here, so a direct hit on
   // /wishlist rendered the HOME page at 200 — a soft 404. Keep
   // this list in step with SPA_ROUTES in worker/index.js.
-  const _validPages = ['home','shop','blog','about','contact','faq','advisor','account','product','wishlist','notifications','privacy','terms','shipping','refund','accessibility','download'];
+  // 'cart', 'vita-points', 'conduct' and 'discount-policy' are real sections in
+  // index.html that showPage() already pushes into the URL, but they were absent
+  // here — so Back out of one of them restored nothing and left the customer on
+  // a page whose URL no longer matched what they were looking at.
+  const _validPages = ['home','shop','blog','about','contact','faq','advisor','account','product','wishlist','cart','notifications','privacy','terms','shipping','refund','accessibility','download','vita-points','conduct','discount-policy'];
   // Legacy /b2b links now redirect to the Ascovita corporate B2B page
   if (_initPage === 'b2b') { window.location.href = 'https://www.ascovita.com/#/capabilities'; }
   if (_initPage && (_validPages.includes(_initPage) || _initPage === 'blog')) {
