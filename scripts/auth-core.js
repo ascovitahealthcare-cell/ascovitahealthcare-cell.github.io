@@ -3120,6 +3120,14 @@ function validateCheckoutForm() {
   if (!phone || phone.replace(/\D/g,'').length < 10)   flag(phoneEl, 'Valid 10-digit phone');
   if (!addr1)                                          flag(addr1El, 'Address');
   if (!city)                                           flag(cityEl, 'City');
+  // State was read above and returned below, but never checked — the one
+  // required field on this form without a validation line. Leaving it blank
+  // sailed past the form and was rejected by the server instead, with
+  // "Missing required fields: state" on a dialog titled Payment Failed. The
+  // customer is told a payment failed, for a cash order, because of a field
+  // nothing had asked them to fill. Courier labels need the state, so it is
+  // required rather than optional.
+  if (!state)                                          flag(stateEl, 'State');
   if (!pin  || pin.replace(/\D/g,'').length < 6)       flag(pinEl, 'Valid 6-digit pincode');
 
   if (errors.length) {
@@ -3707,14 +3715,21 @@ function showPaymentResult(state, opts) {
     ? `<div class="pay-result-icon ok"><svg width="44" height="44" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="#2f5d3a" stroke-width="2"/><path d="M14.1 27.2l7.1 7.2 16.7-16.8" fill="none" stroke="#2f5d3a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
     : `<div class="pay-result-icon fail">✕</div>`;
 
-  const title = ok ? 'Payment Successful' : 'Payment Failed';
+  // A cash-on-delivery order that fails validation is not a failed payment —
+  // no payment was ever attempted. Telling a COD customer "Payment Failed"
+  // and "no money has been deducted" invites them to go and check a card
+  // statement for a charge that never existed.
+  const isCod = opts.method === 'cod';
+  const title = ok ? 'Payment Successful' : (isCod ? 'Order Not Placed' : 'Payment Failed');
   const msg = ok
     ? (opts.msg || 'Your payment went through and your order is confirmed.')
     : friendlyPaymentError(opts.msg || 'Your payment could not be completed.');
 
   const noteHtml = ok
     ? (opts.note ? `<div class="pay-result-note">${opts.note}</div>` : '')
-    : `<div class="pay-result-note">${opts.refundNote || 'No money has been deducted from your account.'}</div>`;
+    : `<div class="pay-result-note">${opts.refundNote || (isCod
+        ? 'Nothing has been charged — cash on delivery is paid to the courier. Your cart is still saved.'
+        : 'No money has been deducted from your account.')}</div>`;
 
   const supportWaNumber = (typeof window.getCustomerWhatsAppNumber === 'function')
     ? window.getCustomerWhatsAppNumber()
@@ -3722,8 +3737,12 @@ function showPaymentResult(state, opts) {
   const actionsHtml = ok
     ? `<button class="pay-result-btn pay-result-primary ok" onclick="closePaymentResult(); showPage('thankyou');">Continue to Order Confirmation →</button>
        <button class="pay-result-btn pay-result-secondary" onclick="closePaymentResult(); showPage('home');">Back to Home</button>`
-    : `<button class="pay-result-btn pay-result-primary fail" onclick="closePaymentResult(); initiatePayment();">🔄 Retry Payment</button>
-       <button class="pay-result-btn pay-result-wa" onclick="window.open('https://wa.me/${supportWaNumber}?text=${encodeURIComponent('Payment failed for order ' + (opts.orderId || '') + (opts.total ? ' amount ₹' + opts.total : '') + ', please help')}', '_blank')">💬 WhatsApp Support</button>
+    // Retry the method they actually chose. This button called initiatePayment()
+    // unconditionally, so a customer whose CASH order failed and tapped "Retry
+    // Payment" was dropped into the card and UPI flow without being asked —
+    // silently switched off the payment method they had picked.
+    : `<button class="pay-result-btn pay-result-primary fail" onclick="closePaymentResult(); ${isCod ? 'initiateCOD()' : 'initiatePayment()'};">🔄 ${isCod ? 'Try Again' : 'Retry Payment'}</button>
+       <button class="pay-result-btn pay-result-wa" onclick="window.open('https://wa.me/${supportWaNumber}?text=${encodeURIComponent((isCod ? 'Order failed for ' : 'Payment failed for order ') + (opts.orderId || '') + (opts.total ? ' amount ₹' + opts.total : '') + ', please help')}', '_blank')">💬 WhatsApp Support</button>
        <button class="pay-result-btn pay-result-secondary" onclick="closePaymentResult(); showPage('cart');">← Back to Cart</button>
        <button class="pay-result-btn pay-result-secondary" onclick="closePaymentResult(); showPage('home');">Cancel & Continue Shopping</button>`;
 
@@ -3746,7 +3765,10 @@ function showPaymentResult(state, opts) {
 // ── Legacy helper used across the checkout paths — routes through the
 // centred modal above so failures are never buried at the page bottom. ──
 function showPaymentError(msg, orderId, formData, total, method) {
-  showPaymentResult('fail', { orderId: orderId, total: total, msg: friendlyPaymentError(msg || '', method) });
+  // `method` was already a parameter here and was thrown away. Without it the
+  // dialog could not tell a card failure from a cash one, so it called every
+  // failure a payment failure and sent every retry into the online flow.
+  showPaymentResult('fail', { orderId: orderId, total: total, method: method, msg: friendlyPaymentError(msg || '', method) });
 }
 
 // ── FINALIZE ORDER AFTER SUCCESSFUL PAYMENT ──
