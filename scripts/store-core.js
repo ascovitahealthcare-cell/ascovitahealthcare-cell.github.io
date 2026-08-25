@@ -1108,9 +1108,9 @@ const PRODUCTS = [
 // Admin-controlled homepage/shop display order — lower position shows first.
 // Products without an explicit position (e.g. brand-new backend additions) sort to the end.
 function byPosition(a, b) {
-  const pa = a.position ?? a.sort_order ?? 9999;
-  const pb = b.position ?? b.sort_order ?? 9999;
-  return pa - pb;
+  const pa = Number.isFinite(Number(a.position ?? a.sort_order)) ? Number(a.position ?? a.sort_order) : 9999;
+  const pb = Number.isFinite(Number(b.position ?? b.sort_order)) ? Number(b.position ?? b.sort_order) : 9999;
+  return (pa - pb) || (Number(a.id) - Number(b.id));
 }
 
 // ═══════════════════════════════════════════════════════════════

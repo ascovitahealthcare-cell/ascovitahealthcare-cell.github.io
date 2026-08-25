@@ -715,12 +715,17 @@ async function initHome() {
   // prices, offers, and stock. Products must not disappear during that gap.
   window.OZYLIX_MISSING_MEDIA = visibleProducts.filter(p => !p.image || !String(p.image).trim()).map(p => ({ id: p.id, name: p.name }));
   const homepageProducts = visibleProducts;
-  // Featured
-  const feat = homepageProducts.filter(p => p.tags.includes('featured')).slice(0,8);
-  const fg=document.getElementById('featuredGrid'); if(fg) fg.innerHTML = feat.map(p => renderProductCard(p, { homepage: true })).join('');
-  // New arrivals
-  const newP = homepageProducts.filter(p => p.tags.includes('new')).slice(0,4);
-  const nag=document.getElementById('newArrivalsGrid'); if(nag) nag.innerHTML = newP.map(p => renderProductCard(p, { homepage: true })).join('');
+  // Use the same deterministic renderers as bootApp and backend hydration.
+  // The previous inline path omitted byPosition(), so initHome could repaint
+  // the cards in static catalogue order after bootApp had already sorted them.
+  try { renderFeatured(); } catch (e) {
+    const feat = homepageProducts.filter(p => p.tags.includes('featured')).sort(byPosition).slice(0,8);
+    const fg=document.getElementById('featuredGrid'); if(fg) fg.innerHTML = feat.map(p => renderProductCard(p, { homepage: true })).join('');
+  }
+  try { renderNewArrivals(); } catch (e) {
+    const newP = homepageProducts.filter(p => p.tags.includes('new')).sort(byPosition).slice(0,4);
+    const nag=document.getElementById('newArrivalsGrid'); if(nag) nag.innerHTML = newP.map(p => renderProductCard(p, { homepage: true })).join('');
+  }
   // Blog content is rendered only on the dedicated blog page.
   // FAQ
   const hfw=document.getElementById('homeFaqWrap'); if(hfw) hfw.innerHTML = FAQS.slice(0,5).map(renderFaqItem).join('');
