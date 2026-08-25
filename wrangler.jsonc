@@ -26,6 +26,21 @@
     {
       "pattern": "www.ozylix.com",
       "custom_domain": true
+    },
+    // The apex. It used to resolve to GitHub Pages, which ignores _headers
+    // entirely — so ozylix.com served the whole storefront with no CSP, no
+    // HSTS and no cache policy, while www had all three. Binding it here puts
+    // it behind the same Worker, which redirects it to www (see APEX_HOST in
+    // worker/index.js).
+    //
+    // DEPLOY NOTE: custom_domain creates and takes over the DNS record. The
+    // first `wrangler deploy` after this line lands will move ozylix.com off
+    // GitHub Pages onto Cloudflare. That is the intent, but it IS a live DNS
+    // change — expect a short propagation window, and do it when you can watch
+    // it rather than last thing at night.
+    {
+      "pattern": "ozylix.com",
+      "custom_domain": true
     }
   ],
 

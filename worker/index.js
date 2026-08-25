@@ -208,9 +208,33 @@ async function handleSiteMedia() {
   }
 }
 
+// The apex is a redirect, not a second copy of the site.
+//
+// ozylix.com resolved to GitHub Pages, which does not read _headers at all —
+// so the apex served the storefront with no CSP, no HSTS, no X-Frame-Options
+// and none of the caching rules, while www had all of them. Two versions of
+// the same shop with different security postures, and the weaker one is the
+// address people type.
+//
+// Everything canonical already points at www: the <link rel=canonical>, the
+// sitemap, the structured data in seo-core.js. So the apex becomes a permanent
+// redirect rather than a second origin — one place serving the site, one set
+// of headers, and the link equity consolidated instead of split.
+//
+// 301 and not 302: this is permanent, and search engines should treat it that
+// way. The path, query and hash are preserved so a shared apex deep link still
+// lands where it was meant to.
+const APEX_HOST = 'ozylix.com';
+const CANONICAL_HOST = 'www.ozylix.com';
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.hostname === APEX_HOST) {
+      url.hostname = CANONICAL_HOST;
+      return Response.redirect(url.toString(), 301);
+    }
 
     if (url.pathname === '/robots.txt') {
       return publicHeaders(new Response(ROBOTS_TXT, {
