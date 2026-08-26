@@ -17,7 +17,7 @@
 // changing this string is what actually evicts the bad copy from devices
 // already carrying it. Bump it on any deploy that fixes a page-breaking
 // bug — a fix nobody can receive is not shipped.
-const CACHE_NAME = 'ozylix-pwa-v28';
+const CACHE_NAME = 'ozylix-pwa-v29';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache on install (your core pages)
@@ -50,8 +50,8 @@ const CORE_FILES = [
   '/scripts/seo-core.min.js?v=20260825-1',
   '/scripts/shop.js',
   '/scripts/promo-data.js',
-  '/scripts/store-core.min.js?v=20260825-1',
-  '/scripts/auth-core.min.js?v=20260825-1',
+  '/scripts/store-core.min.js?v=20260825-2',
+  '/scripts/auth-core.min.js?v=20260825-2',
   '/scripts/cart-utils.js'
 ];
 
