@@ -78,7 +78,12 @@ function isSpaPath(pathname) {
 // complete copy of the storefront — duplicate content for Google, under a name
 // that is meant to be private.
 const ADMIN_HOST = 'back.ozylix.com';
-const ADMIN_ENTRY = new Set(['/','/admin','/admin.html']);
+// Keep the admin shell off enumerable default paths. This is not a substitute
+// for authentication; it reduces automated discovery and brute-force noise.
+const ADMIN_SECRET_PATH = '/ops-console-8f3d2c.html';
+const ADMIN_ENTRY = new Set([ADMIN_SECRET_PATH]);
+const ADMIN_LEGACY_PATHS = new Set(['/','/admin','/admin/','/admin.html']);
+const PUBLIC_LEGACY_ADMIN_PATHS = new Set(['/admin','/admin/','/admin.html']);
 const ADMIN_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://accounts.google.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://sdk.cashfree.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://frwsjgrrtzhjfflcdjjs.supabase.co https://wyvpuafzirwlwweifzao.supabase.co https://i.ibb.co https://ascovita.imgbb.com https://images.unsplash.com; connect-src 'self' https://ascovitahealthcare-cell-github-io.onrender.com https://frwsjgrrtzhjfflcdjjs.supabase.co https://wyvpuafzirwlwweifzao.supabase.co https://accounts.google.com https://www.googleapis.com https://analytics.google.com https://sdk.cashfree.com http://localhost:* http://127.0.0.1:*; frame-src 'self' about:blank https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';";
 
 // Never let the admin hostname into a search index, whatever it serves.
@@ -136,7 +141,7 @@ const PUBLIC_CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsaf
 
 // Cloudflare can otherwise replace the repository file with its managed
 // Content-Signals policy. Keep one authoritative crawler policy at the Worker.
-const ROBOTS_TXT = `User-agent: *\nDisallow: /admin\nDisallow: /admin.html\nDisallow: /api/\nDisallow: /_page_\nDisallow: /tools/\nDisallow: /scripts/\nDisallow: /platform_review_report.md\nSitemap: https://www.ozylix.com/sitemap.xml\n`;
+const ROBOTS_TXT = `User-agent: *\nDisallow: /admin\nDisallow: /admin.html\nDisallow: /ops-console-8f3d2c.html\nDisallow: /api/\nDisallow: /_page_\nDisallow: /tools/\nDisallow: /scripts/\nDisallow: /platform_review_report.md\nSitemap: https://www.ozylix.com/sitemap.xml\n`;
 
 function publicHeaders(res) {
   const headers = new Headers(res.headers);
@@ -231,6 +236,18 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // Enforce transport security at the Worker edge. HSTS only protects
+    // repeat visitors; first-time HTTP requests must receive a redirect.
+    if (url.protocol === 'http:') {
+      url.protocol = 'https:';
+      return Response.redirect(url.toString(), 301);
+    }
+
+    const normalizedPath = url.pathname.replace(/\/+$/, '') || '/';
+    if (url.hostname !== ADMIN_HOST && PUBLIC_LEGACY_ADMIN_PATHS.has(normalizedPath)) {
+      return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
+    }
+
     if (url.hostname === APEX_HOST) {
       url.hostname = CANONICAL_HOST;
       return Response.redirect(url.toString(), 301);
@@ -260,6 +277,11 @@ export default {
     }
 
     if (url.hostname.toLowerCase() === ADMIN_HOST) {
+      const adminPath = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, '') : url.pathname;
+      if (ADMIN_LEGACY_PATHS.has(adminPath)) {
+        const target = new URL(ADMIN_SECRET_PATH, url);
+        return noIndex(Response.redirect(target.toString(), 302));
+      }
       return serveAdmin(request, env, url);
     }
 
