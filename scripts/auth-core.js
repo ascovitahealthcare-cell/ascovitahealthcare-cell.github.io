@@ -3609,22 +3609,22 @@ async function confirmCODOrder(orderId, codTotal, codCharge) {
 // ── PROCESSING OVERLAY ──
 function showProcessingScreen(orderId, total, method) {
   document.getElementById('cfProcessing')?.remove();
-  const methodIcons = { upi:'📱', card:'💳', netbanking:'🏦', emi:'📊', gokwik:'🔴', cashfree:'🔵' };
-  const methodNames = { upi:'UPI', card:'Card', netbanking:'Net Banking', emi:'EMI', gokwik:'GoKwik', cashfree:'Cashfree' };
+  const methodIcons = { cod:'💵', upi:'📱', card:'💳', netbanking:'🏦', emi:'📊', gokwik:'🔴', cashfree:'🔵' };
+  const methodNames = { cod:'Cash on Delivery', upi:'UPI', card:'Card', netbanking:'Net Banking', emi:'EMI', gokwik:'GoKwik', cashfree:'Cashfree' };
 
   const el = document.createElement('div');
   el.id = 'cfProcessing';
   el.style.cssText = 'position:fixed;inset:0;background:rgba(10,20,10,0.92);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:system-ui;text-align:center;padding:32px';
   el.innerHTML = `
     <div style="font-size:3.5rem;margin-bottom:20px;animation:cfSpin 1.2s linear infinite">${methodIcons[method] || '💳'}</div>
-    <div style="font-size:1.3rem;font-weight:800;margin-bottom:8px">Processing Payment</div>
+    <div style="font-size:1.3rem;font-weight:800;margin-bottom:8px">${method === 'cod' ? 'Placing COD Order' : 'Processing Payment'}</div>
     <div style="font-size:.85rem;opacity:.7;margin-bottom:4px">₹${total.toLocaleString('en-IN')} via ${methodNames[method] || method}</div>
     <div style="font-size:.72rem;opacity:.5;margin-bottom:28px">Order: ${orderId}</div>
     <div style="width:240px;height:5px;background:rgba(255,255,255,.15);border-radius:100px;overflow:hidden">
       <div id="cfPBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--st-ok-fg),var(--indigo));border-radius:100px;transition:width .4s ease"></div>
     </div>
-    <div id="cfPStatus" style="font-size:.72rem;opacity:.5;margin-top:12px">Connecting to payment gateway...</div>
-    <div style="font-size:.65rem;opacity:.35;margin-top:24px">🔒 256-bit SSL · GoKwik Secured · PCI DSS</div>
+    <div id="cfPStatus" style="font-size:.72rem;opacity:.5;margin-top:12px">${method === 'cod' ? 'Validating delivery, stock, and order details...' : 'Connecting to payment gateway...'}</div>
+    <div style="font-size:.65rem;opacity:.35;margin-top:24px">${method === 'cod' ? '🔒 Secure COD order · No payment is being processed' : '🔒 256-bit SSL · Payment provider secured · PCI DSS'}</div>
     <style>@keyframes cfSpin{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}</style>
   `;
   document.body.appendChild(el);
@@ -3700,6 +3700,7 @@ function showPaymentResult(state, opts) {
   document.body.classList.add('oz-pay-result'); // hides #ozPayBar + locks scroll
 
   const ok = state === 'ok';
+  const isCod = opts.method === 'cod';
   const el = document.createElement('div');
   el.className = 'pay-result-overlay';
   el.id = 'payResultOverlay';
@@ -3712,14 +3713,16 @@ function showPaymentResult(state, opts) {
     ? `<div class="pay-result-icon ok"><svg width="44" height="44" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="#2f5d3a" stroke-width="2"/><path d="M14.1 27.2l7.1 7.2 16.7-16.8" fill="none" stroke="#2f5d3a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
     : `<div class="pay-result-icon fail">✕</div>`;
 
-  const title = ok ? 'Payment Successful' : 'Payment Failed';
+  const title = ok
+    ? (isCod ? 'COD Order Confirmed' : 'Payment Successful')
+    : (isCod ? 'COD Order Not Placed' : 'Payment Failed');
   const msg = ok
-    ? (opts.msg || 'Your payment went through and your order is confirmed.')
-    : friendlyPaymentError(opts.msg || 'Your payment could not be completed.');
+    ? (opts.msg || (isCod ? 'Your Cash on Delivery order is confirmed.' : 'Your payment went through and your order is confirmed.'))
+    : friendlyPaymentError(opts.msg || (isCod ? 'We could not place your COD order.' : 'Your payment could not be completed.'), opts.method);
 
   const noteHtml = ok
     ? (opts.note ? `<div class="pay-result-note">${opts.note}</div>` : '')
-    : `<div class="pay-result-note">${opts.refundNote || 'No money has been deducted from your account.'}</div>`;
+    : `<div class="pay-result-note">${isCod ? 'No payment was processed. Your cart is safe.' : (opts.refundNote || 'No money has been deducted from your account.')}</div>`;
 
   const supportWaNumber = (typeof window.getCustomerWhatsAppNumber === 'function')
     ? window.getCustomerWhatsAppNumber()
@@ -3727,8 +3730,10 @@ function showPaymentResult(state, opts) {
   const actionsHtml = ok
     ? `<button class="pay-result-btn pay-result-primary ok" onclick="closePaymentResult(); showPage('thankyou');">Continue to Order Confirmation →</button>
        <button class="pay-result-btn pay-result-secondary" onclick="closePaymentResult(); showPage('home');">Back to Home</button>`
-    : `<button class="pay-result-btn pay-result-primary fail" onclick="closePaymentResult(); initiatePayment();">🔄 Retry Payment</button>
-       <button class="pay-result-btn pay-result-wa" onclick="window.open('https://wa.me/${supportWaNumber}?text=${encodeURIComponent('Payment failed for order ' + (opts.orderId || '') + (opts.total ? ' amount ₹' + opts.total : '') + ', please help')}', '_blank')">💬 WhatsApp Support</button>
+    : `${isCod
+       ? `<button class="pay-result-btn pay-result-primary fail" onclick="closePaymentResult(); initiateCOD();">🔄 Retry COD Order</button>`
+       : `<button class="pay-result-btn pay-result-primary fail" onclick="closePaymentResult(); initiatePayment();">🔄 Retry Payment</button>`}
+       <button class="pay-result-btn pay-result-wa" onclick="window.open('https://wa.me/${supportWaNumber}?text=${encodeURIComponent((isCod ? 'COD order failed' : 'Payment failed') + ' for order ' + (opts.orderId || '') + (opts.total ? ' amount ₹' + opts.total : '') + ', please help')}', '_blank')">💬 WhatsApp Support</button>
        <button class="pay-result-btn pay-result-secondary" onclick="closePaymentResult(); showPage('cart');">← Back to Cart</button>
        <button class="pay-result-btn pay-result-secondary" onclick="closePaymentResult(); showPage('home');">Cancel & Continue Shopping</button>`;
 
@@ -3751,7 +3756,7 @@ function showPaymentResult(state, opts) {
 // ── Legacy helper used across the checkout paths — routes through the
 // centred modal above so failures are never buried at the page bottom. ──
 function showPaymentError(msg, orderId, formData, total, method) {
-  showPaymentResult('fail', { orderId: orderId, total: total, msg: friendlyPaymentError(msg || '', method) });
+  showPaymentResult('fail', { orderId: orderId, total: total, msg: msg || '', method: method });
 }
 
 // ── FINALIZE ORDER AFTER SUCCESSFUL PAYMENT ──
@@ -4131,7 +4136,7 @@ async function finalizeOrder(orderId, formData, total, method, codCharge, paymen
   if (!_savedOrder) {
     console.error('[ORDER SAVE FAILED]', _saveError);
     try {
-      showPaymentError(
+        showPaymentError(
         (method === 'cod'
           ? 'We could not place your order just now — no money is involved with Cash on Delivery and your cart is safe. Please check your details and try again in a moment.'
           : 'Your payment went through but we could not confirm the order on our server. Please do not pay again — contact +91 98985 82650 with Order ID: ' + orderId)
@@ -4246,7 +4251,7 @@ async function finalizeOrder(orderId, formData, total, method, codCharge, paymen
   } catch(e) {}
   // Payment just succeeded — show the SUCCESS result in place first so the
   // customer clearly sees the outcome on screen before the thank-you page.
-  showPaymentResult('ok', { orderId: orderId, total: total,
+  showPaymentResult('ok', { orderId: orderId, total: total, method: method,
     msg: 'Your payment of ₹' + Number(total).toLocaleString('en-IN') + ' was received successfully.',
     note: (method ? 'Payment method: ' + (PAY_METHOD_LABEL[method] || method) : '') + '. You will receive your invoice and tracking link by email and SMS.' });
   showPage('thankyou');
