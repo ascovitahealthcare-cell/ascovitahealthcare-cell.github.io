@@ -1428,7 +1428,7 @@ function productSurfaceMediaHTML(url, alt, className, extraStyle) {
   if (mediaTypeFromUrl(src) === 'video') {
     return '<video class="' + cls + '" src="' + src + '" muted loop playsinline autoplay preload="metadata" aria-label="' + safeAlt + '" style="' + style + '"></video>';
   }
-  return '<img class="' + cls + '" src="' + src + '" alt="' + safeAlt + '" loading="lazy" decoding="async" style="' + style + '" onerror="this.src=\'' + PRODUCT_FALLBACKS.default + '\'">';
+  return '<img class="' + cls + '" src="' + src + '" alt="' + safeAlt + '" loading="lazy" fetchpriority="low" decoding="async" style="' + style + '" onerror="this.src=\'' + PRODUCT_FALLBACKS.default + '\'">';
 }
 function upgradeUploadedVideoImages(root) {
   const scope = root || document;

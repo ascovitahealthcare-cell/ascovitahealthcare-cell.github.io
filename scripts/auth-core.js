@@ -1854,7 +1854,7 @@ function renderGalleryMain(m, idx, total) {
     return '<video src="' + m.url + '" muted loop playsinline preload="metadata" autoplay style="width:100%;height:100%;object-fit:contain;border-radius:var(--radius)"></video>'
       + '<span class="vid-badge">▶ Video</span>' + counter;
   }
-  return '<img src="' + (m.url||PRODUCT_FALLBACKS.default) + '" id="mainImg" alt="Product" onclick="openLightbox(_galleryIdx)" onerror="this.src=PRODUCT_FALLBACKS.default" decoding="async">' + counter;
+  return '<img src="' + (m.url||PRODUCT_FALLBACKS.default) + '" id="mainImg" alt="Product" onclick="openLightbox(_galleryIdx)" onerror="this.src=PRODUCT_FALLBACKS.default" loading="eager" fetchpriority="high" decoding="async">' + counter;
 }
 
 function galleryGoto(i) {
