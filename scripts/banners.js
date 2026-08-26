@@ -6,6 +6,21 @@
 // Setup: add INSTAGRAM_TOKEN to Render env vars
 // ══════════════════════════════════════════════════════════
 
+// Load only the active hero slide first. The next slide is hydrated on navigation/autoplay.
+// This reduces first-load image bytes without changing carousel timing, links, or admin refresh.
+function bnHydrateHeroSlide(track, index) {
+  if (!track) return;
+  var slides = track.querySelectorAll('.hero-banner-slide');
+  [index, index + 1].forEach(function (j) {
+    var slide = slides[j];
+    var img = slide && slide.querySelector('img[data-src]');
+    if (img && img.dataset.src) {
+      img.src = img.dataset.src;
+      img.removeAttribute('data-src');
+    }
+  });
+}
+
 (function() {
 
   var IG_API = (typeof API_BASE !== 'undefined' ? API_BASE : 'https://ascovitahealthcare-cell-github-io.onrender.com') + '/api/instagram';
@@ -210,7 +225,10 @@ function bnMediaType(url) {
     var n = shSlides.length;
     shIdx = ((i % n) + n) % n;                  // wraps both directions
     var track = document.getElementById('shTrack');
-    if (track) track.style.transform = 'translateX(-' + (shIdx * 100) + '%)';
+    if (track) {
+      track.style.transform = 'translateX(-' + (shIdx * 100) + '%)';
+      bnHydrateHeroSlide(track, shIdx);
+    }
     var wrap = document.getElementById('shopHero');
     if (wrap) wrap.querySelectorAll('.hero-banner-dot').forEach(function (d, j) {
       d.classList.toggle('active', j === shIdx);
@@ -268,8 +286,8 @@ function bnMediaType(url) {
               + ' style="width:100%;height:100%;object-fit:cover"></video>';
       } else {
         var img = (isPhone && s.mobile) ? s.mobile : s.src;
-        inner = '<img src="' + img + '" alt="' + (s.alt || 'Ozylix effervescent supplements offer banner') + '"' +
-                    (i === 0 ? ' fetchpriority="high" decoding="sync"' : ' loading="lazy" decoding="async"') + '>';
+        inner = '<img ' + (i === 0 ? 'src="' + img + '" fetchpriority="high" decoding="sync"' : 'data-src="' + img + '" loading="lazy" fetchpriority="low" decoding="async"') +
+                    ' width="1600" height="686" alt="' + (s.alt || 'Ozylix effervescent supplements offer banner') + '">';
       }
       return s.link
         ? '<a class="hero-banner-slide" href="' + s.link + '">' + inner + '</a>'
@@ -417,8 +435,8 @@ window.dismissOfferReminder = function () {
               + ' style="width:100%;height:100%;object-fit:cover"></video>';
       } else {
         var img = (isPhone && s.mobile) ? s.mobile : s.src;
-        inner = '<img src="' + img + '" alt="' + (s.alt || 'Ozylix effervescent supplements offer banner') + '"' +
-                    (i === 0 ? ' fetchpriority="high" decoding="sync"' : ' loading="lazy" decoding="async"') + '>';
+        inner = '<img ' + (i === 0 ? 'src="' + img + '" fetchpriority="high" decoding="sync"' : 'data-src="' + img + '" loading="lazy" fetchpriority="low" decoding="async"') +
+                    ' width="1600" height="686" alt="' + (s.alt || 'Ozylix effervescent supplements offer banner') + '">';
       }
       return s.link
         ? '<a class="hero-banner-slide" href="' + s.link + '">' + inner + '</a>'
@@ -512,7 +530,10 @@ window.dismissOfferReminder = function () {
     var n = bnSlides.length;
     bnIdx = ((i % n) + n) % n;                  // wraps both directions
     var track = document.getElementById('heroBannerTrack');
-    if (track) track.style.transform = 'translateX(-' + (bnIdx * 100) + '%)';
+    if (track) {
+      track.style.transform = 'translateX(-' + (bnIdx * 100) + '%)';
+      bnHydrateHeroSlide(track, bnIdx);
+    }
     // Scoped to this carousel. The shop hero (#shopHero) is the same engine
     // rendering the same markup into the same document, so an unscoped
     // '.hero-banner-dot' sweep matched ITS dots too: every home tick — a

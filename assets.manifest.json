@@ -4,7 +4,7 @@
   "scripts/admin-core.js": "ab5d398956d09d10",
   "scripts/admin-ui.js": "f671762dc3fdd8e9",
   "scripts/auth-core.js": "e31c4476978a7c9a",
-  "scripts/banners.js": "cd14bf6fd0ed880f",
+  "scripts/banners.js": "e756ede314c9eb96",
   "scripts/invoice-renderer.js": "51aaf2cafb17d22b",
   "scripts/ozy-track.js": "3c8c65198a09d3f0",
   "scripts/seo-core.js": "6abfa9cf67e18fad",
