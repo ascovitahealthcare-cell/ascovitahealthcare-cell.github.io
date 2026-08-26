@@ -248,6 +248,13 @@ export default {
       return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
     }
 
+    // Preserve old bookmarks and footer links while keeping /privacy as the
+    // single canonical policy URL used by security.txt and the sitemap.
+    if (url.hostname !== ADMIN_HOST && normalizedPath === '/privacy-policy') {
+      url.pathname = '/privacy';
+      return publicHeaders(Response.redirect(url.toString(), 301));
+    }
+
     if (url.hostname === APEX_HOST) {
       url.hostname = CANONICAL_HOST;
       return Response.redirect(url.toString(), 301);
