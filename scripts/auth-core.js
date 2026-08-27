@@ -252,7 +252,7 @@ const FAQS = [
   { q:"How should I store the products?", a:"Store all Ozylix products in a cool, dry place below 30°C. Keep away from direct sunlight and moisture. After opening effervescent tablet tubes, seal tightly and use within 30 days.", cat:"Products" },
   { q:"Are these suitable for vegetarians/vegans?", a:"All Ozylix supplements are 100% vegetarian. The spirulina products are also vegan. Glutathione and B1+Biotin are vegetarian but check if vegan-strict, as some capsule shells may vary.", cat:"Products" },
   { q:"How do I apply a discount code?", a:"Enter one active code in the Apply Coupon field and press Apply. A coupon cannot be stacked with Mix & Match when Mix & Match unlocks, and the server checks expiry, usage limits, minimum order value, and the maximum permitted saving again before payment.", cat:"Offers" },
-  { q:"Do you offer bulk/wholesale pricing?", a:"Yes. For bulk orders or wholesale partnerships, contact ascovitahealthcare@gmail.com or call +91 9898 582 650. Bulk pricing and quantities are quoted separately and are not automatically combined with consumer coupons or Mix & Match.", cat:"Orders" },
+  { q:"Do you offer bulk/wholesale pricing?", a:"Yes. For bulk orders or wholesale partnerships, contact ozylixcare@gmail.com or call +91 9898 582 650. Bulk pricing and quantities are quoted separately and are not automatically combined with consumer coupons or Mix & Match.", cat:"Orders" },
 ];
 
 // ── APP STATE ──
@@ -4347,7 +4347,7 @@ async function sendOrderEmail({ orderId, formData, srItems, sub, totalDisc, prom
       ${method !== 'demo' ? `<a href="${trackUrl}" style="display:block;background:var(--f-mineral-d);color:var(--t-hi);text-align:center;padding:13px;border-radius:100px;font-weight:700;text-decoration:none;font-size:14px;margin:16px 0">📦 Track Your Order on Shiprocket</a>` : ''}
 
       <p style="font-size:12px;color:var(--t-low);text-align:center;margin-top:20px">
-        For queries: <a href="mailto:ascovitahealthcare@gmail.com" style="color:var(--f-mineral-d)">ascovitahealthcare@gmail.com</a> | +91 98985 82650<br>
+        For queries: <a href="mailto:ozylixcare@gmail.com" style="color:var(--f-mineral-d)">ozylixcare@gmail.com</a> | +91 98985 82650<br>
         Ozylix · Near Rajshivalay Cinema, Anand – 388001, Gujarat
       </p>
     </div>
@@ -4370,7 +4370,7 @@ async function sendOrderEmail({ orderId, formData, srItems, sub, totalDisc, prom
     order_date:    new Date().toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'}),
     items_text:    itemsText,
     email_body:    emailHtml,
-    company_email: 'ascovitahealthcare@gmail.com',
+    company_email: 'ozylixcare@gmail.com',
     phone:         formData.phone,
     address:       `${formData.addr1}, ${formData.city}, ${formData.state} - ${formData.pin}`,
     tracking_url:  trackUrl,
@@ -4488,7 +4488,7 @@ function generateInvoice({ orderId, formData, srItems, sub, disc, promoDisc, shi
       Amin Auto Road, Near Rajshivalay Cinema<br>
       Anand – 388001, Gujarat, India<br>
       📞 +91 98985 82650<br>
-      ✉ ascovitahealthcare@gmail.com<br>
+      ✉ ozylixcare@gmail.com<br>
       🌐 ascovita.in
     </div>
   </div>
@@ -4566,7 +4566,7 @@ function generateInvoice({ orderId, formData, srItems, sub, disc, promoDisc, shi
     • All prices are inclusive of 5% GST &nbsp;|&nbsp; HSN Code: 30049099 (Nutraceuticals)<br>
     • Returns accepted within 7 days for sealed/unused products<br>
     • This is a computer-generated invoice and does not require a physical signature<br>
-    • For queries: ascovitahealthcare@gmail.com &nbsp;|&nbsp; +91 98985 82650
+    • For queries: ozylixcare@gmail.com &nbsp;|&nbsp; +91 98985 82650
   </div>
 
   <!-- FOOTER -->
@@ -6334,7 +6334,7 @@ async function renderReturnsPanel() {
     }
 
     html += '<p class="ret-meta" style="margin-top:18px">Something look wrong? '
-          + '<a href="mailto:ascovitahealthcare@gmail.com">Email us</a> with your order number '
+          + '<a href="mailto:ozylixcare@gmail.com">Email us</a> with your order number '
           + 'and we will raise the request for you.</p>';
 
     el.innerHTML = html;
